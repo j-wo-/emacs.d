@@ -33,14 +33,6 @@
 (use-package uniquify
     :config (setq uniquify-buffer-name-style 'post-forward))
 
-(unless (null window-system)
-  (set-frame-height (selected-frame) 55)
-  (set-frame-width (selected-frame) 100))
-
-(unless (null window-system)
-  ;;(setq emacs-custom-font "Droid Sans Mono:pixelsize=18")
-  (set-frame-font "Source Code Pro:pixelsize=18"))
-
 (defun switch-to-theme (theme)
   (dolist (active-theme custom-enabled-themes)
     (disable-theme active-theme))
@@ -50,13 +42,6 @@
 (use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
 (use-package color-theme-sanityinc-solarized)
-
-;;(switch-to-theme 'zenburn)
-(switch-to-theme 'sanityinc-tomorrow-night)
-;;(switch-to-theme 'sanityinc-tomorrow-day)
-;;(switch-to-theme 'sanityinc-solarized-light)
-;;(switch-to-theme 'sanityinc-solarized-dark)
-;;(load-theme 'zenburn t)
 
 (use-package auto-complete-config
     :config
@@ -272,3 +257,18 @@
       (progn
 	(setq sml/name-width 38)
 	(setq sml/mode-width 62))))
+
+;;(switch-to-theme 'zenburn)
+;;(switch-to-theme 'sanityinc-tomorrow-night)
+;;(switch-to-theme 'sanityinc-tomorrow-day)
+;;(switch-to-theme 'sanityinc-solarized-light)
+;;(switch-to-theme 'sanityinc-solarized-dark)
+(load-theme 'sanityinc-tomorrow-night t)
+
+(unless (null window-system)
+  ;;(setq emacs-custom-font "Droid Sans Mono:pixelsize=18")
+  (set-frame-font "Source Code Pro:pixelsize=15"))
+
+(unless (null window-system)
+  (set-frame-height (selected-frame) 44)
+  (set-frame-width (selected-frame) 100))
