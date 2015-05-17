@@ -4,3 +4,6 @@ auto-save-list
 ac-comphist.dat
 ido.last
 projectile-bookmarks.eld
+/eshell/
+/projectile.cache
+/tramp
