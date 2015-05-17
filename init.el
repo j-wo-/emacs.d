@@ -1,9 +1,4 @@
-
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
-(package-initialize)
+;;(package-initialize)
 
 (set-language-environment "utf-8")
 
@@ -19,9 +14,6 @@
 (defun load-local (file)
   (load (f-expand file user-emacs-directory)))
 
-(load-local "keys")
-(load-local "commands")
-
 (use-package diminish)
 
 (menu-bar-mode -1)
@@ -29,6 +21,7 @@
 (scroll-bar-mode -1)
 
 (setq vc-follow-symlinks t)
+(setq make-backup-files nil)
 
 (use-package uniquify
   :config (setq uniquify-buffer-name-style 'post-forward))
@@ -58,7 +51,7 @@
 (use-package projectile
   :config
   (projectile-global-mode)
-  (setq projectile-enable-caching nil)
+  (setq projectile-enable-caching t)
   (setq projectile-mode-line
 	'(:eval (format " [%s]" (projectile-project-name)))))
 
@@ -85,10 +78,12 @@
 
 (use-package paren-face :config (global-paren-face-mode))
 
-(use-package paredit
+(use-package smartparens-config
   :config
-  (diminish 'paredit-mode "()")
-  (define-lisp-keys paredit-mode-map))
+  (use-package smartparens)
+  (sp-pair "'" nil :actions :rem)
+  (sp-pair "`" nil :actions :rem)
+  (smartparens-global-mode t))
 
 (add-hook
  'emacs-lisp-mode-hook
@@ -96,15 +91,11 @@
    (use-package ielm)
    (use-package elisp-slime-nav
      :config (diminish 'elisp-slime-nav-mode "M-."))
-   (define-lisp-keys emacs-lisp-mode-map)
-   (paredit-mode)
    (turn-on-elisp-slime-nav-mode)))
 
 (use-package clojure-mode
   :mode "\\.clj\\'" "\\.cljs\\'"
   :config
-  (define-lisp-keys clojure-mode-map)
-  (add-hook 'clojure-mode-hook 'paredit-mode)
   (defface square-brackets
     '((t (:foreground "#c0c43b"))) 'paren-face)
   (defface curly-brackets
@@ -132,10 +123,7 @@
     (use-package cider-eldoc
       :config (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode))
     (setq cider-repl-popup-stacktraces t)
-    (setq cider-auto-select-error-buffer t)
-    (add-hook 'cider-mode-hook 'paredit-mode)
-    (add-hook 'cider-repl-mode-hook 'paredit-mode)
-    (define-lisp-keys cider-repl-mode-map)))
+    (setq cider-auto-select-error-buffer t)))
 
 (use-package haskell-mode
   :mode "\\.hs\\'" "\\.hs-boot\\'" "\\.lhs\\'" "\\.lhs-boot\\'"
@@ -176,10 +164,6 @@
   (setq slime-contribs '(slime-fancy slime-tramp))
   (use-package slime
     :config
-    (define-lisp-keys slime-mode-map)
-    (define-lisp-keys slime-repl-mode-map)
-    (add-hook 'lisp-mode-hook 'paredit-mode)
-    (add-hook 'slime-repl-mode-hook 'paredit-mode)
     (add-hook 'lisp-mode-hook
 	      (lambda ()
 		(setq-local lisp-indent-function
@@ -194,8 +178,12 @@
 	  slime-complete-symbol-function 'slime-fuzzy-complete-symbol
 	  slime-fuzzy-completion-in-place t
 	  slime-enable-evaluate-in-emacs t
-	  slime-autodoc-use-multiline-p t)
-    (define-key slime-mode-map [(return)] 'paredit-newline)
+	  slime-autodoc-use-multiline-p t
+	  slime-load-failed-fasl 'never
+	  slime-compile-file-options
+	  '(:fasl-directory "/tmp/slime-fasls/"))
+    (make-directory "/tmp/slime-fasls/" t)
+    ;;(define-key slime-mode-map [(return)] 'paredit-newline)
     (define-key slime-mode-map (kbd "C-c .") 'slime-next-note)
     (define-key slime-mode-map (kbd "C-c ,") 'slime-previous-note)
 
@@ -246,22 +234,7 @@
   :config
   (use-package smart-mode-line-powerline-theme)
   (sml/setup)
-  (sml/apply-theme 'powerline)
-  (if (null window-system)
-      (progn
-	(setq sml/name-width 38)
-	(setq sml/mode-width 42))
-    (progn
-      (setq sml/name-width 38)
-      (setq sml/mode-width 62))))
-
-;;(switch-to-theme 'zenburn)
-;;(switch-to-theme 'sanityinc-tomorrow-night)
-;;(switch-to-theme 'sanityinc-tomorrow-day)
-;;(switch-to-theme 'sanityinc-solarized-light)
-;;(switch-to-theme 'sanityinc-solarized-dark)
-(load-theme 'sanityinc-tomorrow-night t)
-;;(sml/apply-theme 'powerline)
+  (sml/apply-theme 'powerline))
 
 (unless (null window-system)
   ;;(setq emacs-custom-font "Droid Sans Mono:pixelsize=18")
@@ -270,3 +243,22 @@
 (unless (null window-system)
   (set-frame-height (selected-frame) 55)
   (set-frame-width (selected-frame) 100))
+
+;;(switch-to-theme 'zenburn)
+;;(switch-to-theme 'sanityinc-tomorrow-night)
+;;(switch-to-theme 'sanityinc-tomorrow-day)
+;;(switch-to-theme 'sanityinc-solarized-light)
+;;(switch-to-theme 'sanityinc-solarized-dark)
+(load-theme 'sanityinc-tomorrow-night t)
+(sml/apply-theme 'powerline)
+
+(if (null window-system)
+    (progn
+      (setq sml/name-width 38)
+      (setq sml/mode-width 42))
+  (progn
+    (setq sml/name-width 34)
+    (setq sml/mode-width 66)))
+
+(load-local "keys")
+(load-local "commands")

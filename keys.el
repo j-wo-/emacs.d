@@ -1,24 +1,3 @@
-(defun define-lisp-keys (mode-map)
-  (dolist (entry
-	    `((,(kbd "[") paredit-open-round)
-	      (,(kbd "]") paredit-close-round)
-	      (,(kbd "(") paredit-open-square)
-	      (,(kbd ")") paredit-close-square)
-	      (,(kbd "C-M-q") indent-sexp)
-	      ;;(,(kbd "(") ,(lambda () (interactive) (insert "[")))
-	      ;;(,(kbd ")") ,(lambda () (interactive) (insert "]")))
-	
-	      ;;(,(kbd "C-f") forward-sexp)
-	      ;;(,(kbd "C-b") backward-sexp)
-	
-	      ;;(,(kbd "C-M-t") transpose-chars)
-	      ;;(,(kbd "C-M-b") backward-char)
-	      ;;(,(kbd "C-M-f") forward-char)
-	      (,[(control ?\{)] (lambda () (interactive) (insert "(")))
-	      (,[(control ?\})] (lambda () (interactive) (insert ")")))))
-    (destructuring-bind (key cmd) entry
-      (define-key mode-map key cmd))))
-
 (defun vi-open-next-line (arg)
   "Move to the next line (like vi) and then opens a line."
   (interactive "p")
@@ -47,11 +26,21 @@
 (global-set-key [(control o)] 'vi-open-next-line)
 (global-set-key [C-down] 'scroll-down-one-line)
 (global-set-key [C-up] 'scroll-up-one-line)
-(global-set-key "\C-f" 'forward-sexp)
-(global-set-key "\C-b" 'backward-sexp)
-(global-set-key "\C-t" 'transpose-sexps)
+(global-set-key "\C-f" 'sp-forward-sexp)
+(global-set-key "\C-b" 'sp-backward-sexp)
+(global-set-key "\C-t" 'sp-transpose-sexp)
 (global-set-key "\C-w" 'backward-kill-word)
 (global-set-key "\C-x\C-k" 'kill-region)
+(global-set-key "\C-\M-q" 'indent-sexp)
+(global-set-key "\C-\M-k" 'sp-kill-sexp)
+
+(global-set-key (kbd "C-{") (lambda (&optional arg) (interactive "P") (sp-wrap-with-pair "(")))
+(global-set-key (kbd "C-(") (lambda (&optional arg) (interactive "P") (sp-wrap-with-pair "[")))
+
+(define-key key-translation-map (kbd "(") (kbd "["))
+(define-key key-translation-map (kbd ")") (kbd "]"))
+(define-key key-translation-map (kbd "[") (kbd "("))
+(define-key key-translation-map (kbd "]") (kbd ")"))
 
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
