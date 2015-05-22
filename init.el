@@ -85,7 +85,13 @@
 
 (use-package paren-face :config (global-paren-face-mode))
 
-(use-package paredit)
+(use-package paredit
+  :config
+  (define-globalized-minor-mode real-global-paredit-mode
+    paredit-mode (lambda ()
+		   (if (not (minibufferp (current-buffer)))
+		       (enable-paredit-mode))))
+  (real-global-paredit-mode t))
 
 (use-package smartparens-config
   :config
@@ -103,7 +109,7 @@
      :config (diminish 'elisp-slime-nav-mode "M-."))
    (turn-on-elisp-slime-nav-mode)
    (aggressive-indent-mode)))
-(enable-lispy 'emacs-lisp-mode-hook)
+;; (enable-lispy 'emacs-lisp-mode-hook)
 
 (use-package clojure-mode
   :mode "\\.clj\\'" "\\.cljs\\'"
@@ -135,9 +141,9 @@
       :config (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode))
     (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
     (add-hook 'cider-mode-hook #'aggressive-indent-mode)
-    (enable-lispy 'clojure-mode-hook)
-    (enable-lispy 'cider-mode-hook)
-    (enable-lispy 'cider-repl-mode-hook)
+    ;; (enable-lispy 'clojure-mode-hook)
+    ;; (enable-lispy 'cider-mode-hook)
+    ;; (enable-lispy 'cider-repl-mode-hook)
     (setq cider-lein-command "~/bin/lein")
     (setq cider-repl-popup-stacktraces t)
     (setq cider-auto-select-error-buffer t)))
@@ -230,8 +236,9 @@
 
     (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
     (add-hook 'slime-mode-hook #'aggressive-indent-mode)
-    (enable-lispy 'lisp-mode-hook)
-    (enable-lispy 'slime-mode-hook)
+    ;; (enable-lispy 'lisp-mode-hook)
+    ;; (enable-lispy 'slime-mode-hook)
+    ;; (enable-lispy 'slime-repl-mode-hook)
 
     (use-package slime-annot)
     (use-package ac-slime
@@ -252,7 +259,7 @@
   :config (diminish 'magit-auto-revert-mode))
 
 (use-package smart-mode-line
-  :init (setq sml/theme 'powerline)
+  :init (setq sml/theme 'respectful)
   :config
   ;; (use-package smart-mode-line-powerline-theme)
   (sml/setup)
@@ -273,7 +280,7 @@
 ;;(switch-to-theme 'sanityinc-solarized-light)
 ;;(switch-to-theme 'sanityinc-solarized-dark)
 (load-theme 'sanityinc-tomorrow-night t)
-(sml/apply-theme 'powerline)
+(sml/apply-theme 'respectful)
 
 (if (null window-system)
     (progn
