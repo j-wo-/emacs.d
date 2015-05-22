@@ -51,3 +51,5 @@
 (depends-on "ensime")
 (depends-on "diminish")
 (depends-on "f")
+(depends-on "aggressive-indent")
+(depends-on "lispy")

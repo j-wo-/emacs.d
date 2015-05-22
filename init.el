@@ -36,6 +36,13 @@
 (use-package color-theme-sanityinc-tomorrow)
 (use-package color-theme-sanityinc-solarized)
 
+(use-package aggressive-indent)
+
+(use-package lispy
+  :config 
+  (defun enable-lispy (mode-hook)
+    (add-hook mode-hook (lambda () (lispy-mode 1)))))
+
 (use-package auto-complete-config
   :config
   (ac-config-default)
@@ -78,12 +85,15 @@
 
 (use-package paren-face :config (global-paren-face-mode))
 
+(use-package paredit)
+
 (use-package smartparens-config
   :config
   (use-package smartparens)
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
-  (smartparens-global-mode t))
+  ;; (smartparens-global-mode t)
+  )
 
 (add-hook
  'emacs-lisp-mode-hook
@@ -91,7 +101,9 @@
    (use-package ielm)
    (use-package elisp-slime-nav
      :config (diminish 'elisp-slime-nav-mode "M-."))
-   (turn-on-elisp-slime-nav-mode)))
+   (turn-on-elisp-slime-nav-mode)
+   (aggressive-indent-mode)))
+(enable-lispy 'emacs-lisp-mode-hook)
 
 (use-package clojure-mode
   :mode "\\.clj\\'" "\\.cljs\\'"
@@ -114,7 +126,6 @@
        (font-lock-fontify-buffer))))
   (use-package cider
     :config
-    (setq cider-lein-command "~/bin/lein")
     (use-package ac-cider
       :config
       (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
@@ -122,6 +133,12 @@
       (add-hook 'cider-repl-mode-hook 'ac-cider-setup))
     (use-package cider-eldoc
       :config (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode))
+    (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
+    (add-hook 'cider-mode-hook #'aggressive-indent-mode)
+    (enable-lispy 'clojure-mode-hook)
+    (enable-lispy 'cider-mode-hook)
+    (enable-lispy 'cider-repl-mode-hook)
+    (setq cider-lein-command "~/bin/lein")
     (setq cider-repl-popup-stacktraces t)
     (setq cider-auto-select-error-buffer t)))
 
@@ -211,6 +228,11 @@
     (add-to-list 'projectile-globally-ignored-modes "comint-mode")
     (add-to-list 'projectile-globally-ignored-modes "slime-repl-mode")
 
+    (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
+    (add-hook 'slime-mode-hook #'aggressive-indent-mode)
+    (enable-lispy 'lisp-mode-hook)
+    (enable-lispy 'slime-mode-hook)
+
     (use-package slime-annot)
     (use-package ac-slime
       :config
@@ -232,9 +254,10 @@
 (use-package smart-mode-line
   :init (setq sml/theme 'powerline)
   :config
-  (use-package smart-mode-line-powerline-theme)
+  ;; (use-package smart-mode-line-powerline-theme)
   (sml/setup)
-  (sml/apply-theme 'powerline))
+  ;; (sml/apply-theme 'powerline)
+  (sml/apply-theme 'respectful))
 
 (unless (null window-system)
   ;;(setq emacs-custom-font "Droid Sans Mono:pixelsize=18")
@@ -262,3 +285,17 @@
 
 (load-local "keys")
 (load-local "commands")
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (zenburn-theme web-mode w3m use-package smex smartparens smart-mode-line-powerline-theme slime-annot request projectile prodigy popwin paren-face paredit pallet nyan-mode mic-paren magit lispy ido-ubiquitous idle-highlight-mode htmlize git-gutter-fringe ghc flycheck-cask flx-ido expand-region exec-path-from-shell ensime elisp-slime-nav drag-stuff color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized aggressive-indent ac-slime ac-haskell-process ac-cider))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
