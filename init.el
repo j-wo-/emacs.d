@@ -91,7 +91,8 @@
     paredit-mode (lambda ()
 		   (if (not (minibufferp (current-buffer)))
 		       (enable-paredit-mode))))
-  (real-global-paredit-mode t))
+  (real-global-paredit-mode t)
+  (diminish 'paredit-mode "()"))
 
 (use-package smartparens-config
   :config
@@ -268,11 +269,7 @@
 
 (unless (null window-system)
   ;;(setq emacs-custom-font "Droid Sans Mono:pixelsize=18")
-  (set-frame-font "Source Code Pro:pixelsize=18"))
-
-(unless (null window-system)
-  (set-frame-height (selected-frame) 55)
-  (set-frame-width (selected-frame) 100))
+  (set-frame-font "Source Code Pro:pixelsize=15"))
 
 ;;(switch-to-theme 'zenburn)
 ;;(switch-to-theme 'sanityinc-tomorrow-night)
@@ -284,25 +281,14 @@
 
 (if (null window-system)
     (progn
-      (setq sml/name-width 38)
-      (setq sml/mode-width 42))
+      (setq sml/name-width 34)
+      (setq sml/mode-width 46))
   (progn
     (setq sml/name-width 34)
     (setq sml/mode-width 66)))
 
 (load-local "keys")
 (load-local "commands")
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (zenburn-theme web-mode w3m use-package smex smartparens smart-mode-line-powerline-theme slime-annot request projectile prodigy popwin paren-face paredit pallet nyan-mode mic-paren magit lispy ido-ubiquitous idle-highlight-mode htmlize git-gutter-fringe ghc flycheck-cask flx-ido expand-region exec-path-from-shell ensime elisp-slime-nav drag-stuff color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized aggressive-indent ac-slime ac-haskell-process ac-cider))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+
+(unless (null window-system)
+  (set-frame-size (selected-frame) 100 48))
