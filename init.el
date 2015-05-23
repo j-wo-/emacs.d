@@ -259,17 +259,19 @@
   :init (setq magit-last-seen-setup-instructions "1.4.0")
   :config (diminish 'magit-auto-revert-mode))
 
+(defvar custom-sml-theme 'powerline)
+
 (use-package smart-mode-line
-  :init (setq sml/theme 'respectful)
+  :init (setq sml/theme custom-sml-theme)
   :config
   ;; (use-package smart-mode-line-powerline-theme)
   (sml/setup)
   ;; (sml/apply-theme 'powerline)
-  (sml/apply-theme 'respectful))
+  (sml/apply-theme custom-sml-theme))
 
 (unless (null window-system)
   ;;(setq emacs-custom-font "Droid Sans Mono:pixelsize=18")
-  (set-frame-font "Source Code Pro:pixelsize=15"))
+  (set-frame-font "Source Code Pro:pixelsize=18"))
 
 ;;(switch-to-theme 'zenburn)
 ;;(switch-to-theme 'sanityinc-tomorrow-night)
@@ -277,7 +279,7 @@
 ;;(switch-to-theme 'sanityinc-solarized-light)
 ;;(switch-to-theme 'sanityinc-solarized-dark)
 (load-theme 'sanityinc-tomorrow-night t)
-(sml/apply-theme 'respectful)
+(sml/apply-theme custom-sml-theme)
 
 (if (null window-system)
     (progn
@@ -291,4 +293,4 @@
 (load-local "commands")
 
 (unless (null window-system)
-  (set-frame-size (selected-frame) 100 48))
+  (set-frame-size (selected-frame) 100 58))
