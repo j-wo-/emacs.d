@@ -91,7 +91,7 @@
     paredit-mode (lambda ()
 		   (if (not (minibufferp (current-buffer)))
 		       (enable-paredit-mode))))
-  (real-global-paredit-mode t)
+  ;;(real-global-paredit-mode t)
   (diminish 'paredit-mode "()"))
 
 (use-package smartparens-config
@@ -99,8 +99,7 @@
   (use-package smartparens)
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
-  ;; (smartparens-global-mode t)
-  )
+  (smartparens-global-mode t))
 
 (add-hook
  'emacs-lisp-mode-hook
@@ -109,7 +108,9 @@
    (use-package elisp-slime-nav
      :config (diminish 'elisp-slime-nav-mode "M-."))
    (turn-on-elisp-slime-nav-mode)
-   (aggressive-indent-mode)))
+   (aggressive-indent-mode)
+   (turn-off-smartparens-mode)
+   (enable-paredit-mode)))
 ;; (enable-lispy 'emacs-lisp-mode-hook)
 
 (use-package clojure-mode
@@ -142,6 +143,12 @@
       :config (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode))
     (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
     (add-hook 'cider-mode-hook #'aggressive-indent-mode)
+    (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'cider-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'clojure-mode-hook 'enable-paredit-mode)
+    (add-hook 'cider-mode-hook 'enable-paredit-mode)
+    (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
     ;; (enable-lispy 'clojure-mode-hook)
     ;; (enable-lispy 'cider-mode-hook)
     ;; (enable-lispy 'cider-repl-mode-hook)
@@ -237,6 +244,13 @@
 
     (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
     (add-hook 'slime-mode-hook #'aggressive-indent-mode)
+    (add-hook 'lisp-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'slime-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'slime-repl-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'lisp-mode-hook 'enable-paredit-mode)
+    (add-hook 'slime-mode-hook 'enable-paredit-mode)
+    (add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
+    
     ;; (enable-lispy 'lisp-mode-hook)
     ;; (enable-lispy 'slime-mode-hook)
     ;; (enable-lispy 'slime-repl-mode-hook)
@@ -259,7 +273,9 @@
   :init (setq magit-last-seen-setup-instructions "1.4.0")
   :config (diminish 'magit-auto-revert-mode))
 
-(defvar custom-sml-theme 'powerline)
+(defvar custom-sml-theme (if (null window-system)
+			     'powerline
+			   'respectful))
 
 (use-package smart-mode-line
   :init (setq sml/theme custom-sml-theme)
@@ -270,16 +286,21 @@
   (sml/apply-theme custom-sml-theme))
 
 (unless (null window-system)
-  ;;(setq emacs-custom-font "Droid Sans Mono:pixelsize=18")
-  (set-frame-font "Source Code Pro:pixelsize=18"))
+  ;;(set-frame-font "Droid Sans Mono:pixelsize=18")
+  (set-frame-font "Source Code Pro:pixelsize=18")) 
 
 ;;(switch-to-theme 'zenburn)
 ;;(switch-to-theme 'sanityinc-tomorrow-night)
+;;(switch-to-theme 'spacegray)
 ;;(switch-to-theme 'sanityinc-tomorrow-day)
 ;;(switch-to-theme 'sanityinc-solarized-light)
 ;;(switch-to-theme 'sanityinc-solarized-dark)
-(load-theme 'sanityinc-tomorrow-night t)
+(if (null window-system)
+    (load-theme 'sanityinc-tomorrow-night t)
+  (load-theme 'sanityinc-tomorrow-night t))
 (sml/apply-theme custom-sml-theme)
+;;(load-theme 'ample t)
+;;(switch-to-theme 'molokai)
 
 (if (null window-system)
     (progn
