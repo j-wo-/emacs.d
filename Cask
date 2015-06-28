@@ -54,4 +54,4 @@
 (depends-on "aggressive-indent")
 (depends-on "lispy")
 (depends-on "material-theme")
-;;(depends-on "w3m")
+(depends-on "systemd")

@@ -43,6 +43,8 @@
   (defun enable-lispy (mode-hook)
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
+(use-package systemd)
+
 (use-package auto-complete-config
   :config
   (ac-config-default)
