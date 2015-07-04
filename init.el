@@ -272,8 +272,7 @@
 (diminish 'git-gutter-mode)
 
 (use-package magit
-  :init (setq magit-last-seen-setup-instructions "1.4.0")
-  :config (diminish 'magit-auto-revert-mode))
+  :init (setq magit-last-seen-setup-instructions "1.4.0"))
 
 (defvar custom-sml-theme (if (null window-system)
 			     'powerline
