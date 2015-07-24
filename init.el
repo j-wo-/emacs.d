@@ -298,7 +298,7 @@
 ;;(switch-to-theme 'sanityinc-solarized-dark)
 (if (null window-system)
     (load-theme 'sanityinc-tomorrow-night t)
-  (load-theme 'sanityinc-tomorrow-night t))
+  (load-theme 'sanityinc-solarized-light t))
 (sml/apply-theme custom-sml-theme)
 ;;(load-theme 'ample t)
 ;;(switch-to-theme 'molokai)
@@ -316,3 +316,6 @@
 
 (unless (null window-system)
   (set-frame-size (selected-frame) 100 58))
+
+(setq server-socket-dir
+      (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
