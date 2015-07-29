@@ -23,6 +23,52 @@
 (setq vc-follow-symlinks t)
 (setq make-backup-files nil)
 
+(unless (null window-system)
+  (set-frame-size (selected-frame) 100 58))
+
+(defvar custom-sml-theme (if (null window-system)
+			     'automatic
+			   'respectful))
+
+(use-package smart-mode-line
+  :init (setq sml/theme custom-sml-theme)
+  :config
+  ;;(use-package smart-mode-line-powerline-theme)
+  (sml/setup)
+  (sml/apply-theme custom-sml-theme))
+
+(unless (null window-system)
+  (set-frame-font "Source Code Pro Semibold:pixelsize=18")) 
+
+;;(use-package zenburn-theme)
+(use-package color-theme-sanityinc-tomorrow)
+;;(use-package color-theme-sanityinc-solarized)
+;;(switch-to-theme 'zenburn)
+;;(switch-to-theme 'sanityinc-tomorrow-night)
+;;(switch-to-theme 'spacegray)
+;;(switch-to-theme 'sanityinc-tomorrow-day)
+;;(switch-to-theme 'sanityinc-solarized-light)
+;;(switch-to-theme 'sanityinc-solarized-dark)
+(if (null window-system)
+    (load-theme 'sanityinc-tomorrow-night t)
+  (load-theme 'sanityinc-tomorrow-night t))
+(sml/apply-theme custom-sml-theme)
+;;(load-theme 'sanityinc-tomorrow-night t)
+
+;;(load-theme 'ample t)
+;;(switch-to-theme 'molokai)
+
+(if (null window-system)
+    (progn
+      (setq sml/name-width 34)
+      (setq sml/mode-width 46))
+  (progn
+    (setq sml/name-width 34)
+    (setq sml/mode-width 66)))
+
+(unless (null window-system)
+  (set-frame-size (selected-frame) 100 58))
+
 (use-package uniquify
   :config (setq uniquify-buffer-name-style 'post-forward))
 
@@ -32,10 +78,6 @@
   (when theme
     (load-theme theme t)))
 
-(use-package zenburn-theme)
-(use-package color-theme-sanityinc-tomorrow)
-(use-package color-theme-sanityinc-solarized)
-
 (use-package aggressive-indent)
 
 (use-package lispy
@@ -44,6 +86,10 @@
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
 (use-package systemd)
+
+(use-package pkgbuild-mode
+  :config
+  (add-to-list 'auto-mode-alist '("/PKGBUILD$" . pkgbuild-mode)))
 
 (use-package auto-complete-config
   :config
@@ -274,48 +320,8 @@
 (use-package magit
   :init (setq magit-last-seen-setup-instructions "1.4.0"))
 
-(defvar custom-sml-theme (if (null window-system)
-			     'powerline
-			   'respectful))
-
-(use-package smart-mode-line
-  :init (setq sml/theme custom-sml-theme)
-  :config
-  ;; (use-package smart-mode-line-powerline-theme)
-  (sml/setup)
-  ;; (sml/apply-theme 'powerline)
-  (sml/apply-theme custom-sml-theme))
-
-(unless (null window-system)
-  ;;(set-frame-font "Droid Sans Mono:pixelsize=18")
-  (set-frame-font "Source Code Pro:pixelsize=18")) 
-
-;;(switch-to-theme 'zenburn)
-;;(switch-to-theme 'sanityinc-tomorrow-night)
-;;(switch-to-theme 'spacegray)
-;;(switch-to-theme 'sanityinc-tomorrow-day)
-;;(switch-to-theme 'sanityinc-solarized-light)
-;;(switch-to-theme 'sanityinc-solarized-dark)
-(if (null window-system)
-    (load-theme 'sanityinc-tomorrow-night t)
-  (load-theme 'sanityinc-solarized-light t))
-(sml/apply-theme custom-sml-theme)
-;;(load-theme 'ample t)
-;;(switch-to-theme 'molokai)
-
-(if (null window-system)
-    (progn
-      (setq sml/name-width 34)
-      (setq sml/mode-width 46))
-  (progn
-    (setq sml/name-width 34)
-    (setq sml/mode-width 66)))
-
 (load-local "keys")
 (load-local "commands")
-
-(unless (null window-system)
-  (set-frame-size (selected-frame) 100 58))
 
 (setq server-socket-dir
       (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))

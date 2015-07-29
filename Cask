@@ -55,3 +55,4 @@
 (depends-on "lispy")
 (depends-on "material-theme")
 (depends-on "systemd")
+(depends-on "pkgbuild-mode")
