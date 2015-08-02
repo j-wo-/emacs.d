@@ -56,3 +56,4 @@
 (depends-on "material-theme")
 (depends-on "systemd")
 (depends-on "pkgbuild-mode")
+(depends-on "base16-theme")

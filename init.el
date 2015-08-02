@@ -38,11 +38,18 @@
   (sml/apply-theme custom-sml-theme))
 
 (unless (null window-system)
-  (set-frame-font "Source Code Pro Semibold:pixelsize=18")) 
+  (set-frame-font "Source Code Pro Semibold:pixelsize=18"))
+
+(defun switch-to-theme (theme)
+  (dolist (active-theme custom-enabled-themes)
+    (disable-theme active-theme))
+  (when theme
+    (load-theme theme t)))
 
 ;;(use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
+
 ;;(switch-to-theme 'zenburn)
 ;;(switch-to-theme 'sanityinc-tomorrow-night)
 ;;(switch-to-theme 'spacegray)
@@ -51,12 +58,11 @@
 ;;(switch-to-theme 'sanityinc-solarized-dark)
 (if (null window-system)
     (load-theme 'sanityinc-tomorrow-night t)
+  ;;(load-theme 'sanityinc-tomorrow-night t)
+  ;;(load-theme 'zenburn t)
   (load-theme 'sanityinc-tomorrow-night t))
 (sml/apply-theme custom-sml-theme)
 ;;(load-theme 'sanityinc-tomorrow-night t)
-
-;;(load-theme 'ample t)
-;;(switch-to-theme 'molokai)
 
 (if (null window-system)
     (progn
@@ -71,12 +77,6 @@
 
 (use-package uniquify
   :config (setq uniquify-buffer-name-style 'post-forward))
-
-(defun switch-to-theme (theme)
-  (dolist (active-theme custom-enabled-themes)
-    (disable-theme active-theme))
-  (when theme
-    (load-theme theme t)))
 
 (use-package aggressive-indent)
 
