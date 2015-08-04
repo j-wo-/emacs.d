@@ -3,6 +3,7 @@
 (set-language-environment "utf-8")
 
 (setq custom-safe-themes t)
+(setq auto-save-default nil)
 
 (require 'cask "~/.cask/cask.el")
 (cask-initialize)
