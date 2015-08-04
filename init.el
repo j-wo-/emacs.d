@@ -26,17 +26,6 @@
 (unless (null window-system)
   (set-frame-size (selected-frame) 100 58))
 
-(defvar custom-sml-theme (if (null window-system)
-			     'automatic
-			   'respectful))
-
-(use-package smart-mode-line
-  :init (setq sml/theme custom-sml-theme)
-  :config
-  ;;(use-package smart-mode-line-powerline-theme)
-  (sml/setup)
-  (sml/apply-theme custom-sml-theme))
-
 (unless (null window-system)
   (set-frame-font "Source Code Pro Semibold:pixelsize=18"))
 
@@ -46,8 +35,8 @@
   (when theme
     (load-theme theme t)))
 
-;;(use-package zenburn-theme)
-(use-package color-theme-sanityinc-tomorrow)
+(use-package zenburn-theme)
+;;(use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
 
 ;;(switch-to-theme 'zenburn)
@@ -56,12 +45,27 @@
 ;;(switch-to-theme 'sanityinc-tomorrow-day)
 ;;(switch-to-theme 'sanityinc-solarized-light)
 ;;(switch-to-theme 'sanityinc-solarized-dark)
-(if (null window-system)
-    (load-theme 'sanityinc-tomorrow-night t)
-  ;;(load-theme 'sanityinc-tomorrow-night t)
-  ;;(load-theme 'zenburn t)
-  (load-theme 'sanityinc-tomorrow-night t))
-(sml/apply-theme custom-sml-theme)
+
+(defvar custom-emacs-theme
+  (if (null window-system)
+      'zenburn
+    'zenburn))
+
+(switch-to-theme custom-emacs-theme)
+
+(defvar custom-sml-theme (if (null window-system)
+			     'respectful ;;'automatic
+			   'respectful ;; 'respectful
+			   ))
+
+(use-package smart-mode-line
+  :init (setq sml/theme custom-sml-theme)
+  :config
+  ;;(use-package smart-mode-line-powerline-theme)
+  (sml/setup)
+  (sml/apply-theme custom-sml-theme))
+
+;;(sml/apply-theme custom-sml-theme)
 ;;(load-theme 'sanityinc-tomorrow-night t)
 
 (if (null window-system)
