@@ -57,3 +57,6 @@
 (depends-on "systemd")
 (depends-on "pkgbuild-mode")
 (depends-on "base16-theme")
+(depends-on "powerline")
+(depends-on "moe-theme")
+(depends-on "js2-mode")

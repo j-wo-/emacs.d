@@ -38,8 +38,8 @@
     (load-theme theme t)))
 
 (use-package zenburn-theme)
-;;(use-package color-theme-sanityinc-tomorrow)
-;;(use-package color-theme-sanityinc-solarized)
+(use-package color-theme-sanityinc-tomorrow)
+(use-package color-theme-sanityinc-solarized)
 
 ;;(switch-to-theme 'zenburn)
 ;;(switch-to-theme 'sanityinc-tomorrow-night)
@@ -50,33 +50,24 @@
 
 (defvar custom-emacs-theme
   (if (null window-system)
-      'zenburn
-    'zenburn))
+      'sanityinc-tomorrow-night
+    'sanityinc-tomorrow-night))
 
 (switch-to-theme custom-emacs-theme)
 
-(defvar custom-sml-theme (if (null window-system)
-			     'respectful ;;'automatic
-			   'respectful ;; 'respectful
-			   ))
+(let ((blue-bg "#1d64c9")
+      (white-bg "#bfbfbf")
+      (white-fg "#eaeaea")
+      (black-fg "#181818"))
+  (custom-set-faces
+   `(mode-line ((t (:foreground ,white-fg :background ,blue-bg))))
+   `(mode-line-buffer-id ((t (:foreground ,white-fg :background ,blue-bg))))
+   `(powerline-active1 ((t (:foreground ,black-fg :background ,white-bg))))
+   `(powerline-active2 ((t (:foreground ,white-fg :background ,blue-bg))))))
 
-(use-package smart-mode-line
-  :init (setq sml/theme custom-sml-theme)
+(use-package powerline
   :config
-  ;;(use-package smart-mode-line-powerline-theme)
-  (sml/setup)
-  (sml/apply-theme custom-sml-theme))
-
-;;(sml/apply-theme custom-sml-theme)
-;;(load-theme 'sanityinc-tomorrow-night t)
-
-(if (null window-system)
-    (progn
-      (setq sml/name-width 34)
-      (setq sml/mode-width 46))
-  (progn
-    (setq sml/name-width 34)
-    (setq sml/mode-width 66)))
+  (powerline-default-theme))
 
 (unless (null window-system)
   (set-frame-size (selected-frame) 100 58))
@@ -119,6 +110,13 @@
 (use-package smex
   :bind ("M-x" . smex)
   :config (smex-initialize))
+
+(use-package js2-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  (add-hook 'js2-mode-hook
+	    (lambda ()
+	      (setf tab-width 2))))
 
 (use-package scala-mode2
   :mode ("\\.scala\\'" . scala-mode)
