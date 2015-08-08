@@ -333,7 +333,9 @@
       (process-send-string proc text)
       (process-send-eof proc))))
 
-(when (null window-system)
+(when (and (null window-system)
+	   (getenv "DISPLAY")
+	   (file-exists-p "/usr/bin/xsel"))
   (setq interprogram-cut-function 'xsel-copy)
   (setq interprogram-paste-function 'xsel-paste))
 
