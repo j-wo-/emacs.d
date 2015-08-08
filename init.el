@@ -324,6 +324,19 @@
 (use-package magit
   :init (setq magit-last-seen-setup-instructions "1.4.0"))
 
+(defun xsel-paste ()
+  (shell-command-to-string "xsel -ob"))
+
+(defun xsel-copy (text &optional push)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
+
+(when (null window-system)
+  (setq interprogram-cut-function 'xsel-copy)
+  (setq interprogram-paste-function 'xsel-paste))
+
 (load-local "keys")
 (load-local "commands")
 
