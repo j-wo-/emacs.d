@@ -43,5 +43,11 @@
 (define-key key-translation-map (kbd "[") (kbd "("))
 (define-key key-translation-map (kbd "]") (kbd ")"))
 
+;; Note: the following still breaks middle-click pasting
+;;(define-key paredit-mode-map (kbd "[") 'paredit-open-round)
+;;(define-key paredit-mode-map (kbd "]") 'paredit-close-round)
+;;(define-key paredit-mode-map (kbd "(") 'paredit-open-square)
+;;(define-key paredit-mode-map (kbd ")") 'paredit-close-square)
+
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
