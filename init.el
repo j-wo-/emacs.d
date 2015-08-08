@@ -335,7 +335,8 @@
 
 (when (and (null window-system)
 	   (getenv "DISPLAY")
-	   (file-exists-p "/usr/bin/xsel"))
+	   (file-exists-p "/usr/bin/xsel")
+	   (not (equal (user-login-name) "root")))
   (setq interprogram-cut-function 'xsel-copy)
   (setq interprogram-paste-function 'xsel-paste))
 
