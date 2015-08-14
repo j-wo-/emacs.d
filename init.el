@@ -29,7 +29,7 @@
   (set-frame-size (selected-frame) 100 58))
 
 (unless (null window-system)
-  (set-frame-font "Source Code Pro Semibold:pixelsize=18"))
+  (set-frame-font "Source Code Pro Semibold:pixelsize=17"))
 
 (defun switch-to-theme (theme)
   (dolist (active-theme custom-enabled-themes)
