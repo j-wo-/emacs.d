@@ -37,9 +37,9 @@
   (when theme
     (load-theme theme t)))
 
-(use-package zenburn-theme)
+;;(use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
-(use-package color-theme-sanityinc-solarized)
+;;(use-package color-theme-sanityinc-solarized)
 
 ;;(switch-to-theme 'zenburn)
 ;;(switch-to-theme 'sanityinc-tomorrow-night)
