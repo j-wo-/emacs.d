@@ -193,6 +193,7 @@
       (add-hook 'cider-repl-mode-hook 'ac-cider-setup))
     (use-package cider-eldoc
       :config (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode))
+    (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
     (add-hook 'cider-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
