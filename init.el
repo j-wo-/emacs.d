@@ -61,12 +61,16 @@
   (let ((blue-bg "#1d64c9")
 	(white-bg "#bfbfbf")
 	(white-fg "#eaeaea")
-	(black-fg "#181818"))
+	(black-fg "#181818")
+	(gray-fg "#b0b0b0"))
     (custom-set-faces
      `(mode-line ((t (:foreground ,white-fg :background ,blue-bg))))
+     `(mode-line-inactive ((t (:foreground ,gray-fg :background ,blue-bg))))
      `(mode-line-buffer-id ((t (:foreground ,white-fg :background ,blue-bg))))
      `(powerline-active1 ((t (:foreground ,black-fg :background ,white-bg))))
-     `(powerline-active2 ((t (:foreground ,white-fg :background ,blue-bg))))))
+     `(powerline-active2 ((t (:foreground ,white-fg :background ,blue-bg))))
+     `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,black-fg))))
+     `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,blue-bg))))))
 
   (use-package powerline
     :config
