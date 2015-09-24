@@ -241,13 +241,7 @@
 
   (use-package tramp
     :config
-    (setq tramp-default-method "ssh")
-    (add-to-list 'tramp-default-user-alist
-		 '("ssh" "\\`jeff-desktop\\'" "jeff"))
-    (add-to-list 'tramp-default-user-alist
-		 '("ssh" "\\`jeff-laptop\\'" "jeff"))
-    (add-to-list 'tramp-default-user-alist
-		 '("ssh" "\\`server\\'" "jeff")))
+    (setq tramp-default-method "ssh"))
 
   (use-package slime-autoloads
     :commands slime
