@@ -91,6 +91,13 @@
 
   (use-package systemd)
 
+  (use-package org
+    :config
+    (define-key global-map "\C-cl" 'org-store-link)
+    (define-key global-map "\C-ca" 'org-agenda)
+    (setq org-log-done t)
+    (setq org-agenda-files (list "~/org/work.org" "~/org/self.org")))
+
   (use-package pkgbuild-mode
     :config
     (add-to-list 'auto-mode-alist '("/PKGBUILD$" . pkgbuild-mode)))
@@ -238,6 +245,8 @@
     (setq haskell-process-auto-import-loaded-modules t)
     (setq haskell-process-log t)
     (setq haskell-process-type 'cabal-repl))
+
+  (add-hook 'java-mode-hook (lambda () (setq indent-tabs-mode nil)))
 
   (use-package tramp
     :config
