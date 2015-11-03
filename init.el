@@ -95,6 +95,7 @@
     :config
     (define-key global-map "\C-cl" 'org-store-link)
     (define-key global-map "\C-ca" 'org-agenda)
+    (define-key global-map "\C-cc" 'org-capture)
     (setq org-log-done t)
     (setq org-agenda-files (list "~/org/work.org" "~/org/self.org")))
 
@@ -133,9 +134,13 @@
 		(setf tab-width 2))))
 
   (use-package scala-mode2
-    :mode ("\\.scala\\'" . scala-mode)
+    :mode
+    ("\\.scala\\'" . scala-mode)
+    ("\\.sbt\\'" . scala-mode)
     :init
     :config
+    ;;(setq scala-indent:default-run-on-strategy 1)
+    ;;(setq scala-indent:indent-value-expression nil)
     (use-package ensime
       :config
       (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)))

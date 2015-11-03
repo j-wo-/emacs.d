@@ -48,6 +48,7 @@
 (depends-on "ac-slime")
 (depends-on "smart-mode-line")
 (depends-on "smart-mode-line-powerline-theme")
+(depends-on "scala-mode2")
 (depends-on "ensime")
 (depends-on "diminish")
 (depends-on "f")
