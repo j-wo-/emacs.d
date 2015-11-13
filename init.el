@@ -1,7 +1,8 @@
 ;;(package-initialize)
 
 (let ((file-name-handler-alist nil))
-  (setq gc-cons-threshold 25000000)
+  
+  (setq gc-cons-threshold 10000000)
 
   (set-language-environment "utf-8")
 
@@ -40,9 +41,10 @@
     (when theme
       (load-theme theme t)))
 
-  ;;(use-package zenburn-theme)
+  (use-package zenburn-theme)
   (use-package color-theme-sanityinc-tomorrow)
-  ;;(use-package color-theme-sanityinc-solarized)
+  (use-package color-theme-sanityinc-solarized)
+  (use-package color-theme-base16)
 
   ;;(switch-to-theme 'zenburn)
   ;;(switch-to-theme 'sanityinc-tomorrow-night)
@@ -143,8 +145,22 @@
     ;;(setq scala-indent:indent-value-expression nil)
     (use-package ensime
       :config
-      (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)))
-
+      ;;(setq ensime-completion-style 'auto-complete)
+      (setq ensime-auto-generate-config t)
+      (setq ensime-typecheck-idle-interval 0.3)
+      (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+      '(add-hook 'scala-mode-hook
+		 (lambda ()
+		   (add-hook 'post-command-hook
+			     (lambda ()
+			       (when (and ensime-mode (ensime-connected-p))
+				 (ensime-print-errors-at-point)))
+			     t t)))
+      (define-key scala-mode-map "\C-t" 'ensime-print-type-at-point)
+      (define-key scala-mode-map "\C-\M-e" 'ensime-print-errors-at-point)
+      (define-key scala-mode-map "\C-c." 'ensime-forward-note)
+      (define-key scala-mode-map "\C-c," 'ensime-backward-note)))
+  
   (use-package ido
     :config
     (ido-mode 1)
