@@ -33,7 +33,7 @@
     (set-frame-size (selected-frame) 100 58))
 
   (unless (null window-system)
-    (set-frame-font "Source Code Pro Semibold:pixelsize=17"))
+    (set-frame-font "Source Code Pro Semibold:pixelsize=19"))
 
   (defun switch-to-theme (theme)
     (dolist (active-theme custom-enabled-themes)
@@ -44,7 +44,9 @@
   (use-package zenburn-theme)
   (use-package color-theme-sanityinc-tomorrow)
   (use-package color-theme-sanityinc-solarized)
-  (use-package color-theme-base16)
+  ;;(use-package color-theme-base16)
+  (use-package moe-theme)
+  (use-package base16-theme)
 
   ;;(switch-to-theme 'zenburn)
   ;;(switch-to-theme 'sanityinc-tomorrow-night)
@@ -55,28 +57,31 @@
 
   (defvar custom-emacs-theme
     (if (null window-system)
-	'sanityinc-tomorrow-night
-      'sanityinc-tomorrow-night))
+	'moe-dark
+      'moe-dark))
 
   (switch-to-theme custom-emacs-theme)
 
-  (let ((blue-bg "#1d64c9")
-	(white-bg "#bfbfbf")
-	(white-fg "#eaeaea")
-	(black-fg "#181818")
-	(gray-fg "#b0b0b0"))
-    (custom-set-faces
-     `(mode-line ((t (:foreground ,white-fg :background ,blue-bg))))
-     `(mode-line-inactive ((t (:foreground ,gray-fg :background ,blue-bg))))
-     `(mode-line-buffer-id ((t (:foreground ,white-fg :background ,blue-bg))))
-     `(powerline-active1 ((t (:foreground ,black-fg :background ,white-bg))))
-     `(powerline-active2 ((t (:foreground ,white-fg :background ,blue-bg))))
-     `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,black-fg))))
-     `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,blue-bg))))))
+  '(let ((blue-bg "#1d64c9")
+	 (white-bg "#bfbfbf")
+	 (white-fg "#eaeaea")
+	 (black-fg "#181818")
+	 (gray-fg "#b0b0b0"))
+     (custom-set-faces
+      `(mode-line ((t (:foreground ,white-fg :background ,blue-bg))))
+      `(mode-line-inactive ((t (:foreground ,gray-fg :background ,blue-bg))))
+      `(mode-line-buffer-id ((t (:foreground ,white-fg :background ,blue-bg))))
+      `(powerline-active1 ((t (:foreground ,black-fg :background ,white-bg))))
+      `(powerline-active2 ((t (:foreground ,white-fg :background ,blue-bg))))
+      `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,black-fg))))
+      `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,blue-bg))))))
 
   (use-package powerline
     :config
-    (powerline-default-theme))
+    (use-package moe-theme)
+    (powerline-moe-theme)
+    ;;(powerline-default-theme)
+    )
 
   (unless (null window-system)
     (set-frame-size (selected-frame) 100 58))
