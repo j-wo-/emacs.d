@@ -154,6 +154,7 @@
       (setq ensime-auto-generate-config t)
       (setq ensime-typecheck-idle-interval 0.3)
       (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+      (add-hook 'scala-mode-hook (lambda () (auto-complete-mode -1)))
       '(add-hook 'scala-mode-hook
 		 (lambda ()
 		   (add-hook 'post-command-hook
