@@ -35,33 +35,6 @@
   (unless (null window-system)
     (set-frame-font "Source Code Pro Semibold:pixelsize=19"))
 
-  (defun switch-to-theme (theme)
-    (dolist (active-theme custom-enabled-themes)
-      (disable-theme active-theme))
-    (when theme
-      (load-theme theme t)))
-
-  (use-package zenburn-theme)
-  (use-package color-theme-sanityinc-tomorrow)
-  (use-package color-theme-sanityinc-solarized)
-  ;;(use-package color-theme-base16)
-  (use-package moe-theme)
-  (use-package base16-theme)
-
-  ;;(switch-to-theme 'zenburn)
-  ;;(switch-to-theme 'sanityinc-tomorrow-night)
-  ;;(switch-to-theme 'spacegray)
-  ;;(switch-to-theme 'sanityinc-tomorrow-day)
-  ;;(switch-to-theme 'sanityinc-solarized-light)
-  ;;(switch-to-theme 'sanityinc-solarized-dark)
-
-  (defvar custom-emacs-theme
-    (if (null window-system)
-	'moe-dark
-      'moe-dark))
-
-  (switch-to-theme custom-emacs-theme)
-
   '(let ((blue-bg "#1d64c9")
 	 (white-bg "#bfbfbf")
 	 (white-fg "#eaeaea")
@@ -76,13 +49,42 @@
       `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,black-fg))))
       `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,blue-bg))))))
 
+  
   (use-package powerline
     :config
-    (use-package moe-theme)
-    (powerline-moe-theme)
     ;;(powerline-default-theme)
     )
 
+  (defun switch-to-theme (theme)
+    (dolist (active-theme custom-enabled-themes)
+      (disable-theme active-theme))
+    (when theme
+      (load-theme theme t)))
+
+  (use-package zenburn-theme)
+  (use-package color-theme-sanityinc-tomorrow)
+  (use-package color-theme-sanityinc-solarized)
+  ;;(use-package color-theme-base16)
+  (use-package moe-theme
+    :config
+    (moe-dark)
+    (powerline-moe-theme))
+  (use-package base16-theme)
+
+  ;;(switch-to-theme 'zenburn)
+  ;;(switch-to-theme 'sanityinc-tomorrow-night)
+  ;;(switch-to-theme 'spacegray)
+  ;;(switch-to-theme 'sanityinc-tomorrow-day)
+  ;;(switch-to-theme 'sanityinc-solarized-light)
+  ;;(switch-to-theme 'sanityinc-solarized-dark)
+
+  (defvar custom-emacs-theme
+    (if (null window-system)
+	'moe-dark
+      'moe-dark))
+
+  ;;(switch-to-theme custom-emacs-theme)
+  
   (unless (null window-system)
     (set-frame-size (selected-frame) 100 58))
 
