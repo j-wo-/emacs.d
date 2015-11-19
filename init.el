@@ -19,6 +19,9 @@
   (defun load-local (file)
     (load (f-expand file user-emacs-directory)))
 
+  ;; load values for options that may be different across machines
+  (load-local "variables")
+
   (use-package diminish)
 
   (menu-bar-mode -1)
@@ -30,10 +33,10 @@
   (setq make-backup-files nil)
 
   (unless (null window-system)
-    (set-frame-size (selected-frame) 100 58))
+    (set-frame-size (selected-frame) custom-frame-width custom-frame-height))
 
   (unless (null window-system)
-    (set-frame-font "Source Code Pro Semibold:pixelsize=19"))
+    (set-frame-font custom-font))
 
   '(let ((blue-bg "#1d64c9")
 	 (white-bg "#bfbfbf")
