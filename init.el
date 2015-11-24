@@ -32,6 +32,9 @@
   (setq vc-follow-symlinks t)
   (setq make-backup-files nil)
 
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 4)
+
   (unless (null window-system)
     (set-frame-size (selected-frame) custom-frame-width custom-frame-height))
 
@@ -39,10 +42,10 @@
     (set-frame-font custom-font))
 
   '(let ((blue-bg "#1d64c9")
-	 (white-bg "#bfbfbf")
-	 (white-fg "#eaeaea")
-	 (black-fg "#181818")
-	 (gray-fg "#b0b0b0"))
+         (white-bg "#bfbfbf")
+         (white-fg "#eaeaea")
+         (black-fg "#181818")
+         (gray-fg "#b0b0b0"))
      (custom-set-faces
       `(mode-line ((t (:foreground ,white-fg :background ,blue-bg))))
       `(mode-line-inactive ((t (:foreground ,gray-fg :background ,blue-bg))))
@@ -64,29 +67,35 @@
     (when theme
       (load-theme theme t)))
 
-  (use-package zenburn-theme)
+  ;;(use-package zenburn-theme)
   (use-package color-theme-sanityinc-tomorrow)
   (use-package color-theme-sanityinc-solarized)
   ;;(use-package color-theme-base16)
   (use-package moe-theme
     :config
-    (moe-dark)
-    (powerline-moe-theme))
+    '(progn
+       (moe-dark)
+       (powerline-moe-theme)))
   (use-package base16-theme)
 
-  ;;(switch-to-theme 'zenburn)
-  ;;(switch-to-theme 'sanityinc-tomorrow-night)
-  ;;(switch-to-theme 'spacegray)
-  ;;(switch-to-theme 'sanityinc-tomorrow-day)
-  ;;(switch-to-theme 'sanityinc-solarized-light)
-  ;;(switch-to-theme 'sanityinc-solarized-dark)
+  (defvar custom-emacs-theme)
+  (setq custom-emacs-theme
+        (if (null window-system)
+            'base16-eighties-dark
+          'base16-eighties-dark))
 
-  (defvar custom-emacs-theme
-    (if (null window-system)
-	'moe-dark
-      'moe-dark))
-
-  ;;(switch-to-theme custom-emacs-theme)
+  (cond
+   ((or (eql custom-emacs-theme 'moe-dark)
+        (eql custom-emacs-theme 'moe-light))
+    (progn
+      (if (eql custom-emacs-theme 'moe-dark)
+          (moe-dark)
+        (moe-light))
+      (powerline-moe-theme)))
+   (t
+    (progn
+      (switch-to-theme custom-emacs-theme)
+      (powerline-default-theme))))
   
   (unless (null window-system)
     (set-frame-size (selected-frame) 100 58))
@@ -123,8 +132,8 @@
     (setq ac-use-fuzzy t)
     (define-globalized-minor-mode real-global-auto-complete-mode
       auto-complete-mode (lambda ()
-			   (if (not (minibufferp (current-buffer)))
-			       (auto-complete-mode 1))))
+                           (if (not (minibufferp (current-buffer)))
+                               (auto-complete-mode 1))))
     (real-global-auto-complete-mode t))
 
   (use-package projectile
@@ -132,7 +141,7 @@
     (projectile-global-mode)
     (setq projectile-enable-caching t)
     (setq projectile-mode-line
-	  '(:eval (format " [%s]" (projectile-project-name)))))
+          '(:eval (format " [%s]" (projectile-project-name)))))
 
   (use-package smex
     :bind ("M-x" . smex)
@@ -141,9 +150,13 @@
   (use-package js2-mode
     :config
     (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-    (add-hook 'js2-mode-hook
-	      (lambda ()
-		(setf tab-width 2))))
+    (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js2-jsx-mode))
+    (let ((js-hook
+           (lambda ()
+             (setf tab-width 4)
+             (setf indent-tabs-mode nil))))
+      (add-hook 'js2-mode-hook js-hook)
+      (add-hook 'js2-jsx-mode-hook js-hook)))
 
   (use-package scala-mode2
     :mode
@@ -161,12 +174,12 @@
       (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
       (add-hook 'scala-mode-hook (lambda () (auto-complete-mode -1)))
       '(add-hook 'scala-mode-hook
-		 (lambda ()
-		   (add-hook 'post-command-hook
-			     (lambda ()
-			       (when (and ensime-mode (ensime-connected-p))
-				 (ensime-print-errors-at-point)))
-			     t t)))
+                 (lambda ()
+                   (add-hook 'post-command-hook
+                             (lambda ()
+                               (when (and ensime-mode (ensime-connected-p))
+                                 (ensime-print-errors-at-point)))
+                             t t)))
       (define-key scala-mode-map "\C-t" 'ensime-print-type-at-point)
       (define-key scala-mode-map "\C-\M-e" 'ensime-print-errors-at-point)
       (define-key scala-mode-map "\C-c." 'ensime-forward-note)
@@ -187,8 +200,8 @@
     :config
     (define-globalized-minor-mode real-global-paredit-mode
       paredit-mode (lambda ()
-		     (if (not (minibufferp (current-buffer)))
-			 (enable-paredit-mode))))
+                     (if (not (minibufferp (current-buffer)))
+                         (enable-paredit-mode))))
     ;;(real-global-paredit-mode t)
     (diminish 'paredit-mode "()"))
 
@@ -220,28 +233,28 @@
       '((t (:foreground "#50a838"))) 'paren-face)
     (defconst clojure-brackets-keywords
       '(("\\[" 0 'square-brackets)
-	("\\]" 0 'square-brackets)
-	("[\\{\\}]" 0 'curly-brackets)))
+        ("\\]" 0 'square-brackets)
+        ("[\\{\\}]" 0 'curly-brackets)))
     (add-hook
      'paren-face-mode-hook
      (lambda ()
        (if paren-face-mode
-	   (font-lock-add-keywords nil clojure-brackets-keywords t)
-	 (font-lock-remove-keywords nil clojure-brackets-keywords))
+           (font-lock-add-keywords nil clojure-brackets-keywords t)
+         (font-lock-remove-keywords nil clojure-brackets-keywords))
        (when (called-interactively-p 'any)
-	 (font-lock-fontify-buffer))))
+         (font-lock-fontify-buffer))))
     (use-package cider
       :config
       ;;(setq cider-cljs-repl "(cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env))")
       (setq cider-cljs-repl "(do (require 'cljs.repl.node) (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))")
       ;;(setq cider-cljs-repl "(do (require 'weasel.repl.websocket) (cemerick.piggieback/cljs-repl (weasel.repl.websocket/repl-env :ip \"127.0.0.1\" :port 9001)))")
       (use-package ac-cider
-	:config
-	(add-hook 'cider-mode-hook 'ac-flyspell-workaround)
-	(add-hook 'cider-mode-hook 'ac-cider-setup)
-	(add-hook 'cider-repl-mode-hook 'ac-cider-setup))
+        :config
+        (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
+        (add-hook 'cider-mode-hook 'ac-cider-setup)
+        (add-hook 'cider-repl-mode-hook 'ac-cider-setup))
       (use-package cider-eldoc
-	:config (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode))
+        :config (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode))
       (add-hook 'clojure-mode-hook #'cider-mode)
       (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
       (add-hook 'cider-mode-hook #'aggressive-indent-mode)
@@ -294,48 +307,48 @@
     (use-package slime
       :config
       (add-hook 'lisp-mode-hook
-		(lambda ()
-		  (setq-local lisp-indent-function
-			      'common-lisp-indent-function)))
+                (lambda ()
+                  (setq-local lisp-indent-function
+                              'common-lisp-indent-function)))
       
       (defvar sbcl-run-command "sbcl --dynamic-space-size 2000 --noinform")
       (defvar ccl-run-command "ccl64 -K utf-8")
       (defvar ecl-run-command "ecl")
       
       (setq inferior-lisp-program sbcl-run-command
-	    slime-net-coding-system 'utf-8-unix
-	    slime-complete-symbol-function 'slime-fuzzy-complete-symbol
-	    slime-fuzzy-completion-in-place t
-	    slime-enable-evaluate-in-emacs t
-	    slime-autodoc-use-multiline-p t
-	    slime-load-failed-fasl 'never
-	    slime-compile-file-options
-	    '(:fasl-directory "/tmp/slime-fasls/"))
+            slime-net-coding-system 'utf-8-unix
+            slime-complete-symbol-function 'slime-fuzzy-complete-symbol
+            slime-fuzzy-completion-in-place t
+            slime-enable-evaluate-in-emacs t
+            slime-autodoc-use-multiline-p t
+            slime-load-failed-fasl 'never
+            slime-compile-file-options
+            '(:fasl-directory "/tmp/slime-fasls/"))
       (make-directory "/tmp/slime-fasls/" t)
       ;;(define-key slime-mode-map [(return)] 'paredit-newline)
       (define-key slime-mode-map (kbd "C-c .") 'slime-next-note)
       (define-key slime-mode-map (kbd "C-c ,") 'slime-previous-note)
 
       (defun slime-sbcl ()
-	(interactive)
-	(setq inferior-lisp-program sbcl-run-command)
-	(slime))
+        (interactive)
+        (setq inferior-lisp-program sbcl-run-command)
+        (slime))
       (defun slime-ccl ()
-	(interactive)
-	(setq inferior-lisp-program ccl-run-command)
-	(slime))
+        (interactive)
+        (setq inferior-lisp-program ccl-run-command)
+        (slime))
       (defun slime-ecl ()
-	(interactive)
-	(setq inferior-lisp-program ecl-run-command)
-	(slime))
+        (interactive)
+        (setq inferior-lisp-program ecl-run-command)
+        (slime))
       (defun kill-slime ()
-	(interactive)
-	(kill-buffer "*inferior-lisp*")
-	(cond
-	 ((equal inferior-lisp-program sbcl-run-command)
-	  (kill-buffer "*slime-repl sbcl*"))
-	 ((equal inferior-lisp-program ccl-run-command)
-	  (kill-buffer "*slime-repl ccl*"))))
+        (interactive)
+        (kill-buffer "*inferior-lisp*")
+        (cond
+         ((equal inferior-lisp-program sbcl-run-command)
+          (kill-buffer "*slime-repl sbcl*"))
+         ((equal inferior-lisp-program ccl-run-command)
+          (kill-buffer "*slime-repl ccl*"))))
 
       (add-to-list 'projectile-globally-ignored-modes "comint-mode")
       (add-to-list 'projectile-globally-ignored-modes "slime-repl-mode")
@@ -355,11 +368,11 @@
 
       (use-package slime-annot)
       (use-package ac-slime
-	:config
-	(defun set-up-slime-ac-fuzzy ()
-	  (set-up-slime-ac t))
-	(add-hook 'lisp-mode-hook 'set-up-slime-ac-fuzzy)
-	(add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy))))
+        :config
+        (defun set-up-slime-ac-fuzzy ()
+          (set-up-slime-ac t))
+        (add-hook 'lisp-mode-hook 'set-up-slime-ac-fuzzy)
+        (add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy))))
 
   (if (null (window-system))
       (require 'git-gutter)
@@ -376,13 +389,13 @@
   (defun xsel-copy (text &optional push)
     (let ((process-connection-type nil))
       (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
-	(process-send-string proc text)
-	(process-send-eof proc))))
+        (process-send-string proc text)
+        (process-send-eof proc))))
 
   (when (and (null window-system)
-	     (getenv "DISPLAY")
-	     (file-exists-p "/usr/bin/xsel")
-	     (not (equal (user-login-name) "root")))
+             (getenv "DISPLAY")
+             (file-exists-p "/usr/bin/xsel")
+             (not (equal (user-login-name) "root")))
     (setq interprogram-cut-function 'xsel-copy)
     (setq interprogram-paste-function 'xsel-paste))
 
@@ -390,4 +403,4 @@
   (load-local "commands")
 
   (setq server-socket-dir
-	(format "/tmp/%s/emacs%d" (user-login-name) (user-uid))))
+        (format "/tmp/%s/emacs%d" (user-login-name) (user-uid))))
