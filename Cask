@@ -33,6 +33,7 @@
 (depends-on "base16-theme")
 (depends-on "moe-theme")
 (depends-on "material-theme")
+(depends-on "gruvbox-theme")
 (depends-on "powerline")
 (depends-on "elisp-slime-nav")
 (depends-on "paredit")
@@ -60,7 +61,4 @@
 (depends-on "lispy")
 (depends-on "systemd")
 (depends-on "pkgbuild-mode")
-
-
-
 (depends-on "js2-mode")

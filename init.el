@@ -70,19 +70,15 @@
   ;;(use-package zenburn-theme)
   (use-package color-theme-sanityinc-tomorrow)
   (use-package color-theme-sanityinc-solarized)
-  ;;(use-package color-theme-base16)
-  (use-package moe-theme
-    :config
-    '(progn
-       (moe-dark)
-       (powerline-moe-theme)))
+  (use-package moe-theme)
   (use-package base16-theme)
+  (use-package gruvbox-theme)
 
   (defvar custom-emacs-theme)
   (setq custom-emacs-theme
         (if (null window-system)
-            'base16-eighties-dark
-          'base16-eighties-dark))
+            'gruvbox
+          'gruvbox))
 
   (cond
    ((or (eql custom-emacs-theme 'moe-dark)
