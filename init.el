@@ -41,20 +41,20 @@
   (unless (null window-system)
     (set-frame-font custom-font))
 
-  '(let ((blue-bg "#1d64c9")
-         (white-bg "#bfbfbf")
-         (white-fg "#eaeaea")
-         (black-fg "#181818")
-         (gray-fg "#b0b0b0"))
-     (custom-set-faces
-      `(mode-line ((t (:foreground ,white-fg :background ,blue-bg))))
-      `(mode-line-inactive ((t (:foreground ,gray-fg :background ,blue-bg))))
-      `(mode-line-buffer-id ((t (:foreground ,white-fg :background ,blue-bg))))
-      `(powerline-active1 ((t (:foreground ,black-fg :background ,white-bg))))
-      `(powerline-active2 ((t (:foreground ,white-fg :background ,blue-bg))))
-      `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,black-fg))))
-      `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,blue-bg))))))
-
+  (let ((dark-bg "#404040")
+        (darker-bg "#181818")
+        (bright-bg "#ebdbb2")
+        (bright-fg "#ebdbb2")
+        (black-fg "#181818")
+        (gray-fg "#ebdbb2"))
+    (custom-set-faces
+     `(mode-line ((t (:foreground ,bright-fg :background ,dark-bg))))
+     `(mode-line-inactive ((t (:foreground ,bright-fg :background ,dark-bg))))
+     `(mode-line-buffer-id ((t (:foreground ,bright-fg :background ,dark-bg))))
+     `(powerline-active1 ((t (:foreground ,black-fg :background ,bright-bg))))
+     `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
+     `(powerline-inactive1 ((t (:foreground ,bright-fg :background ,darker-bg))))
+     `(powerline-inactive2 ((t (:foreground ,bright-fg :background ,dark-bg))))))
   
   (use-package powerline
     :config
