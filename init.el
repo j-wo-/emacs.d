@@ -146,7 +146,9 @@
 
   (use-package flycheck
     :config
-    (define-key flycheck-mode-map "\C-c." 'flycheck-next-error))
+    (define-key flycheck-mode-map "\C-c." 'flycheck-next-error)
+    ;;(add-hook 'after-init-hook #'global-flycheck-mode)
+    )
   
   (use-package js2-mode
     :config
@@ -158,8 +160,8 @@
       (setq web-mode-css-indent-offset 2)
       (setq web-mode-code-indent-offset 2)
       (flycheck-mode t)
-      (when (executable-find "eslint")
-        (flycheck-select-checker 'javascript-eslint)))
+      '(when (executable-find "eslint")
+         (flycheck-select-checker 'javascript-eslint)))
     (add-hook 'web-mode-hook 'my-web-mode-hook)
     (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
     (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
@@ -167,7 +169,8 @@
       :config
       (setq-default
        flycheck-disabled-checkers
-       '(javascript-jshint json-jsonlist)))
+       '(javascript-jshint json-jsonlist))
+      (flycheck-add-mode 'javascript-eslint 'web-mode))
     (let ((js-hook
            (lambda ()
              (setq js2-basic-offset 2)
