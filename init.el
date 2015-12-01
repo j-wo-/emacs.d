@@ -144,14 +144,36 @@
     :bind ("M-x" . smex)
     :config (smex-initialize))
 
+  (use-package flycheck
+    :config
+    (define-key flycheck-mode-map "\C-c." 'flycheck-next-error))
+  
   (use-package js2-mode
     :config
+    (use-package web-mode)
+    (setq js2-include-node-externs t)
+    (setq js2-include-browser-externs t)
+    (defun my-web-mode-hook ()
+      (setq web-mode-markup-indent-offset 2)
+      (setq web-mode-css-indent-offset 2)
+      (setq web-mode-code-indent-offset 2)
+      (flycheck-mode t)
+      (when (executable-find "eslint")
+        (flycheck-select-checker 'javascript-eslint)))
+    (add-hook 'web-mode-hook 'my-web-mode-hook)
     (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-    (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js2-jsx-mode))
+    (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+    (use-package flycheck
+      :config
+      (setq-default
+       flycheck-disabled-checkers
+       '(javascript-jshint json-jsonlist)))
     (let ((js-hook
            (lambda ()
-             (setf tab-width 4)
-             (setf indent-tabs-mode nil))))
+             (setq js2-basic-offset 2)
+             (flycheck-mode t)
+             (when (executable-find "eslint")
+               (flycheck-select-checker 'javascript-eslint)))))
       (add-hook 'js2-mode-hook js-hook)
       (add-hook 'js2-jsx-mode-hook js-hook)))
 

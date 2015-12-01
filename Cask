@@ -62,3 +62,7 @@
 (depends-on "systemd")
 (depends-on "pkgbuild-mode")
 (depends-on "js2-mode")
+(depends-on "flycheck")
+(depends-on "json-mode")
+(depends-on "web-mode")
+(depends-on "exec-path-from-shell")
