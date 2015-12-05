@@ -149,6 +149,8 @@
     (define-key flycheck-mode-map "\C-c." 'flycheck-next-error)
     ;;(add-hook 'after-init-hook #'global-flycheck-mode)
     )
+
+  (use-package less-css-mode)
   
   (use-package js2-mode
     :config
