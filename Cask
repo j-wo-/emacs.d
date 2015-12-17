@@ -67,3 +67,4 @@
 (depends-on "web-mode")
 (depends-on "exec-path-from-shell")
 (depends-on "less-css-mode")
+(depends-on "esup")
