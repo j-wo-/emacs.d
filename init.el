@@ -406,7 +406,13 @@
   (diminish 'git-gutter-mode)
 
   (use-package magit
-    :init (setq magit-last-seen-setup-instructions "1.4.0"))
+    :init (setq magit-last-seen-setup-instructions "1.4.0")
+    :config
+    (define-key global-map (kbd "C-x g") 'magit-status)
+    (define-key global-map (kbd "C-x C-g") 'magit-dispatch-popup)
+    (setq magit-revert-buffers t)
+    (setq magit-completing-read-function 'magit-ido-completing-read)
+    )
 
   (defun xsel-paste ()
     (shell-command-to-string "xsel -ob"))
