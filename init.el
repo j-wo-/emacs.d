@@ -162,8 +162,8 @@
       (setq web-mode-css-indent-offset 2)
       (setq web-mode-code-indent-offset 2)
       (flycheck-mode t)
-      '(when (executable-find "eslint")
-         (flycheck-select-checker 'javascript-eslint)))
+      (when (executable-find "eslint")
+        (flycheck-select-checker 'javascript-eslint)))
     (add-hook 'web-mode-hook 'my-web-mode-hook)
     (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
     (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
@@ -293,7 +293,8 @@
       ;; (enable-lispy 'cider-repl-mode-hook)
       (setq cider-lein-command "~/bin/lein")
       (setq cider-repl-popup-stacktraces t)
-      (setq cider-auto-select-error-buffer t)))
+      (setq cider-auto-select-error-buffer t)
+      (setq cider-prompt-for-symbol nil)))
 
   (use-package haskell-mode
     :mode "\\.hs\\'" "\\.hs-boot\\'" "\\.lhs\\'" "\\.lhs-boot\\'"
