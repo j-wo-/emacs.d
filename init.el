@@ -42,20 +42,20 @@
 (unless (null window-system)
   (set-frame-font custom-font))
 
-(let ((dark-bg "#404040")
-      (darker-bg "#181818")
-      (bright-bg "#ebdbb2")
-      (bright-fg "#ebdbb2")
-      (black-fg "#181818")
-      (gray-fg "#ebdbb2"))
-  (custom-set-faces
-   `(mode-line ((t (:foreground ,bright-fg :background ,dark-bg))))
-   `(mode-line-inactive ((t (:foreground ,bright-fg :background ,dark-bg))))
-   `(mode-line-buffer-id ((t (:foreground ,bright-fg :background ,dark-bg))))
-   `(powerline-active1 ((t (:foreground ,black-fg :background ,bright-bg))))
-   `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
-   `(powerline-inactive1 ((t (:foreground ,bright-fg :background ,darker-bg))))
-   `(powerline-inactive2 ((t (:foreground ,bright-fg :background ,dark-bg))))))
+'(let ((dark-bg "#404040")
+       (darker-bg "#181818")
+       (bright-bg "#ebdbb2")
+       (bright-fg "#ebdbb2")
+       (black-fg "#181818")
+       (gray-fg "#ebdbb2"))
+   (custom-set-faces
+    `(mode-line ((t (:foreground ,bright-fg :background ,dark-bg))))
+    `(mode-line-inactive ((t (:foreground ,bright-fg :background ,dark-bg))))
+    `(mode-line-buffer-id ((t (:foreground ,bright-fg :background ,dark-bg))))
+    `(powerline-active1 ((t (:foreground ,black-fg :background ,bright-bg))))
+    `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
+    `(powerline-inactive1 ((t (:foreground ,bright-fg :background ,darker-bg))))
+    `(powerline-inactive2 ((t (:foreground ,bright-fg :background ,dark-bg))))))
 
 (use-package powerline
   ;; :config (powerline-default-theme)
@@ -76,18 +76,21 @@
 ;;(use-package base16-theme)
 (use-package gruvbox-theme)
 
-(cond
- ((or (eql custom-emacs-theme 'moe-dark)
-      (eql custom-emacs-theme 'moe-light))
-  (progn
-    (if (eql custom-emacs-theme 'moe-dark)
-        (moe-dark)
-      (moe-light))
-    (powerline-moe-theme)))
- (t
-  (progn
-    (switch-to-theme custom-emacs-theme)
-    (powerline-default-theme))))
+(defun set-theme-and-powerline (_)
+  (cond
+   ((or (eql custom-emacs-theme 'moe-dark)
+        (eql custom-emacs-theme 'moe-light))
+    (progn
+      (if (eql custom-emacs-theme 'moe-dark)
+          (moe-dark)
+        (moe-light))
+      (powerline-moe-theme)))
+   (t
+    (progn
+      (switch-to-theme custom-emacs-theme)
+      (powerline-default-theme)))))
+
+(set-theme-and-powerline nil)
 
 (unless (null window-system)
   (set-frame-size (selected-frame) 100 58))
