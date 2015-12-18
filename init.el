@@ -58,8 +58,7 @@
    `(powerline-inactive2 ((t (:foreground ,bright-fg :background ,dark-bg))))))
 
 (use-package powerline
-  :config
-  ;;(powerline-default-theme)
+  ;; :config (powerline-default-theme)
   )
 
 (defun switch-to-theme (theme)
@@ -76,12 +75,6 @@
 (use-package moe-theme)
 ;;(use-package base16-theme)
 (use-package gruvbox-theme)
-
-(defvar custom-emacs-theme)
-(setq custom-emacs-theme
-      (if (null window-system)
-          'gruvbox
-        'gruvbox))
 
 (cond
  ((or (eql custom-emacs-theme 'moe-dark)
