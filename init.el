@@ -155,31 +155,30 @@
 (use-package less-css-mode)
 
 (use-package js2-mode
-  :mode
-  ("\\.js\\'" . js2-mode)
-  ("\\.jsx\\'" . web-mode)
   :config
+  (use-package flycheck)
   (use-package web-mode)
+  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+  (flycheck-add-mode 'javascript-eslint 'js2-mode)
+  (flycheck-add-mode 'javascript-eslint 'web-mode)
+  (setq-default
+   flycheck-disabled-checkers
+   '(javascript-jshint json-jsonlist))
   (setq js2-include-node-externs t)
   (setq js2-include-browser-externs t)
   (defun my-web-mode-hook ()
     (setq web-mode-markup-indent-offset 2)
     (setq web-mode-css-indent-offset 2)
     (setq web-mode-code-indent-offset 2)
-    (flycheck-mode t)
+    (flycheck-mode 1)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
   (add-hook 'web-mode-hook 'my-web-mode-hook)
-  (use-package flycheck
-    :config
-    (setq-default
-     flycheck-disabled-checkers
-     '(javascript-jshint json-jsonlist))
-    (flycheck-add-mode 'javascript-eslint 'web-mode))
   (let ((js-hook
          (lambda ()
            (setq js2-basic-offset 2)
-           (flycheck-mode t)
+           (flycheck-mode 1)
            (when (executable-find "eslint")
              (flycheck-select-checker 'javascript-eslint)))))
     (add-hook 'js2-mode-hook js-hook)
