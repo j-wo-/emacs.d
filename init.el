@@ -95,7 +95,7 @@
 ;;(use-package color-theme-sanityinc-solarized)
 ;;(use-package moe-theme)
 ;;(use-package base16-theme)
-(use-package gruvbox-theme)
+;;(use-package gruvbox-theme)
 
 (defun set-theme-and-powerline (_)
   (cond
