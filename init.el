@@ -3,7 +3,7 @@
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
-(setq gc-cons-threshold 20000000)
+(setq gc-cons-threshold 10000000)
 
 (set-language-environment "utf-8")
 
@@ -19,6 +19,8 @@
 
 (defun load-local (file)
   (load (f-expand file user-emacs-directory)))
+
+(shell-command "~/bin/do-ssh-add")
 
 ;; load values for options that may be different across machines
 (load-local "variables")
@@ -41,7 +43,6 @@
 
 (unless (null window-system)
   (set-frame-font custom-font))
-
 
 (cond ((or (eql custom-emacs-theme 'moe-dark)
            (eql custom-emacs-theme 'moe-light))
@@ -93,7 +94,7 @@
 ;;(use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
-;;(use-package moe-theme)
+(use-package moe-theme)
 ;;(use-package base16-theme)
 ;;(use-package gruvbox-theme)
 
@@ -152,13 +153,19 @@
                              (auto-complete-mode 1))))
   (real-global-auto-complete-mode t))
 
+;;(use-package helm)
+
 (use-package projectile
   :config
   (projectile-global-mode)
   (setq projectile-enable-caching t)
   (setq projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
-  (define-key global-map "\C-cpp" 'projectile-switch-project))
+  (define-key global-map "\C-cpp" 'projectile-switch-project)
+  (define-key global-map "\C-\M-g" 'projectile-grep)
+  (add-to-list 'grep-find-ignored-files "*.log")
+  ;;(use-package helm-projectile)
+  )
 
 (use-package smex
   :bind ("M-x" . smex)
@@ -185,6 +192,7 @@
    '(javascript-jshint json-jsonlist))
   (setq js2-include-node-externs t)
   (setq js2-include-browser-externs t)
+  (setq js2-strict-trailing-comma-warning nil)
   (defun my-web-mode-hook ()
     (setq web-mode-markup-indent-offset 2)
     (setq web-mode-css-indent-offset 2)
@@ -457,6 +465,10 @@
 
 (load-local "keys")
 (load-local "commands")
+
+(if (equal (user-login-name) "root")
+    (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
+  (setenv "SSH_AUTH_SOCK" (concat (getenv "XDG_RUNTIME_DIR") "/ssh-agent.socket")))
 
 (setq server-socket-dir
       (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
