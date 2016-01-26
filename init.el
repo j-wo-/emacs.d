@@ -93,7 +93,7 @@
 ;;(use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
-;;(use-package moe-theme)
+(use-package moe-theme)
 ;;(use-package base16-theme)
 ;;(use-package gruvbox-theme)
 
