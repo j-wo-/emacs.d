@@ -105,11 +105,13 @@
       (if (eql custom-emacs-theme 'moe-dark)
           (moe-dark)
         (moe-light))
-      (powerline-moe-theme)))
+      (powerline-moe-theme)
+      (add-hook 'window-setup-hook 'powerline-moe-theme)))
    (t
     (progn
       (switch-to-theme custom-emacs-theme)
-      (powerline-default-theme)))))
+      (powerline-default-theme)
+      (add-hook 'window-setup-hook 'powerline-default-theme)))))
 
 (set-theme-and-powerline nil)
 
