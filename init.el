@@ -3,7 +3,7 @@
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
-(setq gc-cons-threshold 10000000)
+(setq gc-cons-threshold 20000000)
 
 (set-language-environment "utf-8")
 
@@ -20,7 +20,7 @@
 (defun load-local (file)
   (load (f-expand file user-emacs-directory)))
 
-(shell-command "~/bin/do-ssh-add")
+;;(shell-command "~/bin/do-ssh-add")
 
 ;; load values for options that may be different across machines
 (load-local "variables")
@@ -38,11 +38,7 @@
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 
-(unless (null window-system)
-  (set-frame-size (selected-frame) custom-frame-width custom-frame-height))
 
-(unless (null window-system)
-  (set-frame-font custom-font))
 
 (cond ((or (eql custom-emacs-theme 'moe-dark)
            (eql custom-emacs-theme 'moe-light))
@@ -119,6 +115,10 @@
 (unless (null window-system)
   (set-frame-size (selected-frame) 100 58))
 
+(use-package yasnippet
+  :config
+  (diminish 'yas-minor-mode))
+
 (use-package uniquify
   :config (setq uniquify-buffer-name-style 'post-forward))
 
@@ -132,6 +132,7 @@
 (use-package systemd)
 
 (use-package org
+  :commands org-agenda org-store-link org-capture
   :config
   (define-key global-map "\C-cl" 'org-store-link)
   (define-key global-map "\C-ca" 'org-agenda)
@@ -182,11 +183,14 @@
 (use-package less-css-mode)
 
 (use-package js2-mode
+  :mode
+  ("\\.js\\'" . js2-mode)
+  ("\\.jsx\\'" . web-mode)
   :config
   (use-package flycheck)
   (use-package web-mode)
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+  ;;(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  ;;(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
   (flycheck-add-mode 'javascript-eslint 'js2-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   (setq-default
@@ -365,6 +369,9 @@
   :config
   (setq slime-contribs '(slime-fancy slime-tramp))
   (use-package slime
+    :mode
+    ("\\.lisp\\'" . lisp-mode)
+    ("\\.asd\\'" . lisp-mode)
     :config
     (add-hook 'lisp-mode-hook
               (lambda ()
@@ -441,13 +448,14 @@
 (diminish 'git-gutter-mode)
 
 (use-package magit
+  :commands magit-status magit-push magit-pull
   :init (setq magit-last-seen-setup-instructions "1.4.0")
   :config
   (define-key global-map (kbd "C-x g") 'magit-status)
   (define-key global-map (kbd "C-x C-g") 'magit-dispatch-popup)
   (setq magit-revert-buffers t)
   (setq magit-completing-read-function 'magit-ido-completing-read)
-  )
+  (diminish 'auto-revert-mode))
 
 (defun xsel-paste ()
   (shell-command-to-string "xsel -ob"))
@@ -476,3 +484,9 @@
       (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
 
 (setq file-name-handler-alist file-name-handler-alist-backup)
+
+(unless (null window-system)
+  (set-frame-font custom-font))
+
+'(unless (null window-system)
+   (set-frame-size (selected-frame) custom-frame-width custom-frame-height))
