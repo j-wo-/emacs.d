@@ -183,14 +183,11 @@
 (use-package less-css-mode)
 
 (use-package js2-mode
-  :mode
-  ("\\.js\\'" . js2-mode)
-  ("\\.jsx\\'" . web-mode)
   :config
   (use-package flycheck)
   (use-package web-mode)
-  ;;(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  ;;(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
   (flycheck-add-mode 'javascript-eslint 'js2-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   (setq-default
@@ -199,6 +196,7 @@
   (setq js2-include-node-externs t)
   (setq js2-include-browser-externs t)
   (setq js2-strict-trailing-comma-warning nil)
+  (setq js2-indent-switch-body t)
   (defun my-web-mode-hook ()
     (setq web-mode-markup-indent-offset 2)
     (setq web-mode-css-indent-offset 2)
