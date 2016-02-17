@@ -3,7 +3,9 @@
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
-(setq gc-cons-threshold 20000000)
+(setq initial-frame-alist '((left-fringe . 15) (right-fringe . 15)))
+
+(setq gc-cons-threshold 10000000)
 
 (set-language-environment "utf-8")
 
@@ -25,10 +27,17 @@
 ;; load values for options that may be different across machines
 (load-local "variables")
 
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-(when (fboundp 'scroll-bar-mode)
-  (scroll-bar-mode -1))
+(when (null window-system)
+  (menu-bar-mode -1))
+
+(when nil
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+  (when window-system
+    (set-frame-font custom-font))
+  (when window-system
+    (set-frame-size (selected-frame) custom-frame-width custom-frame-height)))
 
 (use-package diminish)
 
@@ -37,8 +46,6 @@
 
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
-
-
 
 (cond ((or (eql custom-emacs-theme 'moe-dark)
            (eql custom-emacs-theme 'moe-light))
@@ -182,21 +189,30 @@
 
 (use-package less-css-mode)
 
-(use-package js2-mode
+(use-package web-mode
+  :mode
+  "\\.js\\'" "\\.jsx\\'"
   :config
   (use-package flycheck)
-  (use-package web-mode)
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
-  (flycheck-add-mode 'javascript-eslint 'js2-mode)
+  (use-package js2-mode
+    :config
+    (flycheck-add-mode 'javascript-eslint 'js2-mode)
+    (flycheck-add-mode 'javascript-eslint 'js2-jsx-mode)
+    (setq js2-include-node-externs t)
+    (setq js2-include-browser-externs t)
+    (setq js2-strict-trailing-comma-warning nil)
+    (setq js2-indent-switch-body t)
+    (defun my-js2-mode-hook ()
+      (setq js2-basic-offset 2)
+      (flycheck-mode 1)
+      (when (executable-find "eslint")
+        (flycheck-select-checker 'javascript-eslint)))
+    (add-hook 'js2-mode-hook 'my-js2-mode-hook)
+    (add-hook 'js2-jsx-mode-hook 'my-js2-mode-hook))
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   (setq-default
    flycheck-disabled-checkers
    '(javascript-jshint json-jsonlist))
-  (setq js2-include-node-externs t)
-  (setq js2-include-browser-externs t)
-  (setq js2-strict-trailing-comma-warning nil)
-  (setq js2-indent-switch-body t)
   (defun my-web-mode-hook ()
     (setq web-mode-markup-indent-offset 2)
     (setq web-mode-css-indent-offset 2)
@@ -204,15 +220,7 @@
     (flycheck-mode 1)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
-  (add-hook 'web-mode-hook 'my-web-mode-hook)
-  (let ((js-hook
-         (lambda ()
-           (setq js2-basic-offset 2)
-           (flycheck-mode 1)
-           (when (executable-find "eslint")
-             (flycheck-select-checker 'javascript-eslint)))))
-    (add-hook 'js2-mode-hook js-hook)
-    (add-hook 'js2-jsx-mode-hook js-hook)))
+  (add-hook 'web-mode-hook 'my-web-mode-hook))
 
 (use-package scala-mode2
   :mode
@@ -482,9 +490,3 @@
       (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
 
 (setq file-name-handler-alist file-name-handler-alist-backup)
-
-(unless (null window-system)
-  (set-frame-font custom-font))
-
-'(unless (null window-system)
-   (set-frame-size (selected-frame) custom-frame-width custom-frame-height))
