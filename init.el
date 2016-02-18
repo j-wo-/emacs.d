@@ -19,6 +19,9 @@
 (require 'use-package)
 (require 'f)
 
+(add-to-list 'package-archives
+             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+
 (defun load-local (file)
   (load (f-expand file user-emacs-directory)))
 
@@ -339,7 +342,15 @@
     (setq cider-lein-command "~/bin/lein")
     (setq cider-repl-popup-stacktraces t)
     (setq cider-auto-select-error-buffer t)
-    (setq cider-prompt-for-symbol nil)))
+    (setq cider-prompt-for-symbol nil))
+  (use-package clj-refactor
+    :config
+    (defun clj-refactor-clojure-mode-hook ()
+      (clj-refactor-mode 1)
+      (yas-minor-mode 1) ; for adding require/use/import statements
+      ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+      (cljr-add-keybindings-with-prefix "C-c C-m"))
+    (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)))
 
 (use-package haskell-mode
   :mode "\\.hs\\'" "\\.hs-boot\\'" "\\.lhs\\'" "\\.lhs-boot\\'"
