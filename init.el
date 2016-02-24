@@ -336,13 +336,29 @@
     (add-hook 'clojure-mode-hook 'enable-paredit-mode)
     (add-hook 'cider-mode-hook 'enable-paredit-mode)
     (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
+    (defun my-cider-reload-repl-ns ()
+      (message "running hook")
+      (cider-nrepl-request:eval
+       (format "(require '%s :reload)"
+               (buffer-local-value 'cider-buffer-ns (first (cider-repl-buffers))))
+       ;;"(require (ns-name *ns*) :reload)"
+       (lambda (_response) nil)))
+    (defun cider-load-buffer-reload-repl (&optional buffer)
+      (interactive)
+      (let ((result (if buffer
+                        (cider-load-buffer buffer)
+                      (cider-load-buffer))))
+        (my-cider-reload-repl-ns)
+        result))
+    (define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer-reload-repl)
     ;; (enable-lispy 'clojure-mode-hook)
     ;; (enable-lispy 'cider-mode-hook)
     ;; (enable-lispy 'cider-repl-mode-hook)
     (setq cider-lein-command "~/bin/lein")
     (setq cider-repl-popup-stacktraces t)
-    (setq cider-auto-select-error-buffer t)
-    (setq cider-prompt-for-symbol nil))
+    (setq cider-auto-select-error-buffer t))
+  (setq cider-prompt-for-symbol nil)
+  (diminish 'cider-mode)
   (use-package clj-refactor
     :config
     (defun clj-refactor-clojure-mode-hook ()
@@ -350,7 +366,8 @@
       (yas-minor-mode 1) ; for adding require/use/import statements
       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
       (cljr-add-keybindings-with-prefix "C-c C-m"))
-    (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)))
+    (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)
+    (diminish 'clj-refactor-mode)))
 
 (use-package haskell-mode
   :mode "\\.hs\\'" "\\.hs-boot\\'" "\\.lhs\\'" "\\.lhs-boot\\'"
