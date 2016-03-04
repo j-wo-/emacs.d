@@ -1,7 +1,7 @@
 (setq custom-frame-width 100)
 (setq custom-frame-height 58)
 
-(setq custom-font "Sauce Code Pro Medium:pixelsize=25")
+(setq custom-font "Inconsolata for Powerline:pixelsize=22")
 
 (setq custom-emacs-theme 'moe-dark)
 ;;(setq custom-emacs-theme 'sanityinc-tomorrow-night)
