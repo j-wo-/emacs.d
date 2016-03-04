@@ -1,5 +1,6 @@
 (source gnu)
 (source melpa)
+(source melpa-stable)
 
 (depends-on "bind-key")
 (depends-on "cask")
@@ -49,9 +50,10 @@
 (depends-on "ac-haskell-process")
 (depends-on "request")
 (depends-on "clojure-mode")
-;; (depends-on "cider")
-;; (depends-on "clj-refactor")
-(depends-on "ac-cider")
+;; install cider and clj-refactor manually from melpa-stable
+;; (depends-on "cider" :git "https://github.com/clojure-emacs/cider.git" :ref "16389c8dea69c7f29871c80d00d44c504d23dd17")
+;; (depends-on "clj-refactor" :git "https://github.com/clojure-emacs/clj-refactor.el.git" :ref "9c628f2ca9ba6dfdfb1e24d804accc71d873fae0")
+(depends-on "ac-cider" :git "https://github.com/jeffwk/ac-cider.git")
 (depends-on "auto-complete")
 (depends-on "ac-slime")
 (depends-on "scala-mode2")

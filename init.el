@@ -12,15 +12,20 @@
 (setq custom-safe-themes t)
 (setq auto-save-default nil)
 
+(require 'package)
+
+(add-to-list 'package-archives
+             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+
+(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(clj-refactor . "melpa-stable") t)
+
 (require 'cask "~/.cask/cask.el")
 (cask-initialize)
 
 (require 'cl)
 (require 'use-package)
 (require 'f)
-
-(add-to-list 'package-archives
-             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
 (defun load-local (file)
   (load (f-expand file user-emacs-directory)))
@@ -337,7 +342,6 @@
     (add-hook 'cider-mode-hook 'enable-paredit-mode)
     (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
     (defun my-cider-reload-repl-ns ()
-      (message "running hook")
       (cider-nrepl-request:eval
        (format "(require '%s :reload)"
                (buffer-local-value 'cider-buffer-ns (first (cider-repl-buffers))))
@@ -351,6 +355,8 @@
         (my-cider-reload-repl-ns)
         result))
     (define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer-reload-repl)
+    ;;(define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer)
+    (define-key cider-mode-map (kbd "C-c n") 'cider-repl-set-ns)
     ;; (enable-lispy 'clojure-mode-hook)
     ;; (enable-lispy 'cider-mode-hook)
     ;; (enable-lispy 'cider-repl-mode-hook)
