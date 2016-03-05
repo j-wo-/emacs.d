@@ -298,7 +298,8 @@
    (turn-on-elisp-slime-nav-mode)
    (aggressive-indent-mode)
    (turn-off-smartparens-mode)
-   (enable-paredit-mode)))
+   (enable-paredit-mode)
+   (eldoc-mode 1)))
 ;; (enable-lispy 'emacs-lisp-mode-hook)
 
 (use-package clojure-mode
@@ -349,6 +350,25 @@
                (buffer-local-value 'cider-buffer-ns (first (cider-repl-buffers))))
        ;;"(require (ns-name *ns*) :reload)"
        (lambda (_response) nil)))
+    (defvar cider-figwheel-connecting nil)
+    (defun cider-figwheel-init ()
+      (when cider-figwheel-connecting
+        (pop-to-buffer (first (cider-repl-buffers)))
+        (insert "(require 'figwheel-sidecar.repl-api)")
+        (cider-repl-return)
+        (insert "(figwheel-sidecar.repl-api/cljs-repl)")
+        (cider-repl-return)
+        (when (not (zerop (length cider-figwheel-connecting)))
+          (insert (format "(in-ns '%s)" cider-figwheel-connecting))
+          (cider-repl-return))))
+    (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
+    (defun cider-connect-figwheel ()
+      (interactive)
+      (let ((cider-figwheel-connecting
+             (if (eql major-mode 'clojure-mode)
+                 (clojure-expected-ns)
+               "")))
+        (cider-connect "localhost" 7888)))
     (defun cider-load-buffer-reload-repl (&optional buffer)
       (interactive)
       (let ((result (if buffer
@@ -526,3 +546,17 @@
       (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
 
 (setq file-name-handler-alist file-name-handler-alist-backup)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (cider zenburn-theme web-mode use-package systemd smex smartparens smart-mode-line-powerline-theme slime-annot request projectile prodigy popwin pkgbuild-mode paren-face pallet nyan-mode moe-theme mic-paren material-theme magit lispy less-css-mode json-mode js2-mode ido-ubiquitous idle-highlight-mode htmlize gruvbox-theme git-gutter-fringe ghc flycheck-cask flx-ido expand-region exec-path-from-shell esup ensime elisp-slime-nav drag-stuff color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor base16-theme aggressive-indent ac-slime ac-haskell-process ac-cider))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
