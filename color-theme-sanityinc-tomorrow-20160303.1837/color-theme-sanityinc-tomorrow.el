@@ -463,7 +463,7 @@ names to which it refers are bound."
       (helm-source-header (:weight bold :foreground ,orange :height 1.44))
 
       ;; company
-      (company-preview (:foreground ,comment))
+      (company-preview (:foreground ,comment :background ,contrast-bg))
       (company-preview-common (:inherit company-preview :foreground ,red))
       (company-preview-search (:inherit company-preview :foreground ,blue))
       (company-tooltip (:background ,contrast-bg))
@@ -530,6 +530,16 @@ names to which it refers are bound."
       (js2-function-param (:foreground ,blue))
       (js2-instance-member (:foreground ,blue))
       (js2-private-function-call (:foreground ,red))
+      ;; js2-mode additional attributes for better syntax highlight in javascript
+      (js2-jsdoc-tag (:foreground ,aqua))
+      (js2-jsdoc-type (:foreground ,orange))
+      (js2-jsdoc-value (:foreground ,orange))
+      (js2-function-call (:foreground ,green))
+      (js2-object-property (:foreground ,orange))
+      (js2-private-member (:foreground ,purple))
+      (js2-jsdoc-html-tag-name (:foreground ,orange))
+      (js2-jsdoc-html-tag-delimiter (:foreground ,orange))
+
 
       ;; js3-mode
       (js3-warning-face (:underline ,orange))
@@ -755,6 +765,22 @@ names to which it refers are bound."
       (term-color-magenta (:foreground ,purple :background ,purple))
       (term-color-cyan    (:foreground ,aqua :background ,aqua))
       (term-color-white   (:foreground ,background :background ,background))
+
+      ;; e2wm
+      (e2wm:face-history-list-normal (:foreground ,foreground :background ,background))
+      (e2wm:face-history-list-select1 (:foreground ,aqua :background ,background))
+      (e2wm:face-history-list-select2 (:foreground ,yellow :background ,background))
+
+      ;; rpm-spec-mode
+      (rpm-spec-dir-face (:foreground ,green))
+      (rpm-spec-doc-face (:foreground ,green))
+      (rpm-spec-ghost-face (:foreground ,red))
+      (rpm-spec-macro-face (:foreground ,yellow))
+      (rpm-spec-obsolete-tag-face (:foreground ,red))
+      (rpm-spec-package-face (:foreground ,red))
+      (rpm-spec-section-face (:foreground ,yellow))
+      (rpm-spec-tag-face (:foreground ,blue))
+      (rpm-spec-var-face (:foreground ,red))
       ))))
 
 (defmacro color-theme-sanityinc-tomorrow--frame-parameter-specs ()
@@ -847,12 +873,6 @@ are bound."
   "Apply the tomorrow night theme."
   (interactive)
   (color-theme-sanityinc-tomorrow 'night))
-
-;;;###autoload
-(defun color-theme-sanityinc-tomorrow-night-rxvt ()
-  "Apply the tomorrow night theme."
-  (interactive)
-  (color-theme-sanityinc-tomorrow 'night-rxvt))
 
 ;;;###autoload
 (defun color-theme-sanityinc-tomorrow-day ()

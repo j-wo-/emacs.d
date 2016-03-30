@@ -1,27 +1,31 @@
 ;;(package-initialize)
 
+;; wrapping the entire file in a let form causes some problems with editing/tools
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
+;; this value is approximately the default in Emacs 24,
+;; but the fringes were much smaller by default in a dev snapshot of Emacs 25
 (setq initial-frame-alist '((left-fringe . 15) (right-fringe . 15)))
 
-(setq gc-cons-threshold 10000000)
+;; raising gc-cons-threshold substantially improves Emacs startup time
+;;(setq gc-cons-threshold 10000000)
+(setq gc-cons-threshold 25000000)
 
 (set-language-environment "utf-8")
 
 (setq custom-safe-themes t)
 (setq auto-save-default nil)
 
-(require 'package)
+;;(require 'package)
 
-(add-to-list 'package-archives
-             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(require 'cask "~/.cask/cask.el")
+(cask-initialize)
 
 (add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(clj-refactor . "melpa-stable") t)
 
-(require 'cask "~/.cask/cask.el")
-(cask-initialize)
+;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
 (require 'cl)
 (require 'use-package)
@@ -35,10 +39,15 @@
 ;; load values for options that may be different across machines
 (load-local "variables")
 
-(when (null window-system)
-  (menu-bar-mode -1))
+(defun active-minor-modes ()
+  (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
+
+(defun minor-mode-active-p (minor-mode)
+  (if (member minor-mode (active-minor-modes)) t nil))
 
 (when nil
+  ;; calling these substantially increases Emacs startup time
+  ;; most are now set in .Xdefaults and loaded with xrdb -merge
   (menu-bar-mode -1)
   (tool-bar-mode -1)
   (when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
@@ -46,6 +55,10 @@
     (set-frame-font custom-font))
   (when window-system
     (set-frame-size (selected-frame) custom-frame-width custom-frame-height)))
+
+(when (null window-system)
+  ;; need to call this for terminal mode because the .Xdefaults settings won't apply
+  (menu-bar-mode -1))
 
 (use-package diminish)
 
@@ -127,8 +140,8 @@
 
 (set-theme-and-powerline nil)
 
-(unless (null window-system)
-  (set-frame-size (selected-frame) 100 58))
+'(unless (null window-system)
+   (set-frame-size (selected-frame) 100 58))
 
 (use-package yasnippet
   :config
@@ -181,6 +194,7 @@
         '(:eval (format " [%s]" (projectile-project-name))))
   (define-key global-map "\C-cpp" 'projectile-switch-project)
   (define-key global-map "\C-\M-g" 'projectile-grep)
+  (setq projectile-use-git-grep t)
   (add-to-list 'grep-find-ignored-files "*.log")
   ;;(use-package helm-projectile)
   )
@@ -201,6 +215,11 @@
   :mode
   "\\.js\\'" "\\.jsx\\'"
   :config
+  (use-package tern
+    :config
+    (use-package tern-auto-complete
+      :config
+      (tern-ac-setup)))
   (use-package flycheck)
   (use-package js2-mode
     :config
@@ -213,6 +232,7 @@
     (defun my-js2-mode-hook ()
       (setq js2-basic-offset 2)
       (flycheck-mode 1)
+      (tern-mode t)
       (when (executable-find "eslint")
         (flycheck-select-checker 'javascript-eslint)))
     (add-hook 'js2-mode-hook 'my-js2-mode-hook)
@@ -226,9 +246,14 @@
     (setq web-mode-css-indent-offset 2)
     (setq web-mode-code-indent-offset 2)
     (flycheck-mode 1)
+    (tern-mode t)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
-  (add-hook 'web-mode-hook 'my-web-mode-hook))
+  (add-hook 'web-mode-hook 'my-web-mode-hook)
+  
+  )
+
+(use-package jade-mode)
 
 (use-package scala-mode2
   :mode
@@ -303,7 +328,9 @@
 ;; (enable-lispy 'emacs-lisp-mode-hook)
 
 (use-package clojure-mode
-  :mode "\\.clj\\'" "\\.cljs\\'"
+  :mode
+  ("\\.clj\\'" . clojure-mode)
+  ("\\.cljs\\'" . clojurescript-mode)
   :config
   (defface square-brackets
     '((t (:foreground "#c0c43b"))) 'paren-face)
@@ -336,12 +363,16 @@
       (add-hook 'cider-mode-hook 'eldoc-mode)
       (add-hook 'cider-repl-mode-hook 'eldoc-mode))
     (add-hook 'clojure-mode-hook #'cider-mode)
+    (add-hook 'clojurescript-mode-hook #'cider-mode)
     (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
+    (add-hook 'clojurescript-mode-hook #'aggressive-indent-mode)
     (add-hook 'cider-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'clojurescript-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'cider-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'clojure-mode-hook 'enable-paredit-mode)
+    (add-hook 'clojurescript-mode-hook 'enable-paredit-mode)
     (add-hook 'cider-mode-hook 'enable-paredit-mode)
     (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
     (defun my-cider-reload-repl-ns ()
@@ -365,7 +396,7 @@
     (defun cider-connect-figwheel ()
       (interactive)
       (let ((cider-figwheel-connecting
-             (if (eql major-mode 'clojure-mode)
+             (if (member major-mode '(clojure-mode clojurescript-mode))
                  (clojure-expected-ns)
                "")))
         (cider-connect "localhost" 7888)))
@@ -395,6 +426,7 @@
       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
       (cljr-add-keybindings-with-prefix "C-c C-m"))
     (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)
+    (add-hook 'clojurescript-mode-hook 'clj-refactor-clojure-mode-hook)
     (diminish 'clj-refactor-mode)))
 
 (use-package haskell-mode
