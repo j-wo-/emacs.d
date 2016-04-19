@@ -189,7 +189,7 @@
 (use-package projectile
   :config
   (projectile-global-mode)
-  (setq projectile-enable-caching t)
+  (setq projectile-enable-caching nil)
   (setq projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
   (define-key global-map "\C-cpp" 'projectile-switch-project)
