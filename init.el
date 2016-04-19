@@ -561,12 +561,16 @@
       (process-send-string proc text)
       (process-send-eof proc))))
 
-(when (and (null window-system)
-           (getenv "DISPLAY")
-           (file-exists-p "/usr/bin/xsel")
-           (not (equal (user-login-name) "root")))
-  (setq interprogram-cut-function 'xsel-copy)
-  (setq interprogram-paste-function 'xsel-paste))
+(defun do-xsel-copy-paste-setup ()
+  (when (and (null window-system)
+             (getenv "DISPLAY")
+             (file-exists-p "/usr/bin/xsel")
+             (not (equal (user-login-name) "root")))
+    (setq interprogram-cut-function 'xsel-copy)
+    (setq interprogram-paste-function 'xsel-paste)))
+
+(do-xsel-copy-paste-setup)
+(add-hook 'window-setup-hook 'do-xsel-copy-paste-setup)
 
 (load-local "keys")
 (load-local "commands")
