@@ -532,7 +532,7 @@
       :config
       (defun set-up-slime-ac-fuzzy ()
         (set-up-slime-ac t))
-      (add-hook 'lisp-mode-hook 'set-up-slime-ac-fuzzy)
+      (add-hook 'slime-mode-hook 'set-up-slime-ac-fuzzy)
       (add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy))))
 
 (if (null (window-system))
