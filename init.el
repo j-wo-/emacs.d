@@ -72,7 +72,8 @@
            (eql custom-emacs-theme 'moe-light))
        nil)
       ((or (eql custom-emacs-theme 'sanityinc-tomorrow-night)
-           (eql custom-emacs-theme 'sanityinc-tomorrow-night-rxvt))
+           (eql custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)
+           t)
        (let ((dark-bg "#303030")
              (bright-fg "#babcba")
              (gray-fg "#555756")
@@ -87,7 +88,7 @@
           `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
           `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,bright-inactive))))
           `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg)))))))
-      (t
+      (nil
        (let ((dark-bg "#404040")
              (darker-bg "#181818")
              (bright-bg "#ebdbb2")
@@ -117,8 +118,8 @@
 
 ;;(use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
-;;(use-package color-theme-sanityinc-solarized)
-(use-package moe-theme)
+(use-package color-theme-sanityinc-solarized)
+;;(use-package moe-theme)
 ;;(use-package base16-theme)
 ;;(use-package gruvbox-theme)
 
