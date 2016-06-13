@@ -257,10 +257,9 @@
 (use-package jade-mode)
 
 (use-package scala-mode2
-  :mode
-  ("\\.scala\\'" . scala-mode)
-  ("\\.sbt\\'" . scala-mode)
-  :init
+  ;; :mode
+  ;; ("\\.scala\\'" . scala-mode)
+  ;; ("\\.sbt\\'" . scala-mode)
   :config
   ;;(setq scala-indent:default-run-on-strategy 1)
   ;;(setq scala-indent:indent-value-expression nil)
@@ -269,7 +268,7 @@
     ;;(setq ensime-completion-style 'auto-complete)
     (setq ensime-auto-generate-config t)
     (setq ensime-typecheck-idle-interval 0.3)
-    (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+    (add-hook 'scala-mode-hook 'ensime-mode)
     (add-hook 'scala-mode-hook (lambda () (auto-complete-mode -1)))
     '(add-hook 'scala-mode-hook
                (lambda ()
@@ -281,7 +280,8 @@
     (define-key scala-mode-map "\C-t" 'ensime-print-type-at-point)
     (define-key scala-mode-map "\C-\M-e" 'ensime-print-errors-at-point)
     (define-key scala-mode-map "\C-c." 'ensime-forward-note)
-    (define-key scala-mode-map "\C-c," 'ensime-backward-note)))
+    (define-key scala-mode-map "\C-c," 'ensime-backward-note)
+    (define-key scala-mode-map (kbd "C-M-.") 'ensime-show-uses-of-symbol-at-point)))
 
 (use-package ido
   :config
