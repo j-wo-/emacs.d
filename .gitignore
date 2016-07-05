@@ -1,4 +1,3 @@
-.cask
 auto-save-list
 *~
 ac-comphist.dat
@@ -13,3 +12,6 @@ projectile-bookmarks.eld
 /ensime
 *\#*
 /async-bytecomp.log
+*.elc
+/elpa/
+.cask/

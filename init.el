@@ -17,19 +17,30 @@
 (setq custom-safe-themes t)
 (setq auto-save-default nil)
 
-;;(require 'package)
-
-(require 'cask "~/.cask/cask.el")
-(cask-initialize)
-
-(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(clj-refactor . "melpa-stable") t)
-
-;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-
 (require 'cl)
+
+(require 'package)
+(package-initialize)
+
+;;(require 'cask "~/.cask/cask.el")
+;;(cask-initialize)
+
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+
+(defun pin-stable (pkg)
+  (add-to-list 'package-pinned-packages (cons pkg "melpa-stable") t))
+
+(mapcar #'pin-stable '(cider clj-refactor slime web-mode tern js2-mode ac-cider
+                             magit))
+
+(when (not (package-installed-p 'use-package))
+  (package-refresh-contents)
+  (package-install 'use-package))
+
 (require 'use-package)
-(require 'f)
+(setq use-package-always-ensure t)
+(use-package f)
 
 (defun load-local (file)
   (load (f-expand file user-emacs-directory)))
@@ -38,6 +49,8 @@
 
 ;; load values for options that may be different across machines
 (load-local "variables")
+(load-local "keys")
+(load-local "commands")
 
 (defun active-minor-modes ()
   (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
@@ -148,8 +161,8 @@
   :config
   (diminish 'yas-minor-mode))
 
-(use-package uniquify
-  :config (setq uniquify-buffer-name-style 'post-forward))
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'post-forward)
 
 (use-package aggressive-indent)
 
@@ -173,7 +186,7 @@
   :config
   (add-to-list 'auto-mode-alist '("/PKGBUILD$" . pkgbuild-mode)))
 
-(use-package auto-complete-config
+(use-package auto-complete
   :config
   (ac-config-default)
   (setq global-auto-complete-mode t)
@@ -254,12 +267,13 @@
   
   )
 
-(use-package jade-mode)
+(use-package jade-mode
+  :mode ("\\.jade\\'" . jade-mode))
 
-(use-package scala-mode2
-  ;; :mode
-  ;; ("\\.scala\\'" . scala-mode)
-  ;; ("\\.sbt\\'" . scala-mode)
+(use-package scala-mode
+  :mode
+  ("\\.scala\\'" . scala-mode)
+  ("\\.sbt\\'" . scala-mode)
   :config
   ;;(setq scala-indent:default-run-on-strategy 1)
   ;;(setq scala-indent:indent-value-expression nil)
@@ -308,9 +322,8 @@
   ;;(real-global-paredit-mode t)
   (diminish 'paredit-mode "()"))
 
-(use-package smartparens-config
+(use-package smartparens
   :config
-  (use-package smartparens)
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
   (smartparens-global-mode t))
@@ -359,10 +372,9 @@
       (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
       (add-hook 'cider-mode-hook 'ac-cider-setup)
       (add-hook 'cider-repl-mode-hook 'ac-cider-setup))
-    (use-package cider-eldoc
-      :config
-      (add-hook 'cider-mode-hook 'eldoc-mode)
-      (add-hook 'cider-repl-mode-hook 'eldoc-mode))
+    (require 'cider-eldoc)
+    (add-hook 'cider-mode-hook 'eldoc-mode)
+    (add-hook 'cider-repl-mode-hook 'eldoc-mode)
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
     (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
@@ -456,89 +468,86 @@
   :config
   (setq tramp-default-method "ssh"))
 
-(use-package slime-autoloads
+(use-package slime
   :commands slime
   :mode
   ("\\.lisp\\'" . lisp-mode)
   ("\\.asd\\'" . lisp-mode)
-  :config
+  :init
   (setq slime-contribs '(slime-fancy slime-tramp))
-  (use-package slime
-    :mode
-    ("\\.lisp\\'" . lisp-mode)
-    ("\\.asd\\'" . lisp-mode)
+  :config
+  (add-hook 'lisp-mode-hook
+            (lambda ()
+              (setq-local lisp-indent-function
+                          'common-lisp-indent-function)))
+    
+  (defvar sbcl-run-command "sbcl --dynamic-space-size 2000 --noinform")
+  (defvar ccl-run-command "ccl64 -K utf-8")
+  (defvar ecl-run-command "ecl")
+    
+  (setq inferior-lisp-program sbcl-run-command
+        slime-net-coding-system 'utf-8-unix
+        slime-complete-symbol-function 'slime-fuzzy-complete-symbol
+        slime-fuzzy-completion-in-place t
+        slime-enable-evaluate-in-emacs t
+        slime-autodoc-use-multiline-p t
+        slime-load-failed-fasl 'never
+        slime-compile-file-options
+        '(:fasl-directory "/tmp/slime-fasls/"))
+  (make-directory "/tmp/slime-fasls/" t)
+  ;;(define-key slime-mode-map [(return)] 'paredit-newline)
+  (define-key slime-mode-map (kbd "C-c .") 'slime-next-note)
+  (define-key slime-mode-map (kbd "C-c ,") 'slime-previous-note)
+
+  (defun slime-sbcl ()
+    (interactive)
+    (setq inferior-lisp-program sbcl-run-command)
+    (slime))
+  (defun slime-ccl ()
+    (interactive)
+    (setq inferior-lisp-program ccl-run-command)
+    (slime))
+  (defun slime-ecl ()
+    (interactive)
+    (setq inferior-lisp-program ecl-run-command)
+    (slime))
+  (defun kill-slime ()
+    (interactive)
+    (kill-buffer "*inferior-lisp*")
+    (cond
+     ((equal inferior-lisp-program sbcl-run-command)
+      (kill-buffer "*slime-repl sbcl*"))
+     ((equal inferior-lisp-program ccl-run-command)
+      (kill-buffer "*slime-repl ccl*"))))
+
+  (add-to-list 'projectile-globally-ignored-modes "comint-mode")
+  (add-to-list 'projectile-globally-ignored-modes "slime-repl-mode")
+
+  (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
+  (add-hook 'slime-mode-hook #'aggressive-indent-mode)
+  (add-hook 'lisp-mode-hook 'turn-off-smartparens-mode)
+  (add-hook 'slime-mode-hook 'turn-off-smartparens-mode)
+  (add-hook 'slime-repl-mode-hook 'turn-off-smartparens-mode)
+  (add-hook 'lisp-mode-hook 'enable-paredit-mode)
+  (add-hook 'slime-mode-hook 'enable-paredit-mode)
+  (add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
+    
+  ;; (enable-lispy 'lisp-mode-hook)
+  ;; (enable-lispy 'slime-mode-hook)
+  ;; (enable-lispy 'slime-repl-mode-hook)
+
+  (use-package slime-annot)
+  (use-package ac-slime
     :config
-    (add-hook 'lisp-mode-hook
-              (lambda ()
-                (setq-local lisp-indent-function
-                            'common-lisp-indent-function)))
-    
-    (defvar sbcl-run-command "sbcl --dynamic-space-size 2000 --noinform")
-    (defvar ccl-run-command "ccl64 -K utf-8")
-    (defvar ecl-run-command "ecl")
-    
-    (setq inferior-lisp-program sbcl-run-command
-          slime-net-coding-system 'utf-8-unix
-          slime-complete-symbol-function 'slime-fuzzy-complete-symbol
-          slime-fuzzy-completion-in-place t
-          slime-enable-evaluate-in-emacs t
-          slime-autodoc-use-multiline-p t
-          slime-load-failed-fasl 'never
-          slime-compile-file-options
-          '(:fasl-directory "/tmp/slime-fasls/"))
-    (make-directory "/tmp/slime-fasls/" t)
-    ;;(define-key slime-mode-map [(return)] 'paredit-newline)
-    (define-key slime-mode-map (kbd "C-c .") 'slime-next-note)
-    (define-key slime-mode-map (kbd "C-c ,") 'slime-previous-note)
-
-    (defun slime-sbcl ()
-      (interactive)
-      (setq inferior-lisp-program sbcl-run-command)
-      (slime))
-    (defun slime-ccl ()
-      (interactive)
-      (setq inferior-lisp-program ccl-run-command)
-      (slime))
-    (defun slime-ecl ()
-      (interactive)
-      (setq inferior-lisp-program ecl-run-command)
-      (slime))
-    (defun kill-slime ()
-      (interactive)
-      (kill-buffer "*inferior-lisp*")
-      (cond
-       ((equal inferior-lisp-program sbcl-run-command)
-        (kill-buffer "*slime-repl sbcl*"))
-       ((equal inferior-lisp-program ccl-run-command)
-        (kill-buffer "*slime-repl ccl*"))))
-
-    (add-to-list 'projectile-globally-ignored-modes "comint-mode")
-    (add-to-list 'projectile-globally-ignored-modes "slime-repl-mode")
-
-    (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
-    (add-hook 'slime-mode-hook #'aggressive-indent-mode)
-    (add-hook 'lisp-mode-hook 'turn-off-smartparens-mode)
-    (add-hook 'slime-mode-hook 'turn-off-smartparens-mode)
-    (add-hook 'slime-repl-mode-hook 'turn-off-smartparens-mode)
-    (add-hook 'lisp-mode-hook 'enable-paredit-mode)
-    (add-hook 'slime-mode-hook 'enable-paredit-mode)
-    (add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
-    
-    ;; (enable-lispy 'lisp-mode-hook)
-    ;; (enable-lispy 'slime-mode-hook)
-    ;; (enable-lispy 'slime-repl-mode-hook)
-
-    (use-package slime-annot)
-    (use-package ac-slime
-      :config
-      (defun set-up-slime-ac-fuzzy ()
-        (set-up-slime-ac t))
-      (add-hook 'slime-mode-hook 'set-up-slime-ac-fuzzy)
-      (add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy))))
+    (defun set-up-slime-ac-fuzzy ()
+      (set-up-slime-ac t))
+    (add-hook 'slime-mode-hook 'set-up-slime-ac-fuzzy)
+    (add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy)))
 
 (if (null (window-system))
-    (require 'git-gutter)
-  (require 'git-gutter-fringe))
+    (use-package git-gutter)
+  (use-package git-gutter-fringe))
+
 (global-git-gutter-mode t)
 (diminish 'git-gutter-mode)
 
@@ -573,8 +582,6 @@
 (do-xsel-copy-paste-setup)
 (add-hook 'window-setup-hook 'do-xsel-copy-paste-setup)
 
-(load-local "keys")
-(load-local "commands")
 
 (if (equal (user-login-name) "root")
     (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
@@ -597,4 +604,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(mode-line ((t (:foreground "#888888" :background "#303030" :box (:line-width 2 :color "#505050")))))
+ '(mode-line-buffer-id ((t (:foreground "#81a2be" :background "#303030"))))
+ '(mode-line-inactive ((t (:foreground "#555756" :background "#303030" :box (:line-width 2 :color "#303030")))))
+ '(powerline-active1 ((t (:foreground "#babcba" :background "#505050"))))
+ '(powerline-active2 ((t (:foreground "#babcba" :background "#303030"))))
+ '(powerline-inactive1 ((t (:foreground "#555756" :background "#383838"))))
+ '(powerline-inactive2 ((t (:foreground "#555756" :background "#303030")))))
