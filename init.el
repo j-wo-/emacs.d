@@ -31,8 +31,7 @@
 (defun pin-stable (pkg)
   (add-to-list 'package-pinned-packages (cons pkg "melpa-stable") t))
 
-(mapcar #'pin-stable '(cider clj-refactor slime web-mode tern js2-mode ac-cider
-                             magit))
+(mapcar #'pin-stable '(cider clj-refactor slime web-mode tern js2-mode ac-cider magit))
 
 (when (not (package-installed-p 'use-package))
   (package-refresh-contents)
@@ -279,10 +278,11 @@
   ;;(setq scala-indent:indent-value-expression nil)
   (use-package ensime
     :config
-    ;;(setq ensime-completion-style 'auto-complete)
+    (setq ensime-startup-snapshot-notification nil)
     (setq ensime-auto-generate-config t)
     (setq ensime-typecheck-idle-interval 0.3)
-    (add-hook 'scala-mode-hook 'ensime-mode)
+    (setq ensime-completion-style 'company)
+    (use-package company :config (diminish 'company-mode))
     (add-hook 'scala-mode-hook (lambda () (auto-complete-mode -1)))
     '(add-hook 'scala-mode-hook
                (lambda ()
@@ -598,7 +598,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (cider zenburn-theme web-mode use-package systemd smex smartparens smart-mode-line-powerline-theme slime-annot request projectile prodigy popwin pkgbuild-mode paren-face pallet nyan-mode moe-theme mic-paren material-theme magit lispy less-css-mode json-mode js2-mode ido-ubiquitous idle-highlight-mode htmlize gruvbox-theme git-gutter-fringe ghc flycheck-cask flx-ido expand-region exec-path-from-shell esup ensime elisp-slime-nav drag-stuff color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor base16-theme aggressive-indent ac-slime ac-haskell-process ac-cider))))
+    (scala-mode cider zenburn-theme web-mode use-package systemd smex smartparens smart-mode-line-powerline-theme slime-annot request projectile prodigy popwin pkgbuild-mode paren-face pallet nyan-mode moe-theme mic-paren material-theme magit lispy less-css-mode json-mode js2-mode ido-ubiquitous idle-highlight-mode htmlize gruvbox-theme git-gutter-fringe ghc flycheck-cask flx-ido expand-region exec-path-from-shell esup ensime elisp-slime-nav drag-stuff color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor base16-theme aggressive-indent ac-slime ac-haskell-process ac-cider))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
