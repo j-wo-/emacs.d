@@ -1,5 +1,3 @@
-;;(package-initialize)
-
 ;; wrapping the entire file in a let form causes some problems with editing/tools
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
@@ -116,9 +114,7 @@
           `(powerline-inactive1 ((t (:foreground ,bright-fg :background ,darker-bg))))
           `(powerline-inactive2 ((t (:foreground ,bright-fg :background ,dark-bg))))))))
 
-(use-package powerline
-  ;; :config (powerline-default-theme)
-  )
+(use-package powerline)
 
 (defun switch-to-theme (theme)
   (dolist (active-theme custom-enabled-themes)
@@ -126,16 +122,16 @@
   (when theme
     (load-theme theme t)))
 
-(use-package esup)
+(use-package esup :commands esup)
 
 ;;(use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
-(use-package color-theme-sanityinc-solarized)
+;;(use-package color-theme-sanityinc-solarized)
 ;;(use-package moe-theme)
 ;;(use-package base16-theme)
 ;;(use-package gruvbox-theme)
 
-(defun set-theme-and-powerline (_)
+(defun set-theme-and-powerline ()
   (cond
    ((or (eql custom-emacs-theme 'moe-dark)
         (eql custom-emacs-theme 'moe-light))
@@ -151,10 +147,7 @@
       (powerline-default-theme)
       (add-hook 'window-setup-hook 'powerline-default-theme)))))
 
-(set-theme-and-powerline nil)
-
-'(unless (null window-system)
-   (set-frame-size (selected-frame) 100 58))
+(set-theme-and-powerline)
 
 (use-package yasnippet
   :config
@@ -181,9 +174,7 @@
   (setq org-log-done t)
   (setq org-agenda-files (list "~/org/work.org" "~/org/self.org")))
 
-(use-package pkgbuild-mode
-  :config
-  (add-to-list 'auto-mode-alist '("/PKGBUILD$" . pkgbuild-mode)))
+(use-package pkgbuild-mode :mode "/PKGBUILD$")
 
 (use-package auto-complete
   :config
@@ -208,9 +199,7 @@
   (define-key global-map "\C-cpp" 'projectile-switch-project)
   (define-key global-map "\C-\M-g" 'projectile-grep)
   (setq projectile-use-git-grep t)
-  (add-to-list 'grep-find-ignored-files "*.log")
-  ;;(use-package helm-projectile)
-  )
+  (add-to-list 'grep-find-ignored-files "*.log"))
 
 (use-package smex
   :bind ("M-x" . smex)
@@ -218,15 +207,14 @@
 
 (use-package flycheck
   :config
-  (define-key flycheck-mode-map "\C-c." 'flycheck-next-error)
-  ;;(add-hook 'after-init-hook #'global-flycheck-mode)
-  )
+  (define-key flycheck-mode-map "\C-c." 'flycheck-next-error))
 
-(use-package less-css-mode)
+(use-package less-css-mode
+  :mode "\\.less\\'")
 
 (use-package web-mode
   :mode
-  "\\.js\\'" "\\.jsx\\'"
+  "\\.js\\'"  "\\.jsx\\'"
   :config
   (use-package tern
     :config
@@ -262,12 +250,10 @@
     (tern-mode t)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
-  (add-hook 'web-mode-hook 'my-web-mode-hook)
-  
-  )
+  (add-hook 'web-mode-hook 'my-web-mode-hook))
 
 (use-package jade-mode
-  :mode ("\\.jade\\'" . jade-mode))
+  :mode "\\.jade\\'")
 
 (use-package scala-mode
   :mode
@@ -304,10 +290,7 @@
   (ido-everywhere 1)
   (flx-ido-mode 1)
   (setq ido-enable-flex-matching t)
-  (setq ido-use-faces nil)
-  
-  ;;(use-package ido-ubiquitous :config (ido-ubiquitous-mode))
-  )
+  (setq ido-use-faces nil))
 
 (use-package mic-paren :config (paren-activate))
 
@@ -339,7 +322,6 @@
    (turn-off-smartparens-mode)
    (enable-paredit-mode)
    (eldoc-mode 1)))
-;; (enable-lispy 'emacs-lisp-mode-hook)
 
 (use-package clojure-mode
   :mode
@@ -581,7 +563,6 @@
 
 (do-xsel-copy-paste-setup)
 (add-hook 'window-setup-hook 'do-xsel-copy-paste-setup)
-
 
 (if (equal (user-login-name) "root")
     (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
