@@ -365,16 +365,20 @@
   (use-package cider
     :config
     ;;(setq cider-cljs-repl "(cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env))")
-    (setq cider-cljs-repl "(do (require 'cljs.repl.node) (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))")
+    ;;(setq cider-cljs-repl "(do (require 'cljs.repl.node) (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))")
+    (setq cider-cljs-lein-repl
+          "(do (require 'figwheel-sidecar.repl-api)
+           (figwheel-sidecar.repl-api/start-figwheel!)
+           (figwheel-sidecar.repl-api/cljs-repl))")
     ;;(setq cider-cljs-repl "(do (require 'weasel.repl.websocket) (cemerick.piggieback/cljs-repl (weasel.repl.websocket/repl-env :ip \"127.0.0.1\" :port 9001)))")
     (use-package ac-cider
       :config
       (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
       (add-hook 'cider-mode-hook 'ac-cider-setup)
       (add-hook 'cider-repl-mode-hook 'ac-cider-setup))
-    (require 'cider-eldoc)
-    (add-hook 'cider-mode-hook 'eldoc-mode)
-    (add-hook 'cider-repl-mode-hook 'eldoc-mode)
+    ;;(require 'cider-eldoc)
+    ;;(add-hook 'cider-mode-hook 'eldoc-mode)
+    ;;(add-hook 'cider-repl-mode-hook 'eldoc-mode)
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
     (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
