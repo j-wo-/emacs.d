@@ -8,7 +8,7 @@
 
 ;; raising gc-cons-threshold substantially improves Emacs startup time
 ;;(setq gc-cons-threshold 10000000)
-(setq gc-cons-threshold 40000000)
+(setq gc-cons-threshold 50000000)
 
 (set-language-environment "utf-8")
 
@@ -40,10 +40,13 @@
 
 (require 'use-package)
 (setq use-package-always-ensure t)
-(use-package f)
+
+'(use-package f)
+'(defun load-local (file)
+   (load (f-expand file user-emacs-directory)))
 
 (defun load-local (file)
-  (load (f-expand file user-emacs-directory)))
+  (load (locate-user-emacs-file file)))
 
 ;;(shell-command "~/bin/do-ssh-add")
 
@@ -469,6 +472,7 @@
 (add-hook 'java-mode-hook (lambda () (setq indent-tabs-mode nil)))
 
 (use-package tramp
+  :defer t
   :config
   (setq tramp-default-method "ssh"))
 
@@ -621,7 +625,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    )))
+    (lispy web-mode use-package systemd smex smartparens slime-annot projectile powerline pkgbuild-mode paren-face mic-paren magit less-css-mode jade-mode git-gutter-fringe ghc flycheck flx-ido f esup ensime elisp-slime-nav color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor aggressive-indent ac-slime ac-haskell-process ac-cider))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
