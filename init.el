@@ -7,8 +7,7 @@
 (setq initial-frame-alist '((left-fringe . 12) (right-fringe . 12)))
 
 ;; raising gc-cons-threshold substantially improves Emacs startup time
-;;(setq gc-cons-threshold 10000000)
-(setq gc-cons-threshold 40000000)
+(setq gc-cons-threshold 20000000)
 
 (set-language-environment "utf-8")
 
