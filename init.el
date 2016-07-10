@@ -8,7 +8,7 @@
 
 ;; raising gc-cons-threshold substantially improves Emacs startup time
 ;;(setq gc-cons-threshold 10000000)
-(setq gc-cons-threshold 50000000)
+(setq gc-cons-threshold 40000000)
 
 (set-language-environment "utf-8")
 
@@ -63,21 +63,6 @@
 (defun minor-mode-active-p (minor-mode)
   (if (member minor-mode (active-minor-modes)) t nil))
 
-(when nil
-  ;; calling these substantially increases Emacs startup time
-  ;; most are now set in .Xdefaults and loaded with xrdb -merge
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
-  (when window-system
-    (set-frame-font custom-font))
-  (when window-system
-    (set-frame-size (selected-frame) custom-frame-width custom-frame-height)))
-
-(when (null window-system)
-  ;; need to call this for terminal mode because the .Xdefaults settings won't apply
-  (menu-bar-mode -1))
-
 (use-package diminish)
 
 (setq vc-follow-symlinks t)
@@ -130,8 +115,6 @@
   (when theme
     (load-theme theme t)))
 
-(use-package esup :commands esup)
-
 ;;(use-package zenburn-theme)
 (use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
@@ -156,6 +139,23 @@
       (add-hook 'window-setup-hook 'powerline-default-theme)))))
 
 (set-theme-and-powerline)
+
+(when nil
+  ;; calling these substantially increases Emacs startup time
+  ;; most are now set in .Xdefaults and loaded with xrdb -merge
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+  (when window-system
+    (set-frame-font custom-font))
+  (when window-system
+    (set-frame-size (selected-frame) custom-frame-width custom-frame-height)))
+
+(when (null window-system)
+  ;; need to call this for terminal mode because the .Xdefaults settings won't apply
+  (menu-bar-mode -1))
+
+(use-package esup :commands esup)
 
 (use-package yasnippet
   :defer t
@@ -187,6 +187,7 @@
 (use-package pkgbuild-mode :mode "/PKGBUILD$")
 
 (use-package auto-complete
+  :defer 1
   :config
   (ac-config-default)
   (setq global-auto-complete-mode t)
@@ -219,6 +220,7 @@
   :config (smex-initialize))
 
 (use-package flycheck
+  :defer t
   :config
   (define-key flycheck-mode-map "\C-c." 'flycheck-next-error))
 
