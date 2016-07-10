@@ -1,14 +1,14 @@
-;; wrapping the entire file in a let form causes some problems with editing/tools
+;; Wrapping The entire file in a let form causes some problems with editing/tools
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
 ;; this value is approximately the default in Emacs 24,
 ;; but the fringes were much smaller by default in a dev snapshot of Emacs 25
-(setq initial-frame-alist '((left-fringe . 15) (right-fringe . 15)))
+(setq initial-frame-alist '((left-fringe . 12) (right-fringe . 12)))
 
 ;; raising gc-cons-threshold substantially improves Emacs startup time
 ;;(setq gc-cons-threshold 10000000)
-(setq gc-cons-threshold 25000000)
+(setq gc-cons-threshold 40000000)
 
 (set-language-environment "utf-8")
 
@@ -31,9 +31,12 @@
 
 (mapcar #'pin-stable '(cider clj-refactor slime web-mode tern js2-mode ac-cider magit))
 
-(when (not (package-installed-p 'use-package))
-  (package-refresh-contents)
-  (package-install 'use-package))
+(defun install-package-if-not (pkg)
+  (when (not (package-installed-p pkg))
+    (package-refresh-contents)
+    (package-install pkg)))
+
+(mapcar #'install-package-if-not '(use-package))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -44,8 +47,10 @@
 
 ;;(shell-command "~/bin/do-ssh-add")
 
-;; load values for options that may be different across machines
+;; Load values for options that may be different across machines
 (load-local "variables")
+;; Load these early so they'll be available for editing if an
+;; init error occurs later.
 (load-local "keys")
 (load-local "commands")
 
@@ -150,18 +155,20 @@
 (set-theme-and-powerline)
 
 (use-package yasnippet
-  :config
-  (diminish 'yas-minor-mode))
+  :defer t
+  :config (diminish 'yas-minor-mode))
 
 (require 'uniquify)
 (setq uniquify-buffer-name-style 'post-forward)
 
-(use-package aggressive-indent)
+(use-package aggressive-indent
+  :defer t)
 
-'(use-package lispy
-   :config 
-   (defun enable-lispy (mode-hook)
-     (add-hook mode-hook (lambda () (lispy-mode 1)))))
+(use-package lispy
+  :defer t
+  :config 
+  (defun enable-lispy (mode-hook)
+    (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
 (use-package systemd)
 
@@ -191,13 +198,16 @@
 ;;(use-package helm)
 
 (use-package projectile
+  :bind
+  ("\C-cpp" . projectile-switch-project)
+  ("\C-\M-g" . projectile-grep)
   :config
   (projectile-global-mode)
   (setq projectile-enable-caching nil)
   (setq projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
-  (define-key global-map "\C-cpp" 'projectile-switch-project)
-  (define-key global-map "\C-\M-g" 'projectile-grep)
+  ;;(define-key global-map "\C-cpp" 'projectile-switch-project)
+  ;;(define-key global-map "\C-\M-g" 'projectile-grep)
   (setq projectile-use-git-grep t)
   (add-to-list 'grep-find-ignored-files "*.log"))
 
@@ -292,9 +302,12 @@
   (setq ido-enable-flex-matching t)
   (setq ido-use-faces nil))
 
-(use-package mic-paren :config (paren-activate))
+(use-package mic-paren
+  :config (paren-activate))
 
-(use-package paren-face :config (global-paren-face-mode))
+(use-package paren-face
+  :defer t
+  :config (global-paren-face-mode))
 
 (use-package paredit
   :config
@@ -318,6 +331,8 @@
    (use-package elisp-slime-nav
      :config (diminish 'elisp-slime-nav-mode "M-."))
    (turn-on-elisp-slime-nav-mode)
+   (use-package paredit)
+   (use-package aggressive-indent)
    (aggressive-indent-mode)
    (turn-off-smartparens-mode)
    (enable-paredit-mode)
@@ -328,6 +343,9 @@
   ("\\.clj\\'" . clojure-mode)
   ("\\.cljs\\'" . clojurescript-mode)
   :config
+  (use-package paredit)
+  (use-package paren-face)
+  (use-package aggressive-indent)
   (defface square-brackets
     '((t (:foreground "#c0c43b"))) 'paren-face)
   (defface curly-brackets
@@ -458,15 +476,18 @@
   :init
   (setq slime-contribs '(slime-fancy slime-tramp))
   :config
+  (use-package paredit)
+  (use-package paren-face)
+  (use-package aggressive-indent)
   (add-hook 'lisp-mode-hook
             (lambda ()
               (setq-local lisp-indent-function
                           'common-lisp-indent-function)))
-    
+  
   (defvar sbcl-run-command "sbcl --dynamic-space-size 2000 --noinform")
   (defvar ccl-run-command "ccl64 -K utf-8")
   (defvar ecl-run-command "ecl")
-    
+  
   (setq inferior-lisp-program sbcl-run-command
         slime-net-coding-system 'utf-8-unix
         slime-complete-symbol-function 'slime-fuzzy-complete-symbol
@@ -513,7 +534,7 @@
   (add-hook 'lisp-mode-hook 'enable-paredit-mode)
   (add-hook 'slime-mode-hook 'enable-paredit-mode)
   (add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
-    
+  
   ;; (enable-lispy 'lisp-mode-hook)
   ;; (enable-lispy 'slime-mode-hook)
   ;; (enable-lispy 'slime-repl-mode-hook)
@@ -526,9 +547,17 @@
     (add-hook 'slime-mode-hook 'set-up-slime-ac-fuzzy)
     (add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy)))
 
-(if (null (window-system))
-    (use-package git-gutter)
-  (use-package git-gutter-fringe))
+(defun do-git-gutter-config ()
+  (define-key global-map "\C-xpp" 'git-gutter:popup-hunk)
+  (define-key global-map "\C-xpr" 'git-gutter:revert-hunk)
+  (define-key global-map "\C-xpn" 'git-gutter:next-hunk)
+  (define-key global-map "\C-xpb" 'git-gutter:previous-hunk))
+(use-package git-gutter-fringe
+  :if window-system
+  :config (do-git-gutter-config))
+(use-package git-gutter
+  :if (null window-system)
+  :config (do-git-gutter-config))
 
 (global-git-gutter-mode t)
 (diminish 'git-gutter-mode)
@@ -544,15 +573,20 @@
   (setq magit-completing-read-function 'magit-ido-completing-read)
   (diminish 'auto-revert-mode))
 
+;; This sets up terminal-mode Emacs instances to use the X shared clipboard
+;; for kill and yank commands.
+;;
+;; Emacs needs to be started after the X server for this to work.
+;; My solution is to run a script (/usr/local/bin/emacs-reload)
+;; in my i3wm config file to restart the emacs daemons upon
+;; logging into an X session.
 (defun xsel-paste ()
   (shell-command-to-string "xsel -ob"))
-
 (defun xsel-copy (text &optional push)
   (let ((process-connection-type nil))
     (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
       (process-send-string proc text)
       (process-send-eof proc))))
-
 (defun do-xsel-copy-paste-setup ()
   (when (and (null window-system)
              (getenv "DISPLAY")
@@ -560,14 +594,18 @@
              (not (equal (user-login-name) "root")))
     (setq interprogram-cut-function 'xsel-copy)
     (setq interprogram-paste-function 'xsel-paste)))
-
 (do-xsel-copy-paste-setup)
-(add-hook 'window-setup-hook 'do-xsel-copy-paste-setup)
 
+;; Make sure Emacs has the correct ssh-agent config,
+;; in order to use tramp and git commands without requesting a password.
 (if (equal (user-login-name) "root")
     (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
   (setenv "SSH_AUTH_SOCK" (concat (getenv "XDG_RUNTIME_DIR") "/ssh-agent.socket")))
 
+;; Need to make sure emacs server daemon and emacsclient
+;; are using the same path for the socket file.
+;; The path is set here, and the same is set in a script
+;; for starting emacsclient (/usr/local/bin/e).
 (setq server-socket-dir
       (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
 
@@ -579,7 +617,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (scala-mode cider zenburn-theme web-mode use-package systemd smex smartparens smart-mode-line-powerline-theme slime-annot request projectile prodigy popwin pkgbuild-mode paren-face pallet nyan-mode moe-theme mic-paren material-theme magit lispy less-css-mode json-mode js2-mode ido-ubiquitous idle-highlight-mode htmlize gruvbox-theme git-gutter-fringe ghc flycheck-cask flx-ido expand-region exec-path-from-shell esup ensime elisp-slime-nav drag-stuff color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor base16-theme aggressive-indent ac-slime ac-haskell-process ac-cider))))
+    )))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
