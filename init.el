@@ -177,6 +177,7 @@
 (use-package systemd)
 
 (use-package nginx-mode
+  :mode "/nginx.conf$" "\\.nginx-site\\'"
   :config
   (add-hook 'nginx-mode-hook #'aggressive-indent-mode))
 
