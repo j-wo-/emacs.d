@@ -174,6 +174,10 @@
 
 (use-package systemd)
 
+(use-package nginx-mode
+  :config
+  (add-hook 'nginx-mode-hook #'aggressive-indent-mode))
+
 (use-package org
   :commands org-agenda org-store-link org-capture
   :config
