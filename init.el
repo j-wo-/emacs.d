@@ -106,7 +106,9 @@
           `(powerline-inactive1 ((t (:foreground ,bright-fg :background ,darker-bg))))
           `(powerline-inactive2 ((t (:foreground ,bright-fg :background ,dark-bg))))))))
 
-(use-package powerline)
+(use-package powerline
+  :config
+  (setq powerline-display-buffer-size nil))
 
 (defun switch-to-theme (theme)
   (dolist (active-theme custom-enabled-themes)
@@ -158,7 +160,7 @@
 
 (use-package yasnippet
   :defer t
-  :config (diminish 'yas-minor-mode))
+  :diminish yas-minor-mode)
 
 (require 'uniquify)
 (setq uniquify-buffer-name-style 'post-forward)
@@ -201,6 +203,10 @@
                          (if (not (minibufferp (current-buffer)))
                              (auto-complete-mode 1))))
   (real-global-auto-complete-mode t))
+
+(use-package company
+  :diminish (company-mode . "CC")
+  :defer t)
 
 ;;(use-package helm)
 
@@ -281,12 +287,13 @@
   ;;(setq scala-indent:default-run-on-strategy 1)
   ;;(setq scala-indent:indent-value-expression nil)
   (use-package ensime
+    :diminish ensime-mode
     :config
     (setq ensime-startup-snapshot-notification nil)
     (setq ensime-auto-generate-config t)
     (setq ensime-typecheck-idle-interval 0.3)
     (setq ensime-completion-style 'company)
-    (use-package company :config (diminish 'company-mode))
+    (use-package company)
     (add-hook 'scala-mode-hook (lambda () (auto-complete-mode -1)))
     '(add-hook 'scala-mode-hook
                (lambda ()
@@ -318,13 +325,12 @@
   :config (global-paren-face-mode))
 
 (use-package paredit
+  :diminish (paredit-mode "()")
   :config
   (define-globalized-minor-mode real-global-paredit-mode
     paredit-mode (lambda ()
                    (if (not (minibufferp (current-buffer)))
-                       (enable-paredit-mode))))
-  ;;(real-global-paredit-mode t)
-  (diminish 'paredit-mode "()"))
+                       (enable-paredit-mode)))))
 
 (use-package smartparens
   :config
@@ -336,8 +342,7 @@
  'emacs-lisp-mode-hook
  (lambda ()
    (use-package ielm)
-   (use-package elisp-slime-nav
-     :config (diminish 'elisp-slime-nav-mode "M-."))
+   (use-package elisp-slime-nav :diminish (elisp-slime-nav-mode . "M-."))
    (turn-on-elisp-slime-nav-mode)
    (use-package paredit)
    (use-package aggressive-indent)
@@ -371,6 +376,7 @@
      (when (called-interactively-p 'any)
        (font-lock-fontify-buffer))))
   (use-package cider
+    :diminish cider-mode
     :config
     ;;(setq cider-cljs-repl "(cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env))")
     ;;(setq cider-cljs-repl "(do (require 'cljs.repl.node) (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))")
@@ -442,8 +448,8 @@
     (setq cider-repl-popup-stacktraces t)
     (setq cider-auto-select-error-buffer t))
   (setq cider-prompt-for-symbol nil)
-  (diminish 'cider-mode)
   (use-package clj-refactor
+    :diminish clj-refactor-mode
     :config
     (defun clj-refactor-clojure-mode-hook ()
       (clj-refactor-mode 1)
@@ -451,8 +457,7 @@
       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
       (cljr-add-keybindings-with-prefix "C-c C-m"))
     (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)
-    (add-hook 'clojurescript-mode-hook 'clj-refactor-clojure-mode-hook)
-    (diminish 'clj-refactor-mode)))
+    (add-hook 'clojurescript-mode-hook 'clj-refactor-clojure-mode-hook)))
 
 (use-package haskell-mode
   :mode "\\.hs\\'" "\\.hs-boot\\'" "\\.lhs\\'" "\\.lhs-boot\\'"
@@ -564,16 +569,16 @@
   (define-key global-map "\C-xpp" 'git-gutter:popup-hunk)
   (define-key global-map "\C-xpr" 'git-gutter:revert-hunk)
   (define-key global-map "\C-xpn" 'git-gutter:next-hunk)
-  (define-key global-map "\C-xpb" 'git-gutter:previous-hunk))
+  (define-key global-map "\C-xpb" 'git-gutter:previous-hunk)
+  (global-git-gutter-mode t))
 (use-package git-gutter-fringe
+  :diminish git-gutter-mode
   :if window-system
   :config (do-git-gutter-config))
 (use-package git-gutter
+  :diminish git-gutter-mode
   :if (null window-system)
   :config (do-git-gutter-config))
-
-(global-git-gutter-mode t)
-(diminish 'git-gutter-mode)
 
 (define-key global-map (kbd "C-x g") 'magit-status)
 (define-key global-map (kbd "C-x C-g") 'magit-dispatch-popup)
