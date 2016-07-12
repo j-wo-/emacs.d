@@ -70,6 +70,17 @@
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 
+;; Add a hook to convert all tabs to spaces when saving any file,
+;; unless its buffer mode is set to use tabs for indentation.
+;;
+;; (eg. makefile-gmake-mode will set indent-tabs-mode to t,
+;;  so the syntactic tabs in Makefile files will be maintained)
+(add-hook 'write-file-hooks
+          (lambda ()
+            (when (not indent-tabs-mode)
+              (untabify (point-min) (point-max))
+              nil)))
+
 (cond ((or (eql custom-emacs-theme 'moe-dark)
            (eql custom-emacs-theme 'moe-light))
        nil)
