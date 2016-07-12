@@ -224,6 +224,7 @@
 
 (use-package projectile
   :bind
+  ("\C-cpf" . projectile-find-file)
   ("\C-cpp" . projectile-switch-project)
   ("\C-\M-g" . projectile-grep)
   :config
@@ -231,8 +232,6 @@
   (setq projectile-enable-caching nil)
   (setq projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
-  ;;(define-key global-map "\C-cpp" 'projectile-switch-project)
-  ;;(define-key global-map "\C-\M-g" 'projectile-grep)
   (setq projectile-use-git-grep t)
   (add-to-list 'grep-find-ignored-files "*.log"))
 
