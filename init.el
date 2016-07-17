@@ -204,7 +204,7 @@
 (use-package pkgbuild-mode :mode "/PKGBUILD$")
 
 (use-package auto-complete
-  :defer 1
+  :defer 0.25
   :config
   (ac-config-default)
   (setq global-auto-complete-mode t)
@@ -226,12 +226,12 @@
   :bind
   ("\C-cpf" . projectile-find-file)
   ("\C-cpp" . projectile-switch-project)
-  ("\C-\M-g" . projectile-grep)
   :config
   (projectile-global-mode)
   (setq projectile-enable-caching nil)
   (setq projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
+  (define-key global-map "\C-\M-g" #'projectile-grep)
   (setq projectile-use-git-grep t)
   (add-to-list 'grep-find-ignored-files "*.log"))
 
@@ -249,7 +249,7 @@
 
 (use-package web-mode
   :mode
-  "\\.js\\'"  "\\.jsx\\'"
+  "\\.js\\'" "\\.jsx\\'" "\\.json\\'"
   :config
   (use-package tern
     :config
@@ -552,6 +552,7 @@
      ((equal inferior-lisp-program ccl-run-command)
       (kill-buffer "*slime-repl ccl*"))))
 
+  (use-package projectile)
   (add-to-list 'projectile-globally-ignored-modes "comint-mode")
   (add-to-list 'projectile-globally-ignored-modes "slime-repl-mode")
 
