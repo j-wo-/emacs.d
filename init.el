@@ -28,7 +28,9 @@
 (defun pin-stable (pkg)
   (add-to-list 'package-pinned-packages (cons pkg "melpa-stable") t))
 
-(mapcar #'pin-stable '(cider clj-refactor slime web-mode tern js2-mode ac-cider magit))
+(mapcar #'pin-stable
+        '(slime cider clj-refactor ac-cider web-mode js2-mode tern
+                magit markdown-mode))
 
 (defun install-package-if-not (pkg)
   (when (not (package-installed-p pkg))
@@ -186,6 +188,15 @@
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
 (use-package systemd)
+
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown")
+  :config
+  (use-package gh-md))
 
 (use-package nginx-mode
   :mode "/nginx.conf$" "\\.nginx-site\\'"
