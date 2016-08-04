@@ -1,4 +1,4 @@
-;; Wrapping The entire file in a let form causes some problems with editing/tools
+;; wrapping the entire file in a let form causes some problems with editing/tools
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
@@ -29,7 +29,7 @@
   (add-to-list 'package-pinned-packages (cons pkg "melpa-stable") t))
 
 (mapcar #'pin-stable
-        '(slime cider clj-refactor ac-cider web-mode js2-mode tern
+        '(slime cider ac-cider clj-refactor web-mode js2-mode tern
                 magit markdown-mode))
 
 (defun install-package-if-not (pkg)
@@ -102,7 +102,9 @@
           `(powerline-active1 ((t (:foreground ,bright-fg :background ,bright-active))))
           `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
           `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,bright-inactive))))
-          `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg)))))))
+          `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg))))
+          `(popup-face ((t (:foreground "#dddddd" :background ,bright-inactive))))
+          `(popup-tip-face ((t (:foreground "#dddddd" :background ,bright-active)))))))
       (nil
        (let ((dark-bg "#404040")
              (darker-bg "#181818")
@@ -218,6 +220,10 @@
   :defer 0.25
   :config
   (ac-config-default)
+  (setq ac-delay 0.025)
+  (setq ac-max-width 50)
+  (setq ac-auto-show-menu 0.4)
+  (setq ac-quick-help-delay 1.0)
   (setq global-auto-complete-mode t)
   (setq ac-use-dictionary-as-stop-words nil)
   (setq ac-use-fuzzy t)
@@ -229,7 +235,11 @@
 
 (use-package company
   :diminish (company-mode . "CC")
-  :defer t)
+  :config
+  (setq company-minimum-prefix-length 2)
+  (setq company-idle-delay 0.05)
+  ;;(add-hook 'after-init-hook 'global-company-mode)
+  )
 
 ;;(use-package helm)
 
@@ -415,18 +425,23 @@
     ;;(require 'cider-eldoc)
     ;;(add-hook 'cider-mode-hook 'eldoc-mode)
     ;;(add-hook 'cider-repl-mode-hook 'eldoc-mode)
+    ;;(use-package company)
+    '(progn
+       (add-hook 'clojure-mode-hook (lambda () (auto-complete-mode -1)))
+       (add-hook 'clojurescript-mode-hook (lambda () (auto-complete-mode -1)))
+       (add-hook 'cider-repl-mode-hook (lambda () (auto-complete-mode -1)))
+       (add-hook 'clojure-mode-hook #'company-mode)
+       (add-hook 'clojurescript-mode-hook #'company-mode)
+       (add-hook 'cider-repl-mode-hook #'company-mode))
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
     (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojurescript-mode-hook #'aggressive-indent-mode)
-    (add-hook 'cider-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'clojurescript-mode-hook 'turn-off-smartparens-mode)
-    (add-hook 'cider-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'clojure-mode-hook 'enable-paredit-mode)
     (add-hook 'clojurescript-mode-hook 'enable-paredit-mode)
-    (add-hook 'cider-mode-hook 'enable-paredit-mode)
     (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
     (defun my-cider-reload-repl-ns ()
       (cider-nrepl-request:eval
@@ -514,6 +529,7 @@
   ("\\.lisp\\'" . lisp-mode)
   ("\\.asd\\'" . lisp-mode)
   :init
+  ;;(setq slime-contribs '(slime-fancy slime-tramp slime-company))
   (setq slime-contribs '(slime-fancy slime-tramp))
   :config
   (use-package paredit)
@@ -581,6 +597,7 @@
   ;; (enable-lispy 'slime-repl-mode-hook)
 
   (use-package slime-annot)
+  ;;(use-package slime-company)
   (use-package ac-slime
     :config
     (defun set-up-slime-ac-fuzzy ()
