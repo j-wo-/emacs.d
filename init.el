@@ -27,6 +27,11 @@
 
 (defun pin-stable (pkg)
   (add-to-list 'package-pinned-packages (cons pkg "melpa-stable") t))
+(defun unpin-pkg (pkg)
+  (setq package-pinned-packages
+        (remove-if (lambda (x)
+                     (eql (first x) pkg))
+                   package-pinned-packages)))
 
 (mapcar #'pin-stable
         '(slime cider ac-cider clj-refactor web-mode js2-mode tern
