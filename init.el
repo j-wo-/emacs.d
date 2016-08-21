@@ -89,7 +89,9 @@
 (cond ((and window-system
             (or (eql custom-emacs-theme 'moe-dark)
                 (eql custom-emacs-theme 'moe-light)))
-       nil)
+       (custom-set-faces
+        `(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
+        `(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))))
       ((or (eql custom-emacs-theme 'sanityinc-tomorrow-night)
            (eql custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)
            t)
@@ -686,9 +688,6 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(mode-line ((t (:foreground "#888888" :background "#303030" :box (:line-width 2 :color "#505050")))))
- '(mode-line-buffer-id ((t (:foreground "#81a2be" :background "#303030"))))
- '(mode-line-inactive ((t (:foreground "#555756" :background "#303030" :box (:line-width 2 :color "#303030")))))
  '(powerline-active1 ((t (:foreground "#babcba" :background "#505050"))))
  '(powerline-active2 ((t (:foreground "#babcba" :background "#303030"))))
  '(powerline-inactive1 ((t (:foreground "#555756" :background "#383838"))))
