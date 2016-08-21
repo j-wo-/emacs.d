@@ -358,6 +358,7 @@
   :config (paren-activate))
 
 (use-package paren-face
+  :defer t
   :config
   (global-paren-face-mode)
   (face-spec-set 'parenthesis '((t (:foreground "#999999"))))
@@ -395,6 +396,7 @@
 (add-hook
  'emacs-lisp-mode-hook
  (lambda ()
+   (use-package paren-face)
    (use-package ielm)
    (use-package elisp-slime-nav :diminish (elisp-slime-nav-mode . "M-."))
    (turn-on-elisp-slime-nav-mode)
