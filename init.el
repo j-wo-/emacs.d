@@ -34,7 +34,7 @@
                    package-pinned-packages)))
 
 (mapcar #'pin-stable
-        '(slime cider ac-cider clj-refactor web-mode js2-mode tern
+        '(slime cider clj-refactor web-mode js2-mode tern
                 magit markdown-mode))
 
 (defun install-package-if-not (pkg)
@@ -46,10 +46,6 @@
 
 (require 'use-package)
 (setq use-package-always-ensure t)
-
-'(use-package f)
-'(defun load-local (file)
-   (load (f-expand file user-emacs-directory)))
 
 (defun load-local (file)
   (load (locate-user-emacs-file file)))
@@ -69,7 +65,9 @@
 (defun minor-mode-active-p (minor-mode)
   (if (member minor-mode (active-minor-modes)) t nil))
 
-(use-package diminish)
+(use-package diminish
+  :config
+  (diminish 'eldoc-mode))
 
 (setq vc-follow-symlinks t)
 (setq make-backup-files nil)
@@ -88,8 +86,9 @@
               (untabify (point-min) (point-max))
               nil)))
 
-(cond ((or (eql custom-emacs-theme 'moe-dark)
-           (eql custom-emacs-theme 'moe-light))
+(cond ((and window-system
+            (or (eql custom-emacs-theme 'moe-dark)
+                (eql custom-emacs-theme 'moe-light)))
        nil)
       ((or (eql custom-emacs-theme 'sanityinc-tomorrow-night)
            (eql custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)
@@ -137,29 +136,28 @@
     (load-theme theme t)))
 
 ;;(use-package zenburn-theme)
-(use-package color-theme-sanityinc-tomorrow)
+;;(use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
-;;(use-package moe-theme)
+(use-package moe-theme)
 ;;(use-package base16-theme)
 ;;(use-package gruvbox-theme)
+;;(use-package material-theme)
+;;(use-package ample-theme)
 
-(defun set-theme-and-powerline ()
-  (cond
-   ((or (eql custom-emacs-theme 'moe-dark)
-        (eql custom-emacs-theme 'moe-light))
-    (progn
-      (if (eql custom-emacs-theme 'moe-dark)
-          (moe-dark)
-        (moe-light))
-      (powerline-moe-theme)
-      (add-hook 'window-setup-hook 'powerline-moe-theme)))
-   (t
-    (progn
-      (switch-to-theme custom-emacs-theme)
-      (powerline-default-theme)
-      (add-hook 'window-setup-hook 'powerline-default-theme)))))
-
-(set-theme-and-powerline)
+(cond ((eql custom-emacs-theme 'moe-dark)
+       (moe-dark))
+      ((eql custom-emacs-theme 'moe-light)
+       (moe-light))
+      (t
+       (switch-to-theme custom-emacs-theme)))
+(cond ((and window-system
+            (or (eql custom-emacs-theme 'moe-dark)
+                (eql custom-emacs-theme 'moe-light)))
+       (powerline-moe-theme)
+       (add-hook 'window-setup-hook 'powerline-moe-theme))
+      (t
+       (powerline-default-theme)
+       (add-hook 'window-setup-hook 'powerline-default-theme)))
 
 (when nil
   ;; calling these substantially increases Emacs startup time
@@ -358,8 +356,25 @@
   :config (paren-activate))
 
 (use-package paren-face
-  :defer t
-  :config (global-paren-face-mode))
+  :config
+  (global-paren-face-mode)
+  (face-spec-set 'parenthesis '((t (:foreground "#999999"))))
+  (defface square-brackets
+    '((t (:foreground "#c0c43b"))) 'paren-face)
+  (defface curly-brackets
+    '((t (:foreground "#50a838"))) 'paren-face)
+  (defconst clojure-brackets-keywords
+    '(("\\[" 0 'square-brackets)
+      ("\\]" 0 'square-brackets)
+      ("[\\{\\}]" 0 'curly-brackets)))
+  (add-hook
+   'paren-face-mode-hook
+   (lambda ()
+     (if paren-face-mode
+         (font-lock-add-keywords nil clojure-brackets-keywords t)
+       (font-lock-remove-keywords nil clojure-brackets-keywords))
+     (when (called-interactively-p 'any)
+       (font-lock-fontify-buffer)))))
 
 (use-package paredit
   :diminish (paredit-mode "()")
@@ -396,22 +411,7 @@
   (use-package paredit)
   (use-package paren-face)
   (use-package aggressive-indent)
-  (defface square-brackets
-    '((t (:foreground "#c0c43b"))) 'paren-face)
-  (defface curly-brackets
-    '((t (:foreground "#50a838"))) 'paren-face)
-  (defconst clojure-brackets-keywords
-    '(("\\[" 0 'square-brackets)
-      ("\\]" 0 'square-brackets)
-      ("[\\{\\}]" 0 'curly-brackets)))
-  (add-hook
-   'paren-face-mode-hook
-   (lambda ()
-     (if paren-face-mode
-         (font-lock-add-keywords nil clojure-brackets-keywords t)
-       (font-lock-remove-keywords nil clojure-brackets-keywords))
-     (when (called-interactively-p 'any)
-       (font-lock-fontify-buffer))))
+  
   (use-package cider
     :diminish cider-mode
     :config
