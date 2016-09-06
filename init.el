@@ -13,6 +13,7 @@
 
 (setq custom-safe-themes t)
 (setq auto-save-default nil)
+(global-auto-revert-mode t)
 
 (require 'cl)
 
@@ -49,6 +50,8 @@
 
 (defun load-local (file)
   (load (locate-user-emacs-file file)))
+
+(use-package dash)
 
 ;;(shell-command "~/bin/do-ssh-add")
 
