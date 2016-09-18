@@ -38,12 +38,25 @@
         '(slime cider clj-refactor web-mode js2-mode tern
                 magit markdown-mode))
 
-(defun install-package-if-not (pkg)
-  (when (not (package-installed-p pkg))
-    (package-refresh-contents)
-    (package-install pkg)))
+;; Install use-package from MELPA if needed
+;; Allows automatic bootstrap from empty elpa library
+(when (not (package-installed-p 'use-package))
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-(mapcar #'install-package-if-not '(use-package))
+(defmacro ensure-installed (&rest pkgs)
+  `(progn
+     ,@(mapcar (lambda (pkg)
+                 `(when (not (package-installed-p ',pkg))
+                    (use-package ,pkg)))
+               pkgs)))
+
+;; This is to get around an infinite recursion when bootstrapping
+;; in emacs-lisp-mode-hook
+(ensure-installed paren-face
+                  elisp-slime-nav
+                  paredit
+                  aggressive-indent)
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -400,7 +413,7 @@
  'emacs-lisp-mode-hook
  (lambda ()
    (use-package paren-face)
-   (use-package ielm)
+   (require 'ielm)
    (use-package elisp-slime-nav :diminish (elisp-slime-nav-mode . "M-."))
    (turn-on-elisp-slime-nav-mode)
    (use-package paredit)
