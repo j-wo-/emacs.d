@@ -310,7 +310,7 @@
     (defun my-js2-mode-hook ()
       (setq js2-basic-offset 2)
       (flycheck-mode 1)
-      (tern-mode t)
+      ;;(tern-mode t)
       (when (executable-find "eslint")
         (flycheck-select-checker 'javascript-eslint)))
     (add-hook 'js2-mode-hook 'my-js2-mode-hook)
@@ -324,7 +324,7 @@
     (setq web-mode-css-indent-offset 2)
     (setq web-mode-code-indent-offset 2)
     (flycheck-mode 1)
-    (tern-mode t)
+    ;;(tern-mode t)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
   (add-hook 'web-mode-hook 'my-web-mode-hook))
@@ -417,10 +417,12 @@
    (use-package elisp-slime-nav :diminish (elisp-slime-nav-mode . "M-."))
    (turn-on-elisp-slime-nav-mode)
    (use-package paredit)
+   ;; (use-package lispy)
    (use-package aggressive-indent)
    (aggressive-indent-mode)
    (turn-off-smartparens-mode)
    (enable-paredit-mode)
+   ;; (lispy-mode 1)
    (eldoc-mode 1)))
 
 (use-package clojure-mode
@@ -429,6 +431,7 @@
   ("\\.cljs\\'" . clojurescript-mode)
   :config
   (use-package paredit)
+  ;; (use-package lispy)
   (use-package paren-face)
   (use-package aggressive-indent)
   
@@ -437,6 +440,7 @@
     :config
     ;;(setq cider-cljs-repl "(cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env))")
     ;;(setq cider-cljs-repl "(do (require 'cljs.repl.node) (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))")
+    (setq cider-repl-use-pretty-printing t)
     (setq cider-cljs-lein-repl
           "(do (require 'figwheel-sidecar.repl-api)
            (figwheel-sidecar.repl-api/start-figwheel!)
@@ -515,7 +519,7 @@
     :config
     (defun clj-refactor-clojure-mode-hook ()
       (clj-refactor-mode 1)
-      (yas-minor-mode 1) ; for adding require/use/import statements
+      (yas-minor-mode 1)    ; for adding require/use/import statements
       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
       (cljr-add-keybindings-with-prefix "C-c C-m"))
     (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)
@@ -558,6 +562,7 @@
   (setq slime-contribs '(slime-fancy slime-tramp))
   :config
   (use-package paredit)
+  ;; (use-package lispy)
   (use-package paren-face)
   (use-package aggressive-indent)
   (add-hook 'lisp-mode-hook
@@ -700,12 +705,17 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (lispy web-mode use-package systemd smex smartparens slime-annot projectile powerline pkgbuild-mode paren-face mic-paren magit less-css-mode jade-mode git-gutter-fringe ghc flycheck flx-ido f esup ensime elisp-slime-nav color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor aggressive-indent ac-slime ac-haskell-process ac-cider))))
+    (js2-mode gh-md cider yasnippet ivy hydra company avy tern-auto-complete tern swiper scala-mode sbt-mode s popup multiple-cursors moe-theme magit-popup iedit haskell-mode git-gutter git-commit clojure-mode auto-complete auto-revert-mode auto-revert lispy web-mode use-package systemd smex smartparens slime-annot projectile powerline pkgbuild-mode paren-face mic-paren magit less-css-mode jade-mode git-gutter-fringe ghc flycheck flx-ido f esup ensime elisp-slime-nav color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor aggressive-indent ac-slime ac-haskell-process ac-cider))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(mode-line ((t (:foreground "#888888" :background "#303030" :box (:line-width 2 :color "#505050")))))
+ '(mode-line-buffer-id ((t (:foreground "#81a2be" :background "#303030"))))
+ '(mode-line-inactive ((t (:foreground "#555756" :background "#303030" :box (:line-width 2 :color "#303030")))))
+ '(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
+ '(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))
  '(powerline-active1 ((t (:foreground "#babcba" :background "#505050"))))
  '(powerline-active2 ((t (:foreground "#babcba" :background "#303030"))))
  '(powerline-inactive1 ((t (:foreground "#555756" :background "#383838"))))

@@ -1,26 +1,20 @@
 (setq custom-frame-width 100)
 (setq custom-frame-height 58)
 
-;;(setq custom-font "Inconsolata for Powerline:pixelsize=33")
-;;(setq custom-font "Inconsolata for Powerline:pixelsize=36")
-;;(setq custom-font "Sauce Code Pro Medium:pixelsize=30")
-;;(setq custom-font "Sauce Code Pro:pixelsize=30")
-
 (setq custom-emacs-theme 'moe-dark)
-;;(setq custom-emacs-theme 'sanityinc-tomorrow-night)
-;;(setq custom-emacs-theme 'sanityinc-solarized-light)
-;;(setq custom-emacs-theme 'gruvbox)
-;;(setq custom-emacs-theme 'base16-default-dark)
-;;(setq custom-emacs-theme 'material)
-;;(switch-to-theme custom-emacs-theme)
-'(if (null window-system)
-     (setq custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)
-   (setq custom-emacs-theme 'sanityinc-tomorrow-night))
-'(if (null window-system)
-     (setq custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)
-   (setq custom-emacs-theme 'sanityinc-solarized-light))
+;;
+;; 'moe-dark
+;; 'sanityinc-tomorrow-night
+;; 'sanityinc-solarized-light
+;; 'gruvbox
+;; 'base16-default-dark
+;; 'material
+;;
+;; (switch-to-theme custom-emacs-theme)
+;;
+(when (and (eql custom-emacs-theme 'sanityinc-tomorrow-night)
+	   (null window-system))
+  (setq custom-emacs-theme 'sanityinc-tomorrow-night-rxvt))
 
+;;(set-frame-font "Sauce Code Pro Medium:pixelsize=30")
 ;;(set-frame-font "Inconsolata for Powerline:pixelsize=33")
-;;(set-frame-font "Source Code Pro Medium:pixelsize=29")
-;;(set-frame-font "Sauce Code Pro Medium:pixelsize=29")
-;;(set-frame-font "Sauce Code Pro:pixelsize=29")
