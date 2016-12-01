@@ -29,3 +29,11 @@
          (files (directory-files default-directory t ext-re)))
     (dolist (f files nil)
       (fully-indent-file f))))
+
+(defun nxml-pretty-format ()
+  (interactive)
+  (save-excursion
+    (shell-command-on-region (point-min) (point-max)
+                             "xmllint --format -" (buffer-name) t)
+    (nxml-mode)
+    (indent-region (point-min) (point-max))))

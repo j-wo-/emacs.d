@@ -36,7 +36,7 @@
 
 (mapcar #'pin-stable
         '(slime cider clj-refactor web-mode js2-mode tern
-                magit markdown-mode))
+                magit markdown-mode ido-completing-read+))
 
 ;; Install use-package from MELPA if needed
 ;; Allows automatic bootstrap from empty elpa library
@@ -657,6 +657,7 @@
   :commands magit-status magit-push magit-pull
   :init (setq magit-last-seen-setup-instructions "1.4.0")
   :config
+  (use-package ido-completing-read+)
   (setq magit-revert-buffers t)
   (setq magit-completing-read-function 'magit-ido-completing-read)
   (diminish 'auto-revert-mode))
