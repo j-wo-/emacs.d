@@ -75,6 +75,17 @@
 (load-local "keys")
 (load-local "commands")
 
+(defun autoset-window-margins ()
+  (dolist (w (window-list (selected-frame)))
+    (let* ((ws (window-size w t))
+           (ms (- (floor (/ (- ws custom-frame-width) 2))
+                  1)))
+      (if (> ms 2)
+          (set-window-margins w ms ms)
+        (set-window-margins w 0 0)))))
+
+(add-hook 'window-configuration-change-hook 'autoset-window-margins)
+
 (defun active-minor-modes ()
   (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
 
@@ -153,10 +164,10 @@
   (when theme
     (load-theme theme t)))
 
-;;(use-package zenburn-theme)
+(use-package zenburn-theme)
 ;;(use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
-(use-package moe-theme)
+;;(use-package moe-theme)
 ;;(use-package base16-theme)
 ;;(use-package gruvbox-theme)
 ;;(use-package material-theme)
@@ -706,18 +717,19 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (js2-mode gh-md cider yasnippet ivy hydra company avy tern-auto-complete tern swiper scala-mode sbt-mode s popup multiple-cursors moe-theme magit-popup iedit haskell-mode git-gutter git-commit clojure-mode auto-complete auto-revert-mode auto-revert lispy web-mode use-package systemd smex smartparens slime-annot projectile powerline pkgbuild-mode paren-face mic-paren magit less-css-mode jade-mode git-gutter-fringe ghc flycheck flx-ido f esup ensime elisp-slime-nav color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor aggressive-indent ac-slime ac-haskell-process ac-cider))))
+    (zenburn-theme ido-completing-read+ js2-mode gh-md cider yasnippet ivy hydra company avy tern-auto-complete tern swiper scala-mode sbt-mode s popup multiple-cursors moe-theme magit-popup iedit haskell-mode git-gutter git-commit clojure-mode auto-complete auto-revert-mode auto-revert lispy web-mode use-package systemd smex smartparens slime-annot projectile powerline pkgbuild-mode paren-face mic-paren magit less-css-mode jade-mode git-gutter-fringe ghc flycheck flx-ido f esup ensime elisp-slime-nav color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor aggressive-indent ac-slime ac-haskell-process ac-cider))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(mode-line ((t (:foreground "#888888" :background "#303030" :box (:line-width 2 :color "#505050")))))
- '(mode-line-buffer-id ((t (:foreground "#81a2be" :background "#303030"))))
- '(mode-line-inactive ((t (:foreground "#555756" :background "#303030" :box (:line-width 2 :color "#303030")))))
+ ;;'(mode-line ((t (:foreground "#888888" :background "#303030" :box (:line-width 2 :color "#505050")))))
+ ;;'(mode-line-buffer-id ((t (:foreground "#81a2be" :background "#303030"))))
+ ;;'(mode-line-inactive ((t (:foreground "#555756" :background "#303030" :box (:line-width 2 :color "#303030")))))
  '(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
  '(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))
- '(powerline-active1 ((t (:foreground "#babcba" :background "#505050"))))
- '(powerline-active2 ((t (:foreground "#babcba" :background "#303030"))))
- '(powerline-inactive1 ((t (:foreground "#555756" :background "#383838"))))
- '(powerline-inactive2 ((t (:foreground "#555756" :background "#303030")))))
+ ;;'(powerline-active1 ((t (:foreground "#babcba" :background "#505050"))))
+ ;;'(powerline-active2 ((t (:foreground "#babcba" :background "#303030"))))
+ ;;'(powerline-inactive1 ((t (:foreground "#555756" :background "#383838"))))
+ ;;'(powerline-inactive2 ((t (:foreground "#555756" :background "#303030"))))
+ )
