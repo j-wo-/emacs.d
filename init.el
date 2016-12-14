@@ -78,9 +78,10 @@
 (defun autoset-window-margins ()
   (dolist (w (window-list (selected-frame)))
     (let* ((ws (window-size w t))
-           (ms (- (floor (/ (- ws custom-frame-width) 2))
-                  1)))
-      (if (> ms 2)
+           (mtotal (min (- ws custom-frame-width 1)
+                        (- (floor (/ ws 2)) 4)))
+           (ms (floor (/ mtotal 2))))
+      (if (>= ms 2)
           (set-window-margins w ms ms)
         (set-window-margins w 0 0)))))
 
@@ -164,7 +165,10 @@
   (when theme
     (load-theme theme t)))
 
-(use-package zenburn-theme)
+(use-package base16-theme)
+(use-package color-theme-sanityinc-tomorrow)
+(when (eql custom-emacs-theme 'zenburn)
+  (use-package zenburn-theme))
 ;;(use-package color-theme-sanityinc-tomorrow)
 ;;(use-package color-theme-sanityinc-solarized)
 ;;(use-package moe-theme)

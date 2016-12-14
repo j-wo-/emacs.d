@@ -1,8 +1,11 @@
 (setq custom-frame-width 100)
 (setq custom-frame-height 58)
 
-(setq custom-emacs-theme 'zenburn)
+(if window-system
+    (setq custom-emacs-theme 'zenburn)
+  (setq custom-emacs-theme 'sanityinc-tomorrow-night))
 ;;
+;; 'zenburn
 ;; 'moe-dark
 ;; 'sanityinc-tomorrow-night
 ;; 'sanityinc-solarized-light
@@ -16,6 +19,6 @@
            (null window-system))
   (setq custom-emacs-theme 'sanityinc-tomorrow-night-rxvt))
 
-;;(set-frame-font "Sauce Code Pro:pixelsize=34")
+;;(set-frame-font "Sauce Code Pro Medium:pixelsize=32")
 ;;(set-frame-font "Inconsolata for Powerline:pixelsize=42")
-;;(window-size (selected-window) t)
+;;(window-size (selected-window))
