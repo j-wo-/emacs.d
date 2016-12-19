@@ -81,7 +81,7 @@
            (mtotal (min (- ws custom-frame-width 1)
                         (- (floor (/ ws 2)) 4)))
            (ms (floor (/ mtotal 2))))
-      (if (>= ms 2)
+      (if (>= ms 4)
           (set-window-margins w ms ms)
         (set-window-margins w 0 0)))))
 

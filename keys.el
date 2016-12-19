@@ -21,6 +21,8 @@
   (recenter-top-bottom arg)
   (redraw-display))
 
+(global-set-key (kbd "C-x k") 'kill-this-buffer)
+
 (global-set-key "\C-l" 'recenter-top-bottom-refresh)
 
 (global-set-key [(control o)] 'vi-open-next-line)

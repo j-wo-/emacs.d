@@ -20,5 +20,5 @@
   (setq custom-emacs-theme 'sanityinc-tomorrow-night-rxvt))
 
 ;;(set-frame-font "Sauce Code Pro Medium:pixelsize=32")
-;;(set-frame-font "Inconsolata for Powerline:pixelsize=42")
+;;(set-frame-font "Inconsolata for Powerline:pixelsize=36")
 ;;(window-size (selected-window))
