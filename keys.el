@@ -35,6 +35,8 @@
 (global-set-key "\C-x\C-k" 'kill-region)
 (global-set-key "\C-\M-q" 'indent-sexp)
 (global-set-key "\C-\M-k" 'kill-sexp)
+(global-set-key "\C-\M-w" 'split-window-prefer-horizontal)
+
 ;; (global-set-key "\C-\M-a" 'lispy-beginning-of-defun)
 
 ;; (global-set-key (kbd "C-{") (lambda (&optional arg) (interactive "P") (sp-wrap-with-pair "(")))

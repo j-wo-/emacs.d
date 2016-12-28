@@ -1,13 +1,23 @@
-;; wrapping the entire file in a let form causes some problems with editing/tools
+;;
+;; optimizations from
+;; https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
+;;
 (setq file-name-handler-alist-backup file-name-handler-alist)
 (setq file-name-handler-alist nil)
+;; increase gc-cons-threshold for faster startup time
+(setq gc-cons-threshold (* 50 1000 1000))
+;; set it back to a normal value after startup
+(run-with-idle-timer
+ 1 nil
+ (lambda ()
+   (setq gc-cons-threshold (* 2 1000 1000))
+   (unless t
+     (message "gc-cons-threshold restored"))))
+;;
 
 ;; this value is approximately the default in Emacs 24,
 ;; but the fringes were much smaller by default in a dev snapshot of Emacs 25
-(setq initial-frame-alist '((left-fringe . 12) (right-fringe . 12)))
-
-;; raising gc-cons-threshold substantially improves Emacs startup time
-(setq gc-cons-threshold 30000000)
+(setq default-frame-alist '((left-fringe . 15) (right-fringe . 15)))
 
 (set-language-environment "utf-8")
 
@@ -19,9 +29,6 @@
 
 (require 'package)
 (package-initialize)
-
-;;(require 'cask "~/.cask/cask.el")
-;;(cask-initialize)
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
@@ -66,26 +73,12 @@
 
 (use-package dash)
 
-;;(shell-command "~/bin/do-ssh-add")
-
 ;; Load values for options that may be different across machines
 (load-local "variables")
 ;; Load these early so they'll be available for editing if an
 ;; init error occurs later.
 (load-local "keys")
 (load-local "commands")
-
-(defun autoset-window-margins ()
-  (dolist (w (window-list (selected-frame)))
-    (let* ((ws (window-size w t))
-           (mtotal (min (- ws custom-frame-width 1)
-                        (- (floor (/ ws 2)) 4)))
-           (ms (floor (/ mtotal 2))))
-      (if (>= ms 4)
-          (set-window-margins w ms ms)
-        (set-window-margins w 0 0)))))
-
-(add-hook 'window-configuration-change-hook 'autoset-window-margins)
 
 (defun active-minor-modes ()
   (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
@@ -157,14 +150,6 @@
   ;; disable any current themes
   (dolist (active-theme custom-enabled-themes)
     (disable-theme active-theme))
-  ;; activate theme
-  (cond
-   ((eql theme 'moe-dark)
-    (moe-dark))
-   ((eql theme 'moe-light)
-    (moe-light))
-   (t
-    (load-theme theme t)))
   ;; reset any modified face specs
   (reset-override-faces)
   ;; set face specs depending on theme
@@ -201,9 +186,22 @@
    (t
     (remove-hook 'window-setup-hook 'powerline-moe-theme)
     (powerline-default-theme)
-    (add-hook 'window-setup-hook 'powerline-default-theme))))
+    (add-hook 'window-setup-hook 'powerline-default-theme)))
+  ;; activate theme
+  (cond
+   ((eql theme 'moe-dark)
+    (moe-dark))
+   ((eql theme 'moe-light)
+    (moe-light))
+   (t
+    (load-theme theme t))))
 
-(switch-to-theme custom-emacs-theme)
+(defun switch-custom-theme (&optional frame)
+  (let ((frame (or (and (framep frame) frame)
+                   (selected-frame))))
+    (with-selected-frame frame
+      (set-custom-theme)
+      (switch-to-theme custom-emacs-theme))))
 
 (when nil
   ;; calling these substantially increases Emacs startup time
@@ -726,7 +724,14 @@
 (setq server-socket-dir
       (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
 
+(switch-custom-theme)
+(add-hook 'after-make-frame-functions #'switch-custom-theme)
+
+;; restore existing value of file-name-handler-alist
 (setq file-name-handler-alist file-name-handler-alist-backup)
+
+(load-local "auto-margin")
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
