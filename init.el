@@ -7,7 +7,7 @@
 (setq initial-frame-alist '((left-fringe . 12) (right-fringe . 12)))
 
 ;; raising gc-cons-threshold substantially improves Emacs startup time
-(setq gc-cons-threshold 20000000)
+(setq gc-cons-threshold 30000000)
 
 (set-language-environment "utf-8")
 
@@ -114,83 +114,96 @@
               (untabify (point-min) (point-max))
               nil)))
 
-(cond ((and window-system
-            (or (eql custom-emacs-theme 'moe-dark)
-                (eql custom-emacs-theme 'moe-light)))
-       (custom-set-faces
-        `(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
-        `(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))))
-      ((or (eql custom-emacs-theme 'sanityinc-tomorrow-night)
-           (eql custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)
-           t)
-       (let ((dark-bg "#303030")
-             (bright-fg "#babcba")
-             (gray-fg "#555756")
-             (black-fg "#060606")
-             (bright-active "#505050")
-             (bright-inactive "#383838"))
-         (custom-set-faces
-          `(mode-line ((t (:foreground "#888888" :background ,dark-bg :box (:line-width 2 :color ,bright-active)))))
-          `(mode-line-inactive ((t (:foreground ,gray-fg :background ,dark-bg :box (:line-width 2 :color ,dark-bg)))))
-          `(mode-line-buffer-id ((t (:foreground "#81a2be" :background ,dark-bg))))
-          `(powerline-active1 ((t (:foreground ,bright-fg :background ,bright-active))))
-          `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
-          `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,bright-inactive))))
-          `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg))))
-          `(popup-face ((t (:foreground "#dddddd" :background ,bright-inactive))))
-          `(popup-tip-face ((t (:foreground "#dddddd" :background ,bright-active)))))))
-      (nil
-       (let ((dark-bg "#404040")
-             (darker-bg "#181818")
-             (bright-bg "#ebdbb2")
-             (bright-fg "#ebdbb2")
-             (black-fg "#181818")
-             (gray-fg "#ebdbb2"))
-         (custom-set-faces
-          `(mode-line ((t (:foreground ,bright-fg :background ,dark-bg :box (:line-width 2 :color "#aaa090")))))
-          `(mode-line-inactive ((t (:foreground ,bright-fg :background ,dark-bg :box (:line-width 2 :color ,dark-bg)))))
-          `(mode-line-buffer-id ((t (:foreground ,bright-fg :background ,dark-bg))))
-          `(powerline-active1 ((t (:foreground ,black-fg :background ,bright-bg))))
-          `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
-          `(powerline-inactive1 ((t (:foreground ,bright-fg :background ,darker-bg))))
-          `(powerline-inactive2 ((t (:foreground ,bright-fg :background ,dark-bg))))))))
-
 (use-package powerline
   :config
   (setq powerline-display-buffer-size nil))
 
+(defun symbol-matches (sym str)
+  (not (null (string-match str (symbol-name sym)))))
+
+(defvar override-faces nil)
+
+(defun set-override-face (face spec)
+  (face-spec-set face spec)
+  (add-to-list 'override-faces face))
+(defun set-override-faces (&rest face-specs)
+  (dolist (fs face-specs)
+    (destructuring-bind (face spec) fs
+      (set-override-face face spec))))
+(defun reset-override-faces ()
+  (dolist (face override-faces)
+    (face-spec-set face nil 'reset))
+  (setq override-faces nil))
+  
 (defun switch-to-theme (theme)
+  ;; try to load elpa package for theme
+  (cond
+   ((symbol-matches theme "sanityinc-tomorrow")
+    (use-package color-theme-sanityinc-tomorrow))
+   ((symbol-matches theme "sanityinc-solarized")
+    (use-package color-theme-sanityinc-solarized))
+   ((symbol-matches theme "gruvbox")
+    (use-package gruvbox-theme))
+   ((symbol-matches theme "material")
+    (use-package material-theme))
+   ((symbol-matches theme "ample")
+    (use-package ample-theme))
+   ((symbol-matches theme "base16")
+    (use-package base16-theme))
+   ((symbol-matches theme "zenburn")
+    (use-package zenburn-theme))
+   ((symbol-matches theme "moe")
+    (use-package moe-theme)))
+  ;; disable any current themes
   (dolist (active-theme custom-enabled-themes)
     (disable-theme active-theme))
-  (when theme
+  ;; activate theme
+  (cond
+   ((eql theme 'moe-dark)
+    (moe-dark))
+   ((eql theme 'moe-light)
+    (moe-light))
+   (t
     (load-theme theme t)))
+  ;; reset any modified face specs
+  (reset-override-faces)
+  ;; set face specs depending on theme
+  (cond
+   ((symbol-matches theme "moe")
+    (set-override-faces
+     `(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
+     `(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))))
+   ((or (symbol-matches theme "tomorrow")
+        t)
+    (let ((dark-bg "#303030")
+          (bright-fg "#babcba")
+          (gray-fg "#555756")
+          (black-fg "#060606")
+          (bright-active "#505050")
+          (bright-inactive "#383838"))
+      (set-override-faces
+       `(mode-line ((t (:foreground "#888888" :background ,dark-bg :box (:line-width 2 :color ,bright-active)))))
+       `(mode-line-inactive ((t (:foreground ,gray-fg :background ,dark-bg :box (:line-width 2 :color ,dark-bg)))))
+       `(mode-line-buffer-id ((t (:foreground "#81a2be" :background ,dark-bg))))
+       `(powerline-active1 ((t (:foreground ,bright-fg :background ,bright-active))))
+       `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
+       `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,bright-inactive))))
+       `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg))))
+       `(popup-face ((t (:foreground "#dddddd" :background ,bright-inactive))))
+       `(popup-tip-face ((t (:foreground "#dddddd" :background ,bright-active))))))))
+  ;; set up powerline
+  (cond
+   ((and window-system
+         (symbol-matches theme "moe"))
+    (remove-hook 'window-setup-hook 'powerline-default-theme)
+    (powerline-moe-theme)
+    (add-hook 'window-setup-hook 'powerline-moe-theme))
+   (t
+    (remove-hook 'window-setup-hook 'powerline-moe-theme)
+    (powerline-default-theme)
+    (add-hook 'window-setup-hook 'powerline-default-theme))))
 
-(use-package base16-theme)
-(use-package color-theme-sanityinc-tomorrow)
-(when (eql custom-emacs-theme 'zenburn)
-  (use-package zenburn-theme))
-;;(use-package color-theme-sanityinc-tomorrow)
-;;(use-package color-theme-sanityinc-solarized)
-;;(use-package moe-theme)
-;;(use-package base16-theme)
-;;(use-package gruvbox-theme)
-;;(use-package material-theme)
-;;(use-package ample-theme)
-
-(cond ((eql custom-emacs-theme 'moe-dark)
-       (moe-dark))
-      ((eql custom-emacs-theme 'moe-light)
-       (moe-light))
-      (t
-       (switch-to-theme custom-emacs-theme)))
-(cond ((and window-system
-            (or (eql custom-emacs-theme 'moe-dark)
-                (eql custom-emacs-theme 'moe-light)))
-       (powerline-moe-theme)
-       (add-hook 'window-setup-hook 'powerline-moe-theme))
-      (t
-       (powerline-default-theme)
-       (add-hook 'window-setup-hook 'powerline-default-theme)))
+(switch-to-theme custom-emacs-theme)
 
 (when nil
   ;; calling these substantially increases Emacs startup time
@@ -727,13 +740,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- ;;'(mode-line ((t (:foreground "#888888" :background "#303030" :box (:line-width 2 :color "#505050")))))
- ;;'(mode-line-buffer-id ((t (:foreground "#81a2be" :background "#303030"))))
- ;;'(mode-line-inactive ((t (:foreground "#555756" :background "#303030" :box (:line-width 2 :color "#303030")))))
- '(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
- '(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))
- ;;'(powerline-active1 ((t (:foreground "#babcba" :background "#505050"))))
- ;;'(powerline-active2 ((t (:foreground "#babcba" :background "#303030"))))
- ;;'(powerline-inactive1 ((t (:foreground "#555756" :background "#383838"))))
- ;;'(powerline-inactive2 ((t (:foreground "#555756" :background "#303030"))))
  )
