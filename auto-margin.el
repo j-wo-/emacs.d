@@ -2,11 +2,17 @@
 ;; to modify window margins whenever the window layout may have changed.
 
 (defun split-window-prefer-horizontal (&optional window)
-  "Modified version of split-window-sensibly that splits horizontally
+  "Modified version of `split-window-sensibly' that splits horizontally
    by default when allowed."
   (interactive)
   (let ((window (or window (selected-window))))
     (destructuring-bind (mleft . mright) (window-margins window)
+      ;; * Remove the existing window margins first, otherwise they will
+      ;;   interfere with splitting calculations.
+      ;; * If a split is performed, it will trigger an
+      ;;   `autoset-window-margins' to set proper margin values.
+      ;; * If no split is performed, the margins are set back to
+      ;;   their existing values.
       (set-window-margins window 0 0)
       (or (and (window-splittable-p window t)
                ;; Split window horizontally.
@@ -25,10 +31,18 @@
                  (when (window-splittable-p window)
                    (with-selected-window window
                      (split-window-below)))))
+          ;; No split, restore existing window margins
           (and (set-window-margins window mleft mright)
                nil)))))
+
+;; Use this in place of `split-window-sensibly'
 (setq split-window-preferred-function 'split-window-prefer-horizontal)
-(setq split-height-threshold 44)
+
+;; Set a low height threshold to generally allow vertical splits
+;; when window is not wide enough for horizontal split.
+(setq split-height-threshold 20)
+;; Set a high width threshold to use a horizontal split whenever
+;; the window is wide enough.
 (setq split-width-threshold 160)
 
 (defun autoset-window-margins (&optional window &rest args)
