@@ -6,6 +6,7 @@
       (setq custom-emacs-theme 'sanityinc-tomorrow-night)
     (setq custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)))
 
+;;(set-frame-font "Sauce Code Pro Medium:pixelsize=40")
 ;;(set-frame-font "Sauce Code Pro Medium:pixelsize=29")
 ;;(set-frame-font "Source Code Pro Medium:pixelsize=30")
 ;;(set-frame-font "Sauce Code Pro Semibold:pixelsize=30")

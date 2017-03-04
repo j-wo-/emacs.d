@@ -476,7 +476,9 @@
       :config
       (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
       (add-hook 'cider-mode-hook 'ac-cider-setup)
-      (add-hook 'cider-repl-mode-hook 'ac-cider-setup))
+      (add-hook 'cider-repl-mode-hook 'ac-cider-setup)
+      (define-key cider-mode-map "\C-\M-i" 'ac-cider-popup-doc)
+      (define-key cider-repl-mode-map "\C-\M-i" 'ac-cider-popup-doc))
     ;;(require 'cider-eldoc)
     ;;(add-hook 'cider-mode-hook 'eldoc-mode)
     ;;(add-hook 'cider-repl-mode-hook 'eldoc-mode)
