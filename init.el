@@ -238,6 +238,9 @@
 
 (use-package systemd)
 
+(use-package groovy-mode
+  :mode "/Jenkinsfile")
+
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
