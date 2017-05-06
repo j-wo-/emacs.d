@@ -3,7 +3,13 @@
 
 (defun set-custom-theme ()
   (if (some #'display-graphic-p (frame-list))
-      (setq custom-emacs-theme 'sanityinc-tomorrow-night)
+      ;;(setq custom-emacs-theme 'sanityinc-tomorrow-night)
+      ;;(setq custom-emacs-theme 'zenburn)
+      ;;(setq custom-emacs-theme 'apropospriate-dark)
+      ;;(setq custom-emacs-theme 'moe-dark)
+      ;;(setq custom-emacs-theme 'material)
+      ;;(setq custom-emacs-theme 'monokai)
+      (setq custom-emacs-theme 'sanityinc-tomorrow-eighties)
     (setq custom-emacs-theme 'sanityinc-tomorrow-night-rxvt)))
 
 ;;(set-frame-font "Sauce Code Pro Medium:pixelsize=40")
