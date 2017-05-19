@@ -224,6 +224,27 @@
   ;; need to call this for terminal mode because the .Xdefaults settings won't apply
   (menu-bar-mode -1))
 
+(defun do-neotree-toggle ()
+  (interactive)
+  (remove-frame-margins)
+  (neotree-toggle)
+  (autoset-frame-margins))
+(defun neotree-project-dir ()
+  "Open NeoTree using the git root."
+  (interactive)
+  (let ((project-dir (projectile-project-root))
+        (file-name (buffer-file-name)))
+    (do-neotree-toggle)
+    (if project-dir
+        (if (neo-global--window-exists-p)
+            (progn
+              (neotree-dir project-dir)
+              (neotree-find file-name)))
+      (message "Could not find git project root."))))
+(define-key global-map "\C-xn" 'neotree-project-dir)
+(use-package neotree
+  :commands (neotree-toggle do-neotree-toggle neotree-project-dir))
+
 (use-package esup :commands esup)
 
 (use-package yasnippet
