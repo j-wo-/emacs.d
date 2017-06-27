@@ -496,6 +496,7 @@
     :config
     ;;(setq cider-cljs-repl "(cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env))")
     ;;(setq cider-cljs-repl "(do (require 'cljs.repl.node) (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env)))")
+    (setq nrepl-use-ssh-fallback-for-remote-hosts t)
     (setq cider-repl-use-pretty-printing t)
     (setq cider-cljs-lein-repl
           "(do (require 'figwheel-sidecar.repl-api)
