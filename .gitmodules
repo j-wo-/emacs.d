@@ -1,0 +1,3 @@
+[submodule "gruvbox-theme"]
+	path = gruvbox-theme
+	url = git@github.com:jeffwk/gruvbox-theme.git

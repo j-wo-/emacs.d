@@ -107,10 +107,6 @@
               (untabify (point-min) (point-max))
               nil)))
 
-(use-package powerline
-  :config
-  (setq powerline-display-buffer-size nil))
-
 (defun symbol-matches (sym str)
   (not (null (string-match str (symbol-name sym)))))
 
@@ -127,7 +123,31 @@
   (dolist (face override-faces)
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
-  
+
+(use-package autothemer)
+
+(use-package spaceline
+  :config
+  (setq powerline-height 60)
+  (setq powerline-default-separator 'utf-8)
+  (setq spaceline-separator-dir-left '(right . right))
+  (setq spaceline-separator-dir-right '(right . right))
+  (setq powerline-default-separator 'alternate) ;; alternate, slant, wave, zigzag, nil.
+  (setq spaceline-workspace-numbers-unicode t) ;for eyebrowse. nice looking unicode numbers for tagging different layouts
+  (setq spaceline-window-numbers-unicode t)
+  ;; (setq spaceline-highlight-face-func #'spaceline-highlight-face-evil-state) ; set colouring for different evil-states
+  ;; (setq spaceline-inflation 1.4)
+  (require 'spaceline-config)
+  ;;(spaceline-spacemacs-theme)
+  (spaceline-emacs-theme)
+  ;; (spaceline-compile)
+  (spaceline-toggle-buffer-size-off)
+  (spaceline-toggle-minor-modes-off)
+  (spaceline-toggle-buffer-encoding-abbrev-off)
+  (spaceline-toggle-buffer-position-on)
+  (spaceline-toggle-hud-off)
+  (spaceline-toggle-line-column-on))
+
 (defun switch-to-theme (theme)
   ;; try to load elpa package for theme
   (cond
@@ -136,7 +156,14 @@
    ((symbol-matches theme "sanityinc-solarized")
     (use-package color-theme-sanityinc-solarized))
    ((symbol-matches theme "gruvbox")
-    (use-package gruvbox-theme))
+    (use-package gruvbox-theme
+      :ensure nil
+      :load-path "~/.emacs.d/gruvbox-theme"
+      :init
+      (setq anzu-cons-mode-line-p t)
+      (setq gruvbox-contrast 'medium)))
+   ((symbol-matches theme "spacemacs-dark")
+    (use-package spacemacs-theme))
    ((symbol-matches theme "material")
     (use-package material-theme))
    ((symbol-matches theme "ample")
@@ -159,40 +186,42 @@
   ;; reset any modified face specs
   (reset-override-faces)
   ;; set face specs depending on theme
-  (cond
-   ((symbol-matches theme "moe")
-    (set-override-faces
-     `(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
-     `(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))))
-   ((or (symbol-matches theme "tomorrow")
-        t)
-    (let ((dark-bg "#303030")
-          (bright-fg "#babcba")
-          (gray-fg "#555756")
-          (black-fg "#060606")
-          (bright-active "#505050")
-          (bright-inactive "#383838"))
+  (when nil
+    (cond
+     ((symbol-matches theme "moe")
       (set-override-faces
-       `(mode-line ((t (:foreground "#888888" :background ,dark-bg :box (:line-width 2 :color ,bright-active)))))
-       `(mode-line-inactive ((t (:foreground ,gray-fg :background ,dark-bg :box (:line-width 2 :color ,dark-bg)))))
-       `(mode-line-buffer-id ((t (:foreground "#81a2be" :background ,dark-bg))))
-       `(powerline-active1 ((t (:foreground ,bright-fg :background ,bright-active))))
-       `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
-       `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,bright-inactive))))
-       `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg))))
-       `(popup-face ((t (:foreground "#dddddd" :background ,bright-inactive))))
-       `(popup-tip-face ((t (:foreground "#dddddd" :background ,bright-active))))))))
+       `(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
+       `(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))))
+     ((or (symbol-matches theme "tomorrow")
+          t)
+      (let ((dark-bg "#303030")
+            (bright-fg "#babcba")
+            (gray-fg "#555756")
+            (black-fg "#060606")
+            (bright-active "#505050")
+            (bright-inactive "#383838"))
+        (set-override-faces
+         `(mode-line ((t (:foreground "#888888" :background ,dark-bg :box (:line-width 2 :color ,bright-active)))))
+         `(mode-line-inactive ((t (:foreground ,gray-fg :background ,dark-bg :box (:line-width 2 :color ,dark-bg)))))
+         `(mode-line-buffer-id ((t (:foreground "#81a2be" :background ,dark-bg))))
+         `(powerline-active1 ((t (:foreground ,bright-fg :background ,bright-active))))
+         `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
+         `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,bright-inactive))))
+         `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg))))
+         `(popup-face ((t (:foreground "#dddddd" :background ,bright-inactive))))
+         `(popup-tip-face ((t (:foreground "#dddddd" :background ,bright-active)))))))))
   ;; set up powerline
-  (cond
-   ((and window-system
-         (symbol-matches theme "moe"))
-    (remove-hook 'window-setup-hook 'powerline-default-theme)
-    (powerline-moe-theme)
-    (add-hook 'window-setup-hook 'powerline-moe-theme))
-   (t
-    (remove-hook 'window-setup-hook 'powerline-moe-theme)
-    (powerline-default-theme)
-    (add-hook 'window-setup-hook 'powerline-default-theme)))
+  (when nil
+    (cond
+     ((and window-system
+           (symbol-matches theme "moe"))
+      (remove-hook 'window-setup-hook 'powerline-default-theme)
+      (powerline-moe-theme)
+      (add-hook 'window-setup-hook 'powerline-moe-theme))
+     (t
+      (remove-hook 'window-setup-hook 'powerline-moe-theme)
+      (powerline-default-theme)
+      (add-hook 'window-setup-hook 'powerline-default-theme))))
   ;; activate theme
   (cond
    ((eql theme 'moe-dark)
@@ -293,30 +322,33 @@
 
 (use-package pkgbuild-mode :mode "/PKGBUILD$")
 
-(use-package auto-complete
-  :defer 0.25
-  :config
-  (ac-config-default)
-  (setq ac-delay 0.025)
-  (setq ac-max-width 50)
-  (setq ac-auto-show-menu 0.4)
-  (setq ac-quick-help-delay 1.0)
-  (setq global-auto-complete-mode t)
-  (setq ac-use-dictionary-as-stop-words nil)
-  (setq ac-use-fuzzy t)
-  (define-globalized-minor-mode real-global-auto-complete-mode
-    auto-complete-mode (lambda ()
-                         (if (not (minibufferp (current-buffer)))
-                             (auto-complete-mode 1))))
-  (real-global-auto-complete-mode t))
+(when nil
+  (use-package auto-complete
+    :defer 0.25
+    :config
+    (ac-config-default)
+    (setq ac-delay 0.025)
+    (setq ac-max-width 50)
+    (setq ac-auto-show-menu 0.4)
+    (setq ac-quick-help-delay 1.0)
+    (setq global-auto-complete-mode t)
+    (setq ac-use-dictionary-as-stop-words nil)
+    (setq ac-use-fuzzy t)
+    (define-globalized-minor-mode real-global-auto-complete-mode
+      auto-complete-mode (lambda ()
+                           (if (not (minibufferp (current-buffer)))
+                               (auto-complete-mode 1))))
+    (real-global-auto-complete-mode t)))
 
 (use-package company
-  :diminish (company-mode . "CC")
+  :init
+  ;; http://emacs.stackexchange.com/a/10838/12585
+  (setq company-dabbrev-downcase nil)
   :config
   (setq company-minimum-prefix-length 2)
   (setq company-idle-delay 0.05)
-  ;;(add-hook 'after-init-hook 'global-company-mode)
-  )
+  (add-hook 'after-init-hook 'global-company-mode)
+  :diminish global-company-mode "CC")
 
 ;;(use-package helm)
 
@@ -349,11 +381,7 @@
   :mode
   "\\.js\\'" "\\.jsx\\'" "\\.json\\'"
   :config
-  (use-package tern
-    :config
-    (use-package tern-auto-complete
-      :config
-      (tern-ac-setup)))
+  (use-package tern)
   (use-package flycheck)
   (use-package js2-mode
     :config
@@ -403,14 +431,16 @@
     (setq ensime-typecheck-idle-interval 0.3)
     (setq ensime-completion-style 'company)
     (use-package company)
-    (add-hook 'scala-mode-hook (lambda () (auto-complete-mode -1)))
-    '(add-hook 'scala-mode-hook
-               (lambda ()
-                 (add-hook 'post-command-hook
-                           (lambda ()
-                             (when (and ensime-mode (ensime-connected-p))
-                               (ensime-print-errors-at-point)))
-                           t t)))
+    (when nil
+      (add-hook 'scala-mode-hook (lambda () (auto-complete-mode -1))))
+    (when nil
+      (add-hook 'scala-mode-hook
+                (lambda ()
+                  (add-hook 'post-command-hook
+                            (lambda ()
+                              (when (and ensime-mode (ensime-connected-p))
+                                (ensime-print-errors-at-point)))
+                            t t))))
     (define-key scala-mode-map "\C-t" 'ensime-print-type-at-point)
     (define-key scala-mode-map "\C-\M-e" 'ensime-print-errors-at-point)
     (define-key scala-mode-map "\C-c." 'ensime-forward-note)
@@ -503,17 +533,18 @@
            (figwheel-sidecar.repl-api/start-figwheel!)
            (figwheel-sidecar.repl-api/cljs-repl))")
     ;;(setq cider-cljs-repl "(do (require 'weasel.repl.websocket) (cemerick.piggieback/cljs-repl (weasel.repl.websocket/repl-env :ip \"127.0.0.1\" :port 9001)))")
-    '(use-package ac-cider
-       :config
-       (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
-       (add-hook 'cider-mode-hook 'ac-cider-setup)
-       (add-hook 'cider-repl-mode-hook 'ac-cider-setup)
-       (define-key cider-mode-map "\C-\M-i" 'ac-cider-popup-doc)
-       (define-key cider-repl-mode-map "\C-\M-i" 'ac-cider-popup-doc))
+    (when nil
+      (use-package ac-cider
+        :config
+        (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
+        (add-hook 'cider-mode-hook 'ac-cider-setup)
+        (add-hook 'cider-repl-mode-hook 'ac-cider-setup)
+        (define-key cider-mode-map "\C-\M-i" 'ac-cider-popup-doc)
+        (define-key cider-repl-mode-map "\C-\M-i" 'ac-cider-popup-doc)))
     ;;(require 'cider-eldoc)
     ;;(add-hook 'cider-mode-hook 'eldoc-mode)
     ;;(add-hook 'cider-repl-mode-hook 'eldoc-mode)
-    (progn
+    (when nil
       (use-package company)
       (add-hook 'clojure-mode-hook (lambda () (auto-complete-mode -1)))
       (add-hook 'clojurescript-mode-hook (lambda () (auto-complete-mode -1)))
@@ -765,6 +796,12 @@
 
 (load-local "auto-margin")
 
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -772,10 +809,4 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (zenburn-theme ido-completing-read+ js2-mode gh-md cider yasnippet ivy hydra company avy tern-auto-complete tern swiper scala-mode sbt-mode s popup multiple-cursors moe-theme magit-popup iedit haskell-mode git-gutter git-commit clojure-mode auto-complete auto-revert-mode auto-revert lispy web-mode use-package systemd smex smartparens slime-annot projectile powerline pkgbuild-mode paren-face mic-paren magit less-css-mode jade-mode git-gutter-fringe ghc flycheck flx-ido f esup ensime elisp-slime-nav color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor aggressive-indent ac-slime ac-haskell-process ac-cider))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+    (gruvbox-theme web-mode use-package systemd spaceline smex smartparens slime-annot scala-mode projectile pkgbuild-mode paren-face nginx-mode neotree mic-paren markdown-mode magit lispy less-css-mode jade-mode ido-completing-read+ groovy-mode git-gutter-fringe ghc gh-md flycheck flx-ido esup elisp-slime-nav company color-theme-sanityinc-tomorrow clj-refactor autothemer aggressive-indent ac-slime ac-haskell-process))))

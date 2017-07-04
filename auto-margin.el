@@ -46,11 +46,11 @@
 
 ;; Set a low height threshold to generally allow vertical splits
 ;; when window is not wide enough for horizontal split.
-;;(setq split-height-threshold 20)
+(setq split-height-threshold 20)
 
 ;; or set high height threshold to avoid automatic vertical splitting of
 ;; both window columns?
-;; (setq split-height-threshold 80)
+;;(setq split-height-threshold 40)
 
 ;; Set a high width threshold to use a horizontal split whenever
 ;; the window is wide enough.

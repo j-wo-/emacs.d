@@ -25,11 +25,20 @@
 
 (global-set-key "\C-l" 'recenter-top-bottom-refresh)
 
+(defun jeffwk/forward-sexp ()
+  (interactive)
+  (forward-sexp)
+  (redraw-modeline))
+(defun jeffwk/backward-sexp ()
+  (interactive)
+  (backward-sexp)
+  (redraw-modeline))
+
 (global-set-key [(control o)] 'vi-open-next-line)
 (global-set-key [C-down] 'scroll-down-one-line)
 (global-set-key [C-up] 'scroll-up-one-line)
-(global-set-key "\C-f" 'forward-sexp)
-(global-set-key "\C-b" 'backward-sexp)
+(global-set-key "\C-f" 'jeffwk/forward-sexp)
+(global-set-key "\C-b" 'jeffwk/backward-sexp)
 (global-set-key "\C-t" 'transpose-sexps)
 (global-set-key "\C-w" 'backward-kill-word)
 (global-set-key "\C-x\C-k" 'kill-region)
