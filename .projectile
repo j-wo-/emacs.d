@@ -1,10 +1,13 @@
 -/.cask
 -/.git
+-/elpa
 -/semanticdb
 -/ensime
 -/eshell
 -/auto-save-list
--/color-theme-sanityinc-tomorrow-20151215.2105
+-/color-theme-sanityinc-tomorrow-*
+-/gruvbox-theme
+-/eval-sexp-fu.el
 -/projectile.cache
 -/ac-comphist.dat
 -/projectile-bookmarks.eld

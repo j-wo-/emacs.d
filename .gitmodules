@@ -1,3 +1,6 @@
 [submodule "gruvbox-theme"]
 	path = gruvbox-theme
 	url = git@github.com:jeffwk/gruvbox-theme.git
+[submodule "eval-sexp-fu.el"]
+	path = eval-sexp-fu.el
+	url = git@github.com:jeffwk/eval-sexp-fu.el.git

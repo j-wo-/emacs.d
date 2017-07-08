@@ -1,6 +1,9 @@
 ;; This automatically centers windows in large frames by adding hooks
 ;; to modify window margins whenever the window layout may have changed.
 
+;; Controls max width for a centered window
+(setq custom-frame-width 100)
+
 (defun split-window-prefer-horizontal (&optional window)
   "Modified version of `split-window-sensibly' that splits horizontally
    by default when allowed."

@@ -1,11 +1,3 @@
-(defun vi-open-next-line (arg)
-  "Move to the next line (like vi) and then opens a line."
-  (interactive "p")
-  (end-of-line)
-  (open-line arg)
-  (forward-line 1)
-  (indent-according-to-mode))
-
 (defun scroll-down-one-line ()
   (interactive)
   (scroll-up 1)
@@ -21,10 +13,6 @@
   (recenter-top-bottom arg)
   (redraw-display))
 
-(global-set-key (kbd "C-x k") 'kill-this-buffer)
-
-(global-set-key "\C-l" 'recenter-top-bottom-refresh)
-
 (defun jeffwk/forward-sexp ()
   (interactive)
   (forward-sexp)
@@ -34,33 +22,46 @@
   (backward-sexp)
   (redraw-modeline))
 
-(global-set-key [(control o)] 'vi-open-next-line)
-(global-set-key [C-down] 'scroll-down-one-line)
-(global-set-key [C-up] 'scroll-up-one-line)
-(global-set-key "\C-f" 'jeffwk/forward-sexp)
-(global-set-key "\C-b" 'jeffwk/backward-sexp)
-(global-set-key "\C-t" 'transpose-sexps)
-(global-set-key "\C-w" 'backward-kill-word)
-(global-set-key "\C-x\C-k" 'kill-region)
-(global-set-key "\C-\M-q" 'indent-sexp)
-(global-set-key "\C-\M-k" 'kill-sexp)
-(global-set-key "\C-\M-w" 'split-window-prefer-horizontal)
+;; redefine bad default bindings
+(define-key global-map (kbd "C-o") 'other-window)
+(define-key global-map (kbd "C-1") 'delete-other-windows)
+(define-key global-map (kbd "C-x 1") 'delete-other-windows) ;; terminal
+(define-key global-map (kbd "C-2") 'delete-other-windows-vertically)
+(define-key global-map (kbd "C-x 2") 'delete-other-windows-vertically) ;; terminal
+(define-key global-map (kbd "C-q") 'delete-window)
+(define-key global-map (kbd "C-x x") 'split-window-below)
+(define-key global-map (kbd "C-<tab>") 'helm-mini)
+(define-key global-map (kbd "C-x TAB") 'helm-mini) ;; terminal
+(define-key global-map (kbd "C-x s") 'save-buffer)
+(define-key global-map (kbd "C-x C-s") 'save-buffer)
+(define-key global-map (kbd "C-x f") 'helm-find-files)
+(define-key global-map (kbd "C-x C-f") 'helm-find-files)
+;; unset defaults
+(define-key global-map (kbd "C-x o") nil) ;; 'other-window
+(define-key global-map (kbd "C-x 0") nil) ;; 'delete-window
+(define-key global-map (kbd "C-x 3") nil) ;; 'split-window-right
+(define-key global-map (kbd "C-x b") nil) ;; 'ido-switch-buffer
 
-;; (global-set-key "\C-\M-a" 'lispy-beginning-of-defun)
+(define-key global-map (kbd "C-<left>") 'previous-buffer)
+(define-key global-map (kbd "C-<right>") 'next-buffer)
+(define-key global-map (kbd "C-x k") 'kill-this-buffer)
+(define-key global-map (kbd "C-l") 'recenter-top-bottom-refresh)
+(define-key global-map (kbd "C-<down>") 'scroll-down-one-line)
+(define-key global-map (kbd "C-<up>") 'scroll-up-one-line)
+(define-key global-map (kbd "C-f") 'jeffwk/forward-sexp)
+(define-key global-map (kbd "C-b") 'jeffwk/backward-sexp)
+(define-key global-map (kbd "C-t") 'transpose-sexps)
+(define-key global-map (kbd "C-w") 'backward-kill-word)
+(define-key global-map (kbd "C-x C-k") 'kill-region)
+(define-key global-map (kbd "C-M-q") 'indent-sexp)
+(define-key global-map (kbd "C-M-k") 'kill-sexp)
+(define-key global-map (kbd "C-M-w") 'split-window-prefer-horizontal)
 
-;; (global-set-key (kbd "C-{") (lambda (&optional arg) (interactive "P") (sp-wrap-with-pair "(")))
-;; (global-set-key (kbd "C-(") (lambda (&optional arg) (interactive "P") (sp-wrap-with-pair "[")))
-
+;; swap () and [] keys
 (define-key key-translation-map (kbd "(") (kbd "["))
 (define-key key-translation-map (kbd ")") (kbd "]"))
 (define-key key-translation-map (kbd "[") (kbd "("))
 (define-key key-translation-map (kbd "]") (kbd ")"))
-
-;; Note: the following still breaks middle-click pasting
-;;(define-key paredit-mode-map (kbd "[") 'paredit-open-round)
-;;(define-key paredit-mode-map (kbd "]") 'paredit-close-round)
-;;(define-key paredit-mode-map (kbd "(") 'paredit-open-square)
-;;(define-key paredit-mode-map (kbd ")") 'paredit-close-square)
 
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)

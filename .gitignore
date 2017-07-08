@@ -15,3 +15,5 @@ projectile-bookmarks.eld
 *.elc
 /elpa/
 .cask/
+/company-statistics-cache.el
+/recentf

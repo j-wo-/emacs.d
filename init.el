@@ -1,29 +1,41 @@
-;;
-;; optimizations from
-;; https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
-;;
-(setq file-name-handler-alist-backup file-name-handler-alist
-      file-name-handler-alist nil
-      gc-cons-threshold (* 50 1000 1000))
-(run-with-idle-timer
- 1 nil
- (lambda ()
-   (setq gc-cons-threshold (* 2 1000 1000))))
+(setq
+ ;; startup time optimization
+ ;; https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
+ file-name-handler-alist-backup file-name-handler-alist
+ file-name-handler-alist nil
+ gc-cons-threshold (* 100 1000 1000)
+ ;; prevent echoing messages while loading
+ inhibit-message t
+ inhibit-splash-screen t)
+(defun restore-config-post-init ()
+  (setq inhibit-message nil
+        file-name-handler-alist file-name-handler-alist-backup)
+  (run-with-idle-timer
+   1 nil
+   (lambda ()
+     (setq gc-cons-threshold (* 2 1000 1000)))))
+(add-hook 'after-init-hook 'restore-config-post-init)
 
-;; this value is approximately the default in Emacs 24,
-;; but the fringes were much smaller by default in a dev snapshot of Emacs 25
-(setq default-frame-alist '((left-fringe . 15) (right-fringe . 15)))
+(require 'cl)
+
+(defun graphical? ()
+  (some #'display-graphic-p (frame-list)))
+
+(setq custom-emacs-theme
+      (if (graphical?) 'gruvbox 'gruvbox))
 
 (set-language-environment "utf-8")
-(setq custom-safe-themes t)
-(setq auto-save-default nil)
-(global-auto-revert-mode t)
-(setq vc-follow-symlinks t)
-(setq make-backup-files nil)
+
+(setq default-frame-alist '((left-fringe . 12) (right-fringe . 12))
+      custom-safe-themes t
+      auto-save-default nil
+      vc-follow-symlinks t
+      make-backup-files nil)
+
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 
-(require 'cl)
+(global-auto-revert-mode t)
 
 (require 'package)
 (package-initialize)
@@ -39,8 +51,7 @@
                      (eql (first x) pkg))
                    package-pinned-packages)))
 
-(dolist (pkg '(slime web-mode js2-mode tern
-                     magit markdown-mode ido-completing-read+))
+(dolist (pkg '(slime web-mode js2-mode tern magit markdown-mode))
   (pin-stable pkg))
 
 ;; Install use-package from MELPA if needed
@@ -56,12 +67,9 @@
                     (use-package ,pkg)))
                pkgs)))
 
-;; This is to get around an infinite recursion when bootstrapping
-;; in emacs-lisp-mode-hook
-(ensure-installed paren-face
-                  elisp-slime-nav
-                  paredit
-                  aggressive-indent)
+;; This is to get around an infinite recursion in emacs-lisp-mode-hook
+;; when bootstrapping packages
+(ensure-installed paren-face elisp-slime-nav paredit aggressive-indent)
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -87,9 +95,10 @@
 (defun load-local (file)
   (load (locate-user-emacs-file file)))
 
-(load-local "variables")
 (load-local "keys")
 (load-local "commands")
+
+(windmove-default-keybindings)
 
 ;;;
 ;;; load packages
@@ -114,27 +123,40 @@
 ;;; general
 ;;;
 
-(defun do-neotree-toggle ()
-  (interactive)
-  (remove-frame-margins)
-  (neotree-toggle)
-  (autoset-frame-margins))
-(defun neotree-project-dir ()
-  "Open NeoTree using the git root."
-  (interactive)
-  (use-package projectile)
-  (let ((project-dir (projectile-project-root))
-        (file-name (buffer-file-name)))
-    (do-neotree-toggle)
-    (if project-dir
-        (if (neo-global--window-exists-p)
-            (progn
-              (neotree-dir project-dir)
-              (neotree-find file-name)))
-      (message "Could not find git project root"))))
-(define-key global-map "\C-xn" 'neotree-project-dir)
-(use-package neotree
-  :commands (neotree-toggle do-neotree-toggle neotree-project-dir))
+(use-package disable-mouse
+  :config
+  (global-disable-mouse-mode))
+
+(use-package tramp
+  :config
+  (setq tramp-default-method "ssh"))
+
+(use-package helm
+  :config
+  (require 'helm-buffers)
+
+  (dolist (b '("\\`\\*esup"
+               "\\`\\*Scratch"
+               "\\`\\*Messages"
+               "\\`\\*Warnings"
+               "\\`\\*Help"
+               "\\`\\*magit-process"
+               "\\`\\*cider-doc\\*"
+               "\\`\\*tramp"
+               "\\`\\*nrepl"
+               "\\`*Compile"))
+    (add-to-list 'helm-boring-buffer-regexp-list b))
+  (dolist (b '("\\`\\*magit\\: "
+               "\\`\\*cider-repl "))
+    (add-to-list 'helm-white-buffer-regexp-list b))
+
+  (defun jeffwk/helm-buffers-list-all ()
+    (interactive)
+    (let ((helm-boring-buffer-regexp-list
+           '("\\` " "\\`\\*helm" "\\`\\*Echo Area" "\\`\\*Minibuf")))
+      (helm-buffers-list)))
+
+  (define-key global-map (kbd "C-x B") 'jeffwk/helm-buffers-list-all))
 
 (use-package esup :commands esup)
 
@@ -168,31 +190,42 @@
 
 (unless (exclude-pkg? 'company)
   (use-package company
+    :diminish company-mode global-company-mode
     :init
     ;; http://emacs.stackexchange.com/a/10838/12585
-    (setq company-dabbrev-downcase nil)
+    (setq company-dabbrev-downcase nil
+          company-dabbrev-ignore-case nil
+          company-dabbrev-code-other-buffers t
+          company-tooltip-align-annotations t)
     :config
-    (setq company-minimum-prefix-length 2)
-    (setq company-idle-delay 0.05)
-    (add-hook 'after-init-hook 'global-company-mode)
-    :diminish global-company-mode "CC"))
+    (setq company-minimum-prefix-length 3
+          company-idle-delay 0.05)
+    (add-to-list 'company-transformers 'company-sort-by-occurrence)
+    (use-package company-statistics
+      :config
+      (company-statistics-mode 1))
+    (use-package company-quickhelp
+      :config
+      (setq company-quickhelp-delay nil)
+      (company-quickhelp-mode 1))
+    (global-company-mode 1)))
 
 (use-package projectile
   :defer 0.2
   :config
   (use-package helm-projectile
     :config
-    (helm-projectile-on))
+    (helm-projectile-toggle 1))
   (define-key global-map (kbd "C-c pf") 'helm-projectile-find-file)
   (define-key global-map (kbd "C-c pp") 'helm-projectile-switch-project)
   (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
-  (setq projectile-use-git-grep t)
-  (setq projectile-switch-project-action 'helm-projectile)
-  (setq projectile-enable-caching t)
-  (setq projectile-mode-line
+  (setq projectile-use-git-grep t
+        projectile-switch-project-action 'helm-projectile
+        projectile-enable-caching t
+        projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
-  (projectile-global-mode)
-  (add-to-list 'grep-find-ignored-files "*.log"))
+  (add-to-list 'grep-find-ignored-files "*.log")
+  (projectile-global-mode))
 
 (use-package smex
   :bind ("M-x" . smex)
@@ -202,17 +235,30 @@
   :config
   (define-key flycheck-mode-map "\C-c ." 'flycheck-next-error)
   (define-key flycheck-mode-map "\C-c ," 'flycheck-previous-error)
+  ;; because git-gutter is in the left fringe
+  (setq flycheck-indication-mode 'right-fringe)
+  ;; A non-descript, left-pointing arrow
+  (use-package fringe-helper)
+  (fringe-helper-define 'flycheck-fringe-bitmap-double-arrow 'center
+    "...X...."
+    "..XX...."
+    ".XXX...."
+    "XXXX...."
+    ".XXX...."
+    "..XX...."
+    "...X....")
   ;; (global-flycheck-mode 1)
   )
 
 (use-package ido
   :config
-  (use-package flx-ido)
   (ido-mode 1)
   (ido-everywhere 1)
-  (flx-ido-mode 1)
-  (setq ido-enable-flex-matching t)
-  (setq ido-use-faces nil))
+  (use-package flx-ido
+    :config
+    (flx-ido-mode 1))
+  (setq ido-enable-flex-matching t
+        ido-use-faces nil))
 
 (use-package mic-paren
   :config (paren-activate))
@@ -245,18 +291,24 @@
   (define-globalized-minor-mode real-global-paredit-mode
     paredit-mode (lambda ()
                    (if (not (minibufferp (current-buffer)))
-                       (enable-paredit-mode)))))
+                       (enable-paredit-mode))))
+  (define-key paredit-mode-map (kbd "C-<left>") nil)
+  (define-key paredit-mode-map (kbd "C-<right>") nil))
 
 (use-package smartparens
   :config
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
+  (when nil
+    (global-set-key (kbd "C-{")
+                    (lambda (&optional arg)
+                      (interactive "P")
+                      (sp-wrap-with-pair "(")))
+    (global-set-key (kbd "C-(")
+                    (lambda (&optional arg)
+                      (interactive "P")
+                      (sp-wrap-with-pair "["))))
   (smartparens-global-mode t))
-
-(use-package tramp
-  :defer t
-  :config
-  (setq tramp-default-method "ssh"))
 
 (defun do-git-gutter-config ()
   (define-key global-map "\C-xpp" 'git-gutter:popup-hunk)
@@ -267,23 +319,82 @@
 (use-package git-gutter-fringe
   :diminish git-gutter-mode
   :if window-system
-  :config (do-git-gutter-config))
+  :config
+  (do-git-gutter-config)
+  (use-package fringe-helper)
+  (fringe-helper-define 'git-gutter-fr:added '(center repeated)
+    "XXX.....")
+  (fringe-helper-define 'git-gutter-fr:modified '(center repeated)
+    "XXX.....")
+  (fringe-helper-define 'git-gutter-fr:deleted 'bottom
+    "X......."
+    "XX......"
+    "XXX....."
+    "XXXX...."))
 (use-package git-gutter
   :diminish git-gutter-mode
   :if (null window-system)
   :config (do-git-gutter-config))
 
-(define-key global-map (kbd "C-x g") 'magit-status)
-(define-key global-map (kbd "C-x C-g") 'magit-dispatch-popup)
-
 (use-package magit
-  :commands magit-status magit-push magit-pull
-  :init (setq magit-last-seen-setup-instructions "1.4.0")
+  :bind
+  ("C-x g" . magit-status)
+  ("C-x C-g" . magit-dispatch-popup)
+  :init
+  (setq magit-last-seen-setup-instructions "1.4.0")
   :config
-  (use-package ido-completing-read+)
   (setq magit-revert-buffers t)
-  (setq magit-completing-read-function 'magit-ido-completing-read)
+  (define-key magit-status-mode-map (kbd "C-<tab>") nil)
   (diminish 'auto-revert-mode))
+
+(defun do-neotree-toggle ()
+  (interactive)
+  (remove-frame-margins)
+  (neotree-toggle)
+  (autoset-frame-margins))
+(defun neotree-project-dir ()
+  "Open NeoTree using the git root."
+  (interactive)
+  (use-package projectile)
+  (let ((project-dir (projectile-project-root))
+        (file-name (buffer-file-name)))
+    (do-neotree-toggle)
+    (if project-dir
+        (if (neo-global--window-exists-p)
+            (progn
+              (neotree-dir project-dir)
+              (neotree-find file-name)))
+      (message "Could not find git project root"))))
+(define-key global-map "\C-xn" 'neotree-project-dir)
+(use-package neotree
+  :commands
+  (neotree-toggle
+   do-neotree-toggle
+   neotree-project-dir)
+  :config
+  (setq neo-create-file-auto-open nil
+        neo-auto-indent-point nil
+        neo-autorefresh nil
+        neo-mode-line-type nil
+        neo-show-updir-line nil
+        neo-theme 'nerd
+        neo-window-width 25
+        neo-banner-message nil
+        neo-confirm-create-file #'off-p
+        neo-confirm-create-directory #'off-p
+        neo-show-hidden-files nil
+        neo-keymap-style 'concise
+        neo-hidden-regexp-list
+        '(;; vcs folders
+          "^\\.\\(git\\|hg\\|svn\\)$"
+          ;; compiled files
+          "\\.\\(pyc\\|o\\|elc\\|lock\\|css.map\\)$"
+          ;; generated files, caches or local pkgs
+          "^\\(node_modules\\|vendor\\|target\\|.\\(project\\|cask\\|yardoc\\|sass-cache\\)\\)$"
+          ;; org-mode folders
+          "^\\.\\(sync\\|export\\|attach\\)$"
+          "~$"
+          "^#.*#$")))
 
 ;;;
 ;;; theming
@@ -304,8 +415,6 @@
   (setq override-faces nil))
 
 (use-package autothemer)
-
-
 
 (defun switch-to-theme (theme)
   ;; try to load elpa package for theme
@@ -343,6 +452,8 @@
     (disable-theme active-theme))
   ;; reset any modified face specs
   (reset-override-faces)
+  (set-override-faces
+   `(fringe ((t (:foreground "#383838" :background "#383838")))))
   ;; set face specs depending on theme
   (when nil
     (cond
@@ -381,7 +492,6 @@
   (let ((frame (or (and (framep frame) frame)
                    (selected-frame))))
     (with-selected-frame frame
-      (set-custom-theme)
       (switch-to-theme custom-emacs-theme))))
 
 (when (null window-system)
@@ -398,7 +508,11 @@
   (defun enable-lispy (mode-hook)
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
-(use-package cider-eval-sexp-fu
+(use-package highlight)
+
+(use-package eval-sexp-fu
+  :ensure nil
+  :load-path "~/.emacs.d/eval-sexp-fu.el"
   :config
   (turn-on-eval-sexp-fu-flash-mode))
 
@@ -415,9 +529,7 @@
   (use-package cider
     :diminish cider-mode
     :config
-    (use-package cider-eval-sexp-fu
-      :config
-      (turn-on-eval-sexp-fu-flash-mode))
+    (use-package cider-eval-sexp-fu)
     (setq nrepl-use-ssh-fallback-for-remote-hosts t)
     (setq cider-repl-use-pretty-printing t)
     (add-hook 'clojure-mode-hook #'cider-mode)
@@ -732,12 +844,9 @@
 ;;; end
 ;;;
 
-(switch-custom-theme)
-(add-hook 'after-make-frame-functions #'switch-custom-theme)
-
 (use-package spaceline
   :init
-  (setq powerline-height 60)
+  (setq powerline-height 54)
   (setq powerline-default-separator 'utf-8)
   (setq spaceline-separator-dir-left '(right . right))
   (setq spaceline-separator-dir-right '(right . right))
@@ -756,11 +865,79 @@
   (spaceline-toggle-hud-off)
   (spaceline-toggle-line-column-on)
   ;; (spaceline-spacemacs-theme)
-  (spaceline-emacs-theme))
+  ;; (spaceline-emacs-theme)
+  (spaceline-define-segment buffer-id-with-path
+    "Name of buffer (or path relative to project root)."
+    (if (and (buffer-file-name) (projectile-project-p))
+        (s-trim (powerline-buffer-id 'mode-line-buffer-id))
+      (s-trim (powerline-buffer-id 'mode-line-buffer-id))))
+  (spaceline-install
+    `((((((persp-name :fallback workspace-number)
+          window-number) :separator "|")
+        buffer-modified
+        buffer-size)
+       :face highlight-face
+       :priority 0)
+      (anzu :priority 4)
+      auto-compile
+      ((buffer-id-with-path remote-host)
+       :priority 5)
+      major-mode
+      (process :when active)
+      ((flycheck-error flycheck-warning flycheck-info)
+       :when active
+       :priority 3)
+      (minor-modes :when active)
+      (mu4e-alert-segment :when active)
+      (erc-track :when active)
+      (version-control :when active
+                       :priority 7)
+      (org-pomodoro :when active)
+      (org-clock :when active)
+      nyan-cat)
+    `(which-function
+      (python-pyvenv :fallback python-pyenv)
+      purpose
+      (battery :when active)
+      (selection-info :priority 2)
+      input-method
+      ((buffer-encoding-abbrev
+        point-position
+        line-column)
+       :separator " | "
+       :priority 3)
+      (global :when active)
+      (buffer-position :priority 0)
+      (hud :priority 0))))
+
+(use-package all-the-icons)
+;;(all-the-icons-install-fonts)
+
+(use-package doom-themes
+  :config
+  (add-hook 'after-init-hook #'doom-themes-visual-bell-config)
+  (add-hook 'after-init-hook #'doom-themes-neotree-config)
+  (setq doom-neotree-enable-variable-pitch t
+        doom-neotree-file-icons 'simple
+        doom-neotree-line-spacing 2)
+  (doom-themes-visual-bell-config)
+  (doom-themes-neotree-config))
+
+(defun jeffwk/init-ui (&optional frame)
+  (switch-custom-theme)
+  (set-face-attribute 'variable-pitch frame
+                      :font (font-spec :family "Fira Sans" :size 26)))
+(jeffwk/init-ui)
+(add-hook 'after-make-frame-functions #'jeffwk/init-ui)
 
 (load-local "auto-margin")
 
-(setq file-name-handler-alist file-name-handler-alist-backup)
+(setq file-name-handler-alist file-name-handler-alist-backup
+      inhibit-message nil)
+
+(when (graphical?)
+  (use-package projectile)
+  (add-hook 'after-init-hook 'helm-projectile-switch-project))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -769,7 +946,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (helm-projectile flycheck-clojure clj-refactor cider yasnippet web-mode use-package systemd spaceline smex smartparens slime-annot scala-mode projectile paren-face paredit neotree mic-paren magit lispy less-css-mode jade-mode ido-completing-read+ git-gutter-fringe ghc flycheck flx-ido esup elisp-slime-nav company color-theme-sanityinc-tomorrow clojure-mode cider-eval-sexp-fu autothemer aggressive-indent ac-slime ac-haskell-process))))
+    (doom-themes disable-mouse flycheck-clojure clj-refactor cider-eval-sexp-fu cider spaceline jade-mode web-mode less-css-mode ac-haskell-process ghc haskell-mode elisp-slime-nav scala-mode ac-slime slime-annot helm-projectile slime clojure-mode highlight lispy autothemer magit git-gutter-fringe smartparens paredit paren-face mic-paren flx-ido fringe-helper flycheck smex projectile company-quickhelp company-statistics company aggressive-indent yasnippet esup neotree helm dash use-package color-theme-sanityinc-tomorrow))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
