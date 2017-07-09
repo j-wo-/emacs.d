@@ -128,6 +128,7 @@
   (global-disable-mouse-mode))
 
 (use-package tramp
+  :defer t
   :config
   (setq tramp-default-method "ssh"))
 
@@ -211,7 +212,6 @@
     (global-company-mode 1)))
 
 (use-package projectile
-  :defer 0.2
   :config
   (use-package helm-projectile
     :config
@@ -232,6 +232,7 @@
   :config (smex-initialize))
 
 (use-package flycheck
+  :defer t
   :config
   (define-key flycheck-mode-map "\C-c ." 'flycheck-next-error)
   (define-key flycheck-mode-map "\C-c ," 'flycheck-previous-error)
@@ -356,7 +357,8 @@
   "Open NeoTree using the git root."
   (interactive)
   (use-package projectile)
-  (let ((project-dir (projectile-project-root))
+  (let ((project-dir (and (projectile-project-p)
+                          (projectile-project-root)))
         (file-name (buffer-file-name)))
     (do-neotree-toggle)
     (if project-dir
@@ -528,6 +530,8 @@
   
   (use-package cider
     :diminish cider-mode
+    :init
+    (use-package tramp)
     :config
     (use-package cider-eval-sexp-fu)
     (setq nrepl-use-ssh-fallback-for-remote-hosts t)
@@ -858,16 +862,26 @@
   :config
   (require 'spaceline-config)
   ;; (spaceline-compile)
+
   (spaceline-toggle-buffer-size-off)
   (spaceline-toggle-minor-modes-off)
   (spaceline-toggle-buffer-encoding-abbrev-off)
   (spaceline-toggle-buffer-position-on)
   (spaceline-toggle-hud-off)
   (spaceline-toggle-line-column-on)
-  ;; (spaceline-spacemacs-theme)
-  (spaceline-emacs-theme)
+
+  (defface jeffwk/modeline-buffer-path
+    '((t
+       (:inherit mode-line-buffer-id
+                 :bold nil
+                 :foreground "#a89984")))
+    "Face used for the buffer name."
+    :group '+jeffwk)
+
   (defun jeffwk/buffer-path ()
-    (when (and buffer-file-name (projectile-project-root))
+    (when (and buffer-file-name
+               (projectile-project-p)
+               (projectile-project-root))
       (let ((buffer-path
              (file-relative-name (file-name-directory
                                   (or buffer-file-truename (file-truename buffer-file-name)))
@@ -875,8 +889,9 @@
         (unless (equal buffer-path "./")
           (let ((max-length (truncate (* (window-body-width) 0.4))))
             (if (> (length buffer-path) max-length)
-                (let ((path (nreverse (split-string buffer-path "/" t)))
-                      (output ""))
+                (let* ((path (nreverse (split-string buffer-path "/" t)))
+                       ;; (path (subseq path 0 (min (length path) 2)))
+                       (output ""))
                   (when (and path (equal "" (car path)))
                     (setq path (cdr path)))
                   (while (and path (<= (length output) (- max-length 4)))
@@ -889,17 +904,12 @@
                   output)
               buffer-path))))))
 
-  (defface jeffwk/modeline-buffer-path
-    '((t
-       (:inherit mode-line-emphasis
-                 :bold nil
-                 :foreground "#a89984")))
-    "Face used for the buffer name."
-    :group '+jeffwk)
-
   (spaceline-define-segment buffer-id-with-path
     "Name of buffer (or path relative to project root)."
-    (let ((name (s-trim (powerline-buffer-id 'mode-line-buffer-id)))
+    (let ((name (propertize (if (buffer-file-name)
+                                (file-name-nondirectory (buffer-file-name))
+                              (buffer-name))
+                            'face 'mode-line-buffer-id))
           (path (jeffwk/buffer-path)))
       (if path
           (concat (propertize path 'face
@@ -907,44 +917,51 @@
                   name)
         name)))
 
-  (spaceline-install
-    `((((((persp-name :fallback workspace-number)
-          window-number) :separator "|")
-        buffer-modified
-        buffer-size)
-       :face highlight-face
-       :priority 0)
-      (anzu :priority 4)
-      auto-compile
-      ((buffer-id-with-path remote-host)
-       :priority 5)
-      major-mode
-      (process :when active)
-      ((flycheck-error flycheck-warning flycheck-info)
-       :when active
-       :priority 3)
-      (minor-modes :when active)
-      (mu4e-alert-segment :when active)
-      (erc-track :when active)
-      (version-control :when active
-                       :priority 7)
-      (org-pomodoro :when active)
-      (org-clock :when active)
-      nyan-cat)
-    `(which-function
-      (python-pyvenv :fallback python-pyenv)
-      purpose
-      (battery :when active)
-      (selection-info :priority 2)
-      input-method
-      ((buffer-encoding-abbrev
-        point-position
-        line-column)
-       :separator " | "
-       :priority 3)
-      (global :when active)
-      (buffer-position :priority 0)
-      (hud :priority 0))))
+  (defun jeffwk/spaceline-theme ()
+    (spaceline-install
+      `((((((persp-name :fallback workspace-number)
+            window-number) :separator "|")
+          buffer-modified
+          buffer-size)
+         :face highlight-face
+         :priority 0)
+        (anzu :priority 4)
+        auto-compile
+        ((buffer-id-with-path remote-host)
+         :priority 5)
+        major-mode
+        (process :when active)
+        ((flycheck-error flycheck-warning flycheck-info)
+         :when active
+         :priority 3)
+        (minor-modes :when active)
+        (mu4e-alert-segment :when active)
+        (erc-track :when active)
+        (version-control :when active
+                         :priority 7)
+        (org-pomodoro :when active)
+        (org-clock :when active)
+        nyan-cat)
+      `(which-function
+        (python-pyvenv :fallback python-pyenv)
+        purpose
+        (battery :when active)
+        (selection-info :priority 2)
+        input-method
+        ((buffer-encoding-abbrev
+          point-position
+          line-column)
+         :separator " | "
+         :priority 3)
+        (global :when active)
+        (buffer-position :priority 0)
+        (hud :priority 0)))
+
+    (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
+
+  ;; (spaceline-spacemacs-theme)
+  ;; (spaceline-emacs-theme)
+  (jeffwk/spaceline-theme))
 
 (use-package all-the-icons)
 ;;(all-the-icons-install-fonts)
