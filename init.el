@@ -378,7 +378,7 @@
         neo-mode-line-type nil
         neo-show-updir-line nil
         neo-theme 'nerd
-        neo-window-width 25
+        neo-window-width 28
         neo-banner-message nil
         neo-confirm-create-file #'off-p
         neo-confirm-create-directory #'off-p
@@ -866,11 +866,47 @@
   (spaceline-toggle-line-column-on)
   ;; (spaceline-spacemacs-theme)
   (spaceline-emacs-theme)
+  (defun jeffwk/buffer-path ()
+    (when (and buffer-file-name (projectile-project-root))
+      (let ((buffer-path
+             (file-relative-name (file-name-directory
+                                  (or buffer-file-truename (file-truename buffer-file-name)))
+                                 (projectile-project-root))))
+        (unless (equal buffer-path "./")
+          (let ((max-length (truncate (* (window-body-width) 0.4))))
+            (if (> (length buffer-path) max-length)
+                (let ((path (nreverse (split-string buffer-path "/" t)))
+                      (output ""))
+                  (when (and path (equal "" (car path)))
+                    (setq path (cdr path)))
+                  (while (and path (<= (length output) (- max-length 4)))
+                    (setq output (concat (car path) "/" output)
+                          path (cdr path)))
+                  (when path
+                    (setq output (concat "../" output)))
+                  (unless (string-suffix-p "/" output)
+                    (setq output (concat output "/")))
+                  output)
+              buffer-path))))))
+
+  (defface jeffwk/modeline-buffer-path
+    '((t
+       (:inherit mode-line-emphasis
+                 :bold nil
+                 :foreground "#a89984")))
+    "Face used for the buffer name."
+    :group '+jeffwk)
+
   (spaceline-define-segment buffer-id-with-path
     "Name of buffer (or path relative to project root)."
-    (if (and (buffer-file-name) (projectile-project-p))
-        (s-trim (powerline-buffer-id 'mode-line-buffer-id))
-      (s-trim (powerline-buffer-id 'mode-line-buffer-id))))
+    (let ((name (s-trim (powerline-buffer-id 'mode-line-buffer-id)))
+          (path (jeffwk/buffer-path)))
+      (if path
+          (concat (propertize path 'face
+                              '(:inherit jeffwk/modeline-buffer-path))
+                  name)
+        name)))
+
   (spaceline-install
     `((((((persp-name :fallback workspace-number)
           window-number) :separator "|")
@@ -925,8 +961,10 @@
 
 (defun jeffwk/init-ui (&optional frame)
   (switch-custom-theme)
+  ;;(set-frame-font "Sauce Code Pro-11")
   (set-face-attribute 'variable-pitch frame
                       :font (font-spec :family "Fira Sans" :size 26)))
+
 (jeffwk/init-ui)
 (add-hook 'after-make-frame-functions #'jeffwk/init-ui)
 
