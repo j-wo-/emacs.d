@@ -865,7 +865,7 @@
   (spaceline-toggle-hud-off)
   (spaceline-toggle-line-column-on)
   ;; (spaceline-spacemacs-theme)
-  ;; (spaceline-emacs-theme)
+  (spaceline-emacs-theme)
   (spaceline-define-segment buffer-id-with-path
     "Name of buffer (or path relative to project root)."
     (if (and (buffer-file-name) (projectile-project-p))
