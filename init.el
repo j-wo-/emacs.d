@@ -348,6 +348,71 @@
   (define-key magit-status-mode-map (kbd "C-<tab>") nil)
   (diminish 'auto-revert-mode))
 
+(defun jeffwk/on-switch-project ()
+  (remove-frame-margins)
+  (neotree-projectile-action)
+  (autoset-frame-margins)
+  (helm-projectile))
+
+(defun jeffwk/neotree-buffer ()
+  (let ((result nil))
+    (mapcar (lambda (window)
+              (let ((buffer (window-buffer window)))
+                (save-excursion
+                  (with-current-buffer buffer
+                    (when (eq major-mode 'neotree-mode)
+                      (setq result buffer))))))
+            (window-list))
+    result))
+(defun jeffwk/neotree-open-p ()
+  (if (jeffwk/neotree-buffer) t nil))
+
+(defun jeffwk/neotree-expanded-dirs ()
+  (let ((buffer (jeffwk/neotree-buffer))
+        (result nil))
+    (when buffer
+      (save-excursion
+        (with-current-buffer buffer
+          (setq result neo-buffer--expanded-node-list)))
+      result)))
+
+(defun jeffwk/neotree-unexpand-dir (dir)
+  (let ((buffer (jeffwk/neotree-buffer)))
+    (when buffer
+      (save-excursion
+        (with-current-buffer buffer
+          (setq neo-buffer--expanded-node-list
+                (remove dir neo-buffer--expanded-node-list)))))))
+
+(defvar jeffwk/neotree-latest-file nil)
+(defvar jeffwk/neotree-temp-dirs nil)
+
+(defun jeffwk/update-neotree-file ()
+  (when (jeffwk/neotree-open-p)
+    (let ((file (buffer-file-name)))
+      (when (and file (not (equal file jeffwk/neotree-latest-file)))
+        (if (and jeffwk/neotree-latest-file
+                 (equal (file-name-directory file)
+                        (file-name-directory jeffwk/neotree-latest-file)))
+            ;; directory hasn't changed
+            (progn
+              (setq jeffwk/neotree-latest-file file)
+              (neotree-refresh t))
+          (let ((temp-dirs jeffwk/neotree-temp-dirs))
+            (setq jeffwk/neotree-latest-file file)
+            ;; unexpand directories in neotree buffer
+            (dolist (dir temp-dirs)
+              (jeffwk/neotree-unexpand-dir dir))
+            ;; record temp directories expanded by this action
+            (let* ((pre-dirs (jeffwk/neotree-expanded-dirs))
+                   (_refresh (neotree-refresh t))
+                   (post-dirs (jeffwk/neotree-expanded-dirs))
+                   (new-dirs (remove-if (lambda (d)
+                                          (member d pre-dirs))
+                                        post-dirs)))
+              (setq jeffwk/neotree-temp-dirs new-dirs))
+            (neotree-refresh t)))))))
+
 (defun do-neotree-toggle ()
   (interactive)
   (remove-frame-margins)
@@ -376,7 +441,7 @@
   :config
   (setq neo-create-file-auto-open nil
         neo-auto-indent-point nil
-        neo-autorefresh nil
+        neo-autorefresh t
         neo-mode-line-type nil
         neo-show-updir-line nil
         neo-theme 'nerd
@@ -396,7 +461,9 @@
           ;; org-mode folders
           "^\\.\\(sync\\|export\\|attach\\)$"
           "~$"
-          "^#.*#$")))
+          "^#.*#$")
+        projectile-switch-project-action 'jeffwk/on-switch-project)
+  (add-hook 'post-command-hook 'jeffwk/update-neotree-file))
 
 ;;;
 ;;; modes
@@ -597,13 +664,14 @@
           (insert (format "(in-ns '%s)" cider-figwheel-connecting))
           (cider-repl-return))))
     (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
-    (defun cider-connect-figwheel ()
+    (defun cider-connect-figwheel (&optional port)
       (interactive)
-      (let ((cider-figwheel-connecting
+      (let ((port (or port 7888))
+            (cider-figwheel-connecting
              (if (member major-mode '(clojure-mode clojurescript-mode))
                  (clojure-expected-ns)
                "")))
-        (cider-connect "localhost" 7888)))
+        (cider-connect "localhost" port)))
     (defun cider-load-buffer-reload-repl (&optional buffer)
       (interactive)
       (let ((result (if buffer
@@ -1026,8 +1094,8 @@
 
 (when (graphical?)
   (use-package projectile)
+  (use-package neotree)
   (add-hook 'after-init-hook 'helm-projectile-switch-project))
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1035,7 +1103,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (doom-themes disable-mouse flycheck-clojure clj-refactor cider-eval-sexp-fu cider spaceline jade-mode web-mode less-css-mode ac-haskell-process ghc haskell-mode elisp-slime-nav scala-mode ac-slime slime-annot helm-projectile slime clojure-mode highlight lispy autothemer magit git-gutter-fringe smartparens paredit paren-face mic-paren flx-ido fringe-helper flycheck smex projectile company-quickhelp company-statistics company aggressive-indent yasnippet esup neotree helm dash use-package color-theme-sanityinc-tomorrow))))
+    (gh-md flycheck-clojure clj-refactor cider-eval-sexp-fu cider doom-themes all-the-icons spaceline jade-mode web-mode less-css-mode ac-haskell-process ghc haskell-mode elisp-slime-nav scala-mode ac-slime slime-annot slime clojure-mode highlight lispy autothemer pkgbuild-mode nginx-mode markdown-mode groovy-mode systemd neotree magit git-gutter-fringe smartparens paredit paren-face mic-paren flx-ido fringe-helper flycheck smex helm-projectile projectile company-quickhelp company-statistics company aggressive-indent yasnippet esup helm disable-mouse dash use-package color-theme-sanityinc-tomorrow))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
