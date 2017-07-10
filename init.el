@@ -399,6 +399,40 @@
           "^#.*#$")))
 
 ;;;
+;;; modes
+;;;
+
+(use-package systemd)
+
+(use-package groovy-mode
+  :mode "/Jenkinsfile")
+
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown")
+  :config
+  (use-package gh-md))
+
+(use-package nginx-mode
+  :mode "/nginx.conf$" "\\.nginx-site\\'"
+  :config
+  (add-hook 'nginx-mode-hook #'aggressive-indent-mode))
+
+(use-package org
+  :commands org-agenda org-store-link org-capture
+  :config
+  (define-key global-map "\C-cl" 'org-store-link)
+  (define-key global-map "\C-ca" 'org-agenda)
+  (define-key global-map "\C-cc" 'org-capture)
+  (setq org-log-done t)
+  (setq org-agenda-files (list "~/org/work.org" "~/org/self.org")))
+
+(use-package pkgbuild-mode :mode "/PKGBUILD$")
+
+;;;
 ;;; theming
 ;;;
 
