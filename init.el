@@ -51,7 +51,8 @@
                      (eql (first x) pkg))
                    package-pinned-packages)))
 
-(dolist (pkg '(slime web-mode js2-mode tern magit markdown-mode))
+(dolist (pkg '(slime web-mode js2-mode tern magit markdown-mode
+                     cider clojure-mode clj-refactor))
   (pin-stable pkg))
 
 ;; Install use-package from MELPA if needed
@@ -199,14 +200,14 @@
           company-tooltip-align-annotations t)
     :config
     (setq company-minimum-prefix-length 3
-          company-idle-delay 0.05)
+          company-idle-delay 0.25)
     (add-to-list 'company-transformers 'company-sort-by-occurrence)
     (use-package company-statistics
       :config
       (company-statistics-mode 1))
     (use-package company-quickhelp
       :config
-      (setq company-quickhelp-delay nil)
+      (setq company-quickhelp-delay 1)
       (company-quickhelp-mode 1))
     (global-company-mode 1)))
 
