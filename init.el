@@ -5,7 +5,7 @@
  file-name-handler-alist nil
  gc-cons-threshold (* 100 1000 1000)
  ;; prevent echoing messages while loading
- inhibit-message t
+ ;; inhibit-message t
  inhibit-splash-screen t)
 (defun restore-config-post-init ()
   (setq inhibit-message nil
@@ -200,7 +200,7 @@
           company-tooltip-align-annotations t)
     :config
     (setq company-minimum-prefix-length 3
-          company-idle-delay 0.25)
+          company-idle-delay 0.15)
     (add-to-list 'company-transformers 'company-sort-by-occurrence)
     (use-package company-statistics
       :config
@@ -577,6 +577,7 @@
   (use-package clj-refactor
     :diminish clj-refactor-mode
     :config
+    (setq cljr-warn-on-eval nil)
     (defun clj-refactor-clojure-mode-hook ()
       (clj-refactor-mode 1)
       (yas-minor-mode 1)    ; for adding require/use/import statements
@@ -585,9 +586,10 @@
     (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)
     (add-hook 'clojurescript-mode-hook 'clj-refactor-clojure-mode-hook))
 
-  (use-package flycheck-clojure
-    :config
-    (flycheck-clojure-setup)))
+  (when nil
+    (use-package flycheck-clojure
+      :config
+      (flycheck-clojure-setup))))
 
 (use-package slime
   :commands slime

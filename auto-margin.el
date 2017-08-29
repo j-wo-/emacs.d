@@ -3,6 +3,7 @@
 
 ;; Controls max width for a centered window
 (setq custom-frame-width 100)
+(setq custom-min-margin 10)
 
 (defun split-window-prefer-horizontal (&optional window)
   "Modified version of `split-window-sensibly' that splits horizontally
@@ -65,7 +66,7 @@
     (let* ((ws (window-size w t))
            (mtotal (min (- ws custom-frame-width 1)
                         (- (floor (/ ws 2)) 4))))
-      (if (>= mtotal 20)
+      (if (>= mtotal (* 2 custom-min-margin))
           (let ((ms (floor (/ (- ws custom-frame-width 1) 2))))
             (set-window-margins w ms ms))
         (set-window-margins w 0 0)))))
