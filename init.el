@@ -200,7 +200,7 @@
           company-tooltip-align-annotations t)
     :config
     (setq company-minimum-prefix-length 3
-          company-idle-delay 0.15)
+          company-idle-delay 0.1)
     (add-to-list 'company-transformers 'company-sort-by-occurrence)
     (use-package company-statistics
       :config
@@ -240,14 +240,15 @@
   (setq flycheck-indication-mode 'right-fringe)
   ;; A non-descript, left-pointing arrow
   (use-package fringe-helper)
-  (fringe-helper-define 'flycheck-fringe-bitmap-double-arrow 'center
-    "...X...."
-    "..XX...."
-    ".XXX...."
-    "XXXX...."
-    ".XXX...."
-    "..XX...."
-    "...X....")
+  (fringe-helper-define
+   'flycheck-fringe-bitmap-double-arrow 'center
+   "...X...."
+   "..XX...."
+   ".XXX...."
+   "XXXX...."
+   ".XXX...."
+   "..XX...."
+   "...X....")
   ;; (global-flycheck-mode 1)
   )
 
@@ -323,15 +324,18 @@
   :config
   (do-git-gutter-config)
   (use-package fringe-helper)
-  (fringe-helper-define 'git-gutter-fr:added '(center repeated)
-    "XXX.....")
-  (fringe-helper-define 'git-gutter-fr:modified '(center repeated)
-    "XXX.....")
-  (fringe-helper-define 'git-gutter-fr:deleted 'bottom
-    "X......."
-    "XX......"
-    "XXX....."
-    "XXXX...."))
+  (fringe-helper-define
+   'git-gutter-fr:added '(center repeated)
+   "XXX.....")
+  (fringe-helper-define
+   'git-gutter-fr:modified '(center repeated)
+   "XXX.....")
+  (fringe-helper-define
+   'git-gutter-fr:deleted 'bottom
+   "X......."
+   "XX......"
+   "XXX....."
+   "XXXX...."))
 (use-package git-gutter
   :diminish git-gutter-mode
   :if (null window-system)
@@ -496,14 +500,6 @@
   (defun enable-lispy (mode-hook)
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
-(use-package highlight)
-
-(use-package eval-sexp-fu
-  :ensure nil
-  :load-path "~/.emacs.d/eval-sexp-fu.el"
-  :config
-  (turn-on-eval-sexp-fu-flash-mode))
-
 (use-package clojure-mode
   :mode
   ("\\.clj\\'" . clojure-mode)
@@ -519,7 +515,6 @@
     :init
     (use-package tramp)
     :config
-    (use-package cider-eval-sexp-fu)
     (setq nrepl-use-ssh-fallback-for-remote-hosts t)
     (setq cider-repl-use-pretty-printing t)
     (add-hook 'clojure-mode-hook #'cider-mode)
@@ -980,11 +975,10 @@
       inhibit-message nil)
 
 (when (graphical?)
-  (use-package projectile)
+  '(use-package projectile)
   (when jeffwk/enable-auto-neotree
     (use-package neotree))
-  (add-hook 'after-init-hook 'helm-projectile-switch-project))
-
+  '(add-hook 'after-init-hook 'helm-projectile-switch-project))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
