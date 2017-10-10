@@ -22,6 +22,7 @@
   (some #'display-graphic-p (frame-list)))
 
 (setq custom-emacs-theme
+      ;; (if (graphical?) 'gruvbox 'sanityinc-tomorrow-night)
       (if (graphical?) 'gruvbox 'gruvbox))
 
 (set-language-environment "utf-8")
@@ -125,13 +126,18 @@
 ;;;
 
 (use-package disable-mouse
+  :defer 0.25
   :config
+  (diminish 'global-disable-mouse-mode)
+  (diminish 'disable-mouse-mode)
   (global-disable-mouse-mode))
 
 (use-package tramp
   :defer t
   :config
   (setq tramp-default-method "ssh"))
+
+(use-package rainbow-mode)
 
 (use-package helm
   :config
@@ -212,6 +218,8 @@
     (global-company-mode 1)))
 
 (use-package projectile
+  ;; :commands (projectile-switch-project)
+  ;; :bind ("C-c pp" . helm-projectile-switch-project)
   :config
   (use-package helm-projectile
     :config
@@ -288,7 +296,7 @@
        (font-lock-fontify-buffer)))))
 
 (use-package paredit
-  :diminish (paredit-mode "()")
+  :diminish "" ;; (paredit-mode "()")
   :config
   (define-globalized-minor-mode real-global-paredit-mode
     paredit-mode (lambda ()
@@ -420,7 +428,7 @@
       :ensure nil
       :load-path "~/.emacs.d/gruvbox-theme"
       :init
-      (setq gruvbox-contrast 'medium)))
+      (setq gruvbox-contrast 'hard)))
    ((symbol-matches theme "spacemacs-dark")
     (use-package spacemacs-theme))
    ((symbol-matches theme "material")
@@ -674,7 +682,7 @@
  (lambda ()
    (use-package paren-face)
    (require 'ielm)
-   (use-package elisp-slime-nav :diminish (elisp-slime-nav-mode . "M-."))
+   (use-package elisp-slime-nav :diminish "")
    (turn-on-elisp-slime-nav-mode)
    (use-package paredit)
    ;; (use-package lispy)
@@ -832,120 +840,127 @@
 ;;; end
 ;;;
 
-(use-package spaceline
-  :init
-  (setq powerline-height 54)
-  (setq powerline-default-separator 'utf-8)
-  (setq spaceline-separator-dir-left '(right . right))
-  (setq spaceline-separator-dir-right '(right . right))
-  (setq powerline-default-separator 'alternate) ;; alternate, slant, wave, zigzag, nil.
-  (setq spaceline-workspace-numbers-unicode t) ;for eyebrowse. nice looking unicode numbers for tagging different layouts
-  (setq spaceline-window-numbers-unicode t)
-  ;; (setq spaceline-highlight-face-func #'spaceline-highlight-face-evil-state) ; set colouring for different evil-states
-  ;; (setq spaceline-inflation 1.4)
+(use-package powerline
   :config
-  (require 'spaceline-config)
-  ;; (spaceline-compile)
+  (setq powerline-height 54)
+  ;; (setq powerline-default-separator 'utf-8)
+  (setq powerline-default-separator 'alternate)
+  (powerline-default-theme))
 
-  (spaceline-toggle-buffer-size-off)
-  (spaceline-toggle-minor-modes-off)
-  (spaceline-toggle-buffer-encoding-abbrev-off)
-  (spaceline-toggle-buffer-position-on)
-  (spaceline-toggle-hud-off)
-  (spaceline-toggle-line-column-on)
+'(use-package spaceline
+   :init
+   (setq powerline-height 54)
+   (setq powerline-default-separator 'utf-8)
+   (setq spaceline-separator-dir-left '(right . right))
+   (setq spaceline-separator-dir-right '(right . right))
+   (setq powerline-default-separator 'alternate) ;; alternate, slant, wave, zigzag, nil.
+   (setq spaceline-workspace-numbers-unicode t) ;for eyebrowse. nice looking unicode numbers for tagging different layouts
+   (setq spaceline-window-numbers-unicode t)
+   ;; (setq spaceline-highlight-face-func #'spaceline-highlight-face-evil-state) ; set colouring for different evil-states
+   ;; (setq spaceline-inflation 1.4)
+   :config
+   (require 'spaceline-config)
+   ;; (spaceline-compile)
 
-  (defface jeffwk/modeline-buffer-path
-    '((t
-       (:inherit mode-line-buffer-id
-                 :bold nil
-                 :foreground "#a89984")))
-    "Face used for the buffer name."
-    :group '+jeffwk)
+   (spaceline-toggle-buffer-size-off)
+   (spaceline-toggle-minor-modes-off)
+   (spaceline-toggle-buffer-encoding-abbrev-off)
+   (spaceline-toggle-buffer-position-on)
+   (spaceline-toggle-hud-off)
+   (spaceline-toggle-line-column-on)
 
-  (defun jeffwk/buffer-path ()
-    (when (and buffer-file-name
-               (projectile-project-p)
-               (projectile-project-root))
-      (let ((buffer-path
-             (file-relative-name (file-name-directory
-                                  (or buffer-file-truename (file-truename buffer-file-name)))
-                                 (projectile-project-root))))
-        (unless (equal buffer-path "./")
-          (let ((max-length (truncate (* (window-body-width) 0.4))))
-            (if (> (length buffer-path) max-length)
-                (let* ((path (nreverse (split-string buffer-path "/" t)))
-                       ;; (path (subseq path 0 (min (length path) 2)))
-                       (output ""))
-                  (when (and path (equal "" (car path)))
-                    (setq path (cdr path)))
-                  (while (and path (<= (length output) (- max-length 4)))
-                    (setq output (concat (car path) "/" output)
-                          path (cdr path)))
-                  (when path
-                    (setq output (concat "../" output)))
-                  (unless (string-suffix-p "/" output)
-                    (setq output (concat output "/")))
-                  output)
-              buffer-path))))))
+   (defface jeffwk/modeline-buffer-path
+     '((t
+        (:inherit mode-line-buffer-id
+                  :bold nil
+                  :foreground "#a89984")))
+     "Face used for the buffer name."
+     :group '+jeffwk)
 
-  (spaceline-define-segment buffer-id-with-path
-    "Name of buffer (or path relative to project root)."
-    (let ((name (propertize (if (buffer-file-name)
-                                (file-name-nondirectory (buffer-file-name))
-                              (buffer-name))
-                            'face 'mode-line-buffer-id))
-          (path (jeffwk/buffer-path)))
-      (if path
-          (concat (propertize path 'face
-                              '(:inherit jeffwk/modeline-buffer-path))
-                  name)
-        name)))
+   (defun jeffwk/buffer-path ()
+     (when (and buffer-file-name
+                (projectile-project-p)
+                (projectile-project-root))
+       (let ((buffer-path
+              (file-relative-name (file-name-directory
+                                   (or buffer-file-truename (file-truename buffer-file-name)))
+                                  (projectile-project-root))))
+         (unless (equal buffer-path "./")
+           (let ((max-length (truncate (* (window-body-width) 0.4))))
+             (if (> (length buffer-path) max-length)
+                 (let* ((path (nreverse (split-string buffer-path "/" t)))
+                        ;; (path (subseq path 0 (min (length path) 2)))
+                        (output ""))
+                   (when (and path (equal "" (car path)))
+                     (setq path (cdr path)))
+                   (while (and path (<= (length output) (- max-length 4)))
+                     (setq output (concat (car path) "/" output)
+                           path (cdr path)))
+                   (when path
+                     (setq output (concat "../" output)))
+                   (unless (string-suffix-p "/" output)
+                     (setq output (concat output "/")))
+                   output)
+               buffer-path))))))
 
-  (defun jeffwk/spaceline-theme ()
-    (spaceline-install
-      `((((((persp-name :fallback workspace-number)
-            window-number) :separator "|")
-          buffer-modified
-          buffer-size)
-         :face highlight-face
-         :priority 0)
-        (anzu :priority 4)
-        auto-compile
-        ((buffer-id-with-path remote-host)
-         :priority 5)
-        major-mode
-        (process :when active)
-        ((flycheck-error flycheck-warning flycheck-info)
-         :when active
-         :priority 3)
-        (minor-modes :when active)
-        (mu4e-alert-segment :when active)
-        (erc-track :when active)
-        (version-control :when active
-                         :priority 7)
-        (org-pomodoro :when active)
-        (org-clock :when active)
-        nyan-cat)
-      `(which-function
-        (python-pyvenv :fallback python-pyenv)
-        purpose
-        (battery :when active)
-        (selection-info :priority 2)
-        input-method
-        ((buffer-encoding-abbrev
-          point-position
-          line-column)
-         :separator " | "
-         :priority 3)
-        (global :when active)
-        (buffer-position :priority 0)
-        (hud :priority 0)))
+   (spaceline-define-segment buffer-id-with-path
+     "Name of buffer (or path relative to project root)."
+     (let ((name (propertize (if (buffer-file-name)
+                                 (file-name-nondirectory (buffer-file-name))
+                               (buffer-name))
+                             'face 'mode-line-buffer-id))
+           (path (jeffwk/buffer-path)))
+       (if path
+           (concat (propertize path 'face
+                               '(:inherit jeffwk/modeline-buffer-path))
+                   name)
+         name)))
 
-    (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
+   (defun jeffwk/spaceline-theme ()
+     (spaceline-install
+       `((((((persp-name :fallback workspace-number)
+             window-number) :separator "|")
+           buffer-modified
+           buffer-size)
+          :face highlight-face
+          :priority 0)
+         (anzu :priority 4)
+         auto-compile
+         ((buffer-id-with-path remote-host)
+          :priority 5)
+         major-mode
+         (process :when active)
+         ((flycheck-error flycheck-warning flycheck-info)
+          :when active
+          :priority 3)
+         (minor-modes :when active)
+         (mu4e-alert-segment :when active)
+         (erc-track :when active)
+         (version-control :when active
+                          :priority 7)
+         (org-pomodoro :when active)
+         (org-clock :when active)
+         nyan-cat)
+       `(which-function
+         (python-pyvenv :fallback python-pyenv)
+         purpose
+         (battery :when active)
+         (selection-info :priority 2)
+         input-method
+         ((buffer-encoding-abbrev
+           point-position
+           line-column)
+          :separator " | "
+          :priority 3)
+         (global :when active)
+         (buffer-position :priority 0)
+         (hud :priority 0)))
 
-  ;; (spaceline-spacemacs-theme)
-  ;; (spaceline-emacs-theme)
-  (jeffwk/spaceline-theme))
+     (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
+
+   ;; (spaceline-spacemacs-theme)
+   ;; (spaceline-emacs-theme)
+   (jeffwk/spaceline-theme))
 
 (use-package all-the-icons)
 ;;(all-the-icons-install-fonts)
@@ -986,7 +1001,8 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (gh-md flycheck-clojure clj-refactor cider-eval-sexp-fu cider doom-themes all-the-icons spaceline jade-mode web-mode less-css-mode ac-haskell-process ghc haskell-mode elisp-slime-nav scala-mode ac-slime slime-annot slime clojure-mode highlight lispy autothemer pkgbuild-mode nginx-mode markdown-mode groovy-mode systemd neotree magit git-gutter-fringe smartparens paredit paren-face mic-paren flx-ido fringe-helper flycheck smex helm-projectile projectile company-quickhelp company-statistics company aggressive-indent yasnippet esup helm disable-mouse dash use-package color-theme-sanityinc-tomorrow))))
+    (js2-mode tern doom-themes all-the-icons powerline jade-mode web-mode ac-haskell-process ghc haskell-mode elisp-slime-nav scala-mode ac-slime slime-annot helm-projectile slime clojure-mode lispy autothemer pkgbuild-mode nginx-mode markdown-mode groovy-mode systemd neotree magit git-gutter-fringe smartparens paredit paren-face mic-paren flx-ido fringe-helper flycheck smex projectile company-quickhelp company-statistics company aggressive-indent yasnippet esup helm rainbow-mode disable-mouse dash use-package color-theme-sanityinc-tomorrow)))
+ '(tramp-syntax (quote default) nil (tramp)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
