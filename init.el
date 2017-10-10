@@ -249,14 +249,14 @@
   ;; A non-descript, left-pointing arrow
   (use-package fringe-helper)
   (fringe-helper-define
-   'flycheck-fringe-bitmap-double-arrow 'center
-   "...X...."
-   "..XX...."
-   ".XXX...."
-   "XXXX...."
-   ".XXX...."
-   "..XX...."
-   "...X....")
+    'flycheck-fringe-bitmap-double-arrow 'center
+    "...X...."
+    "..XX...."
+    ".XXX...."
+    "XXXX...."
+    ".XXX...."
+    "..XX...."
+    "...X....")
   ;; (global-flycheck-mode 1)
   )
 
@@ -333,17 +333,17 @@
   (do-git-gutter-config)
   (use-package fringe-helper)
   (fringe-helper-define
-   'git-gutter-fr:added '(center repeated)
-   "XXX.....")
+    'git-gutter-fr:added '(center repeated)
+    "XXX.....")
   (fringe-helper-define
-   'git-gutter-fr:modified '(center repeated)
-   "XXX.....")
+    'git-gutter-fr:modified '(center repeated)
+    "XXX.....")
   (fringe-helper-define
-   'git-gutter-fr:deleted 'bottom
-   "X......."
-   "XX......"
-   "XXX....."
-   "XXXX...."))
+    'git-gutter-fr:deleted 'bottom
+    "X......."
+    "XX......"
+    "XXX....."
+    "XXXX...."))
 (use-package git-gutter
   :diminish git-gutter-mode
   :if (null window-system)
@@ -369,7 +369,12 @@
 (use-package systemd)
 
 (use-package groovy-mode
-  :mode "/Jenkinsfile")
+  :mode "/Jenkinsfile"
+  :config
+  (setq groovy-indent-offset 2)
+  (defun do-groovy-mode-config ()
+    (setq-local tab-width 2))
+  (add-hook 'groovy-mode-hook #'do-groovy-mode-config))
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
@@ -977,9 +982,11 @@
 
 (defun jeffwk/init-ui (&optional frame)
   (switch-custom-theme)
-  ;;(set-frame-font "Sauce Code Pro-11")
+  ;;(set-frame-font "Sauce Code Pro Medium-11")
+  ;;(set-frame-font "Inconsolata for Powerline-13")
+  ;;(set-frame-font "Fira Code Retina-11")
   (set-face-attribute 'variable-pitch frame
-                      :font (font-spec :family "Fira Sans" :size 26)))
+                      :font (font-spec :family "Fira Sans" :size 22)))
 
 (jeffwk/init-ui)
 (add-hook 'after-make-frame-functions #'jeffwk/init-ui)

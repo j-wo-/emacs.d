@@ -53,7 +53,7 @@
 (define-key global-map (kbd "C-t") 'transpose-sexps)
 (define-key global-map (kbd "C-w") 'backward-kill-word)
 (define-key global-map (kbd "C-x C-k") 'kill-region)
-(define-key global-map (kbd "C-M-q") 'indent-sexp)
+(define-key global-map (kbd "M-q") 'indent-sexp)
 (define-key global-map (kbd "C-M-k") 'kill-sexp)
 (define-key global-map (kbd "C-M-w") 'split-window-prefer-horizontal)
 
