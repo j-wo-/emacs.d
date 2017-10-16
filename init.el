@@ -27,7 +27,7 @@
 
 (set-language-environment "utf-8")
 
-(setq default-frame-alist '((left-fringe . 12) (right-fringe . 12))
+(setq default-frame-alist '((left-fringe . 10) (right-fringe . 10))
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
@@ -1001,18 +1001,4 @@
   (when jeffwk/enable-auto-neotree
     (use-package neotree))
   '(add-hook 'after-init-hook 'helm-projectile-switch-project))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (js2-mode tern doom-themes all-the-icons powerline jade-mode web-mode ac-haskell-process ghc haskell-mode elisp-slime-nav scala-mode ac-slime slime-annot helm-projectile slime clojure-mode lispy autothemer pkgbuild-mode nginx-mode markdown-mode groovy-mode systemd neotree magit git-gutter-fringe smartparens paredit paren-face mic-paren flx-ido fringe-helper flycheck smex projectile company-quickhelp company-statistics company aggressive-indent yasnippet esup helm rainbow-mode disable-mouse dash use-package color-theme-sanityinc-tomorrow)))
- '(tramp-syntax (quote default) nil (tramp)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+
