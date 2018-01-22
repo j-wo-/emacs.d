@@ -7,6 +7,7 @@
  ;; prevent echoing messages while loading
  ;; inhibit-message t
  inhibit-splash-screen t)
+
 (defun restore-config-post-init ()
   (setq inhibit-message nil
         file-name-handler-alist file-name-handler-alist-backup)
@@ -107,6 +108,7 @@
 ;;;
 
 (defvar jeffwk/exclude-pkgs
+  ;; '(evil company)
   '(evil auto-complete))
 
 (defun exclude-pkg? (pkg)
@@ -125,12 +127,12 @@
 ;;; general
 ;;;
 
-(use-package disable-mouse
-  :defer 0.25
-  :config
-  (diminish 'global-disable-mouse-mode)
-  (diminish 'disable-mouse-mode)
-  (global-disable-mouse-mode))
+'(use-package disable-mouse
+   :defer 0.25
+   :config
+   (diminish 'global-disable-mouse-mode)
+   (diminish 'disable-mouse-mode)
+   (global-disable-mouse-mode))
 
 (use-package tramp
   :defer t
@@ -182,13 +184,13 @@
     :defer 0.25
     :config
     (ac-config-default)
-    (setq ac-delay 0.025)
-    (setq ac-max-width 50)
-    (setq ac-auto-show-menu 0.4)
-    (setq ac-quick-help-delay 1.0)
-    (setq global-auto-complete-mode t)
-    (setq ac-use-dictionary-as-stop-words nil)
-    (setq ac-use-fuzzy t)
+    (setq ac-delay 0.025
+          ac-max-width 50
+          ac-auto-show-menu 0.4
+          ac-quick-help-delay 0.8
+          global-auto-complete-mode t
+          ac-use-dictionary-as-stop-words nil
+          ac-use-fuzzy t)
     (define-globalized-minor-mode real-global-auto-complete-mode
       auto-complete-mode (lambda ()
                            (if (not (minibufferp (current-buffer)))
@@ -206,7 +208,7 @@
           company-tooltip-align-annotations t)
     :config
     (setq company-minimum-prefix-length 3
-          company-idle-delay 0.1)
+          company-idle-delay 0.25)
     (add-to-list 'company-transformers 'company-sort-by-occurrence)
     (use-package company-statistics
       :config
@@ -433,7 +435,7 @@
       :ensure nil
       :load-path "~/.emacs.d/gruvbox-theme"
       :init
-      (setq gruvbox-contrast 'hard)))
+      (setq gruvbox-contrast 'soft)))
    ((symbol-matches theme "spacemacs-dark")
     (use-package spacemacs-theme))
    ((symbol-matches theme "material")
@@ -528,6 +530,15 @@
     :init
     (use-package tramp)
     :config
+    (unless (exclude-pkg? 'auto-complete)
+      (use-package ac-cider)
+      (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
+      (add-hook 'cider-mode-hook 'ac-cider-setup)
+      (add-hook 'cider-repl-mode-hook 'ac-cider-setup)
+      (eval-after-load "auto-complete"
+        '(progn
+           (add-to-list 'ac-modes 'cider-mode)
+           (add-to-list 'ac-modes 'cider-repl-mode))))
     (setq nrepl-use-ssh-fallback-for-remote-hosts t)
     (setq cider-repl-use-pretty-printing t)
     (add-hook 'clojure-mode-hook #'cider-mode)
@@ -1002,3 +1013,18 @@
     (use-package neotree))
   '(add-hook 'after-init-hook 'helm-projectile-switch-project))
 
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(magit-dispatch-arguments nil)
+ '(package-selected-packages
+   (quote
+    (ac-cider ivy company clj-refactor cider gh-md js2-mode tern yasnippet web-mode use-package systemd smex smartparens scala-mode rainbow-mode powerline pkgbuild-mode paren-face paredit nginx-mode neotree mic-paren markdown-mode magit lispy jade-mode helm-projectile groovy-mode git-gutter-fringe ghc flycheck flx-ido esup elisp-slime-nav doom-themes disable-mouse company-statistics company-quickhelp color-theme-sanityinc-tomorrow clojure-mode autothemer aggressive-indent ac-slime ac-haskell-process))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
