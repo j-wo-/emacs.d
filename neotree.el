@@ -1,6 +1,13 @@
 (defcustom jeffwk/enable-auto-neotree nil
   "Non-nil enables hooks to integrate neotree into various actions.")
 
+(defvar jeffwk/neotree-font-set nil)
+(defun jeffwk/init-neotree-font ()
+  (when (null jeffwk/neotree-font-set)
+    (set-face-attribute 'variable-pitch nil
+                        :font (font-spec :family "Fira Sans" :size 22))
+    (setq jeffwk/neotree-font-set t)))
+
 (defun jeffwk/on-switch-project ()
   (remove-frame-margins)
   (neotree-projectile-action)
@@ -69,6 +76,7 @@
 
 (defun jeffwk/do-neotree-toggle ()
   (interactive)
+  (jeffwk/init-neotree-font)
   (remove-frame-margins)
   (neotree-toggle)
   (autoset-frame-margins))
@@ -77,6 +85,7 @@
   "Open NeoTree using the git root."
   (interactive)
   (use-package projectile)
+  (jeffwk/init-neotree-font)
   (let ((project-dir (and (projectile-project-p)
                           (projectile-project-root)))
         (file-name (buffer-file-name)))

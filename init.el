@@ -858,20 +858,20 @@
 
 (use-package powerline
   :config
-  (setq powerline-height 54)
+  (setq powerline-height 48)
   ;; (setq powerline-default-separator 'utf-8)
-  (setq powerline-default-separator 'alternate)
+  (setq powerline-default-separator 'arrow
+        powerline-display-buffer-size nil
+        powerline-display-mule-info nil)
   (powerline-default-theme))
 
 '(use-package spaceline
    :init
-   (setq powerline-height 54)
-   (setq powerline-default-separator 'utf-8)
-   (setq spaceline-separator-dir-left '(right . right))
-   (setq spaceline-separator-dir-right '(right . right))
-   (setq powerline-default-separator 'alternate) ;; alternate, slant, wave, zigzag, nil.
-   (setq spaceline-workspace-numbers-unicode t) ;for eyebrowse. nice looking unicode numbers for tagging different layouts
-   (setq spaceline-window-numbers-unicode t)
+   (setq powerline-height 54
+         powerline-default-separator 'arrow
+         spaceline-separator-dir-left '(right . right)
+         spaceline-separator-dir-right '(right . right)
+         spaceline-workspace-numbers-unicode t)
    ;; (setq spaceline-highlight-face-func #'spaceline-highlight-face-evil-state) ; set colouring for different evil-states
    ;; (setq spaceline-inflation 1.4)
    :config
@@ -996,8 +996,7 @@
   ;;(set-frame-font "Sauce Code Pro Medium-11")
   ;;(set-frame-font "Inconsolata for Powerline-13")
   ;;(set-frame-font "Fira Code Retina-11")
-  (set-face-attribute 'variable-pitch frame
-                      :font (font-spec :family "Fira Sans" :size 22)))
+  nil)
 
 (jeffwk/init-ui)
 (add-hook 'after-make-frame-functions #'jeffwk/init-ui)
@@ -1018,10 +1017,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(magit-dispatch-arguments nil)
  '(package-selected-packages
    (quote
-    (ac-cider ivy company clj-refactor cider gh-md js2-mode tern yasnippet web-mode use-package systemd smex smartparens scala-mode rainbow-mode powerline pkgbuild-mode paren-face paredit nginx-mode neotree mic-paren markdown-mode magit lispy jade-mode helm-projectile groovy-mode git-gutter-fringe ghc flycheck flx-ido esup elisp-slime-nav doom-themes disable-mouse company-statistics company-quickhelp color-theme-sanityinc-tomorrow clojure-mode autothemer aggressive-indent ac-slime ac-haskell-process))))
+    (cider js2-mode tern yaml-mode web-mode use-package systemd spaceline smex smartparens scala-mode rainbow-mode pkgbuild-mode paren-face nginx-mode neotree mic-paren markdown-mode magit lispy jade-mode helm-projectile groovy-mode git-gutter-fringe ghc gh-md flycheck flx-ido esup elisp-slime-nav doom-themes disable-mouse company-statistics company-quickhelp color-theme-sanityinc-tomorrow clj-refactor autothemer aggressive-indent ac-slime ac-haskell-process))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
