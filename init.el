@@ -54,7 +54,8 @@
                    package-pinned-packages)))
 
 (dolist (pkg '(slime web-mode js2-mode tern magit markdown-mode
-                     cider clojure-mode clj-refactor))
+                     ;; cider clojure-mode clj-refactor
+                     ))
   (pin-stable pkg))
 
 ;; Install use-package from MELPA if needed
@@ -145,8 +146,8 @@
   :config
   (require 'helm-buffers)
   (dolist (b '("\\`\\*esup"
-               "\\`\\*Scratch"
-               "\\`\\*Messages"
+               ;; "\\`\\*Scratch"
+               ;; "\\`\\*Messages"
                "\\`\\*Warnings"
                "\\`\\*Help"
                "\\`\\*magit-"
@@ -278,6 +279,7 @@
 (use-package paren-face
   :defer t
   :config
+  (setq paren-face-regexp "[\\(\\)]")
   (global-paren-face-mode)
   (face-spec-set 'parenthesis '((t (:foreground "#999999"))))
   (defface square-brackets
@@ -738,7 +740,7 @@
                               (when (and ensime-mode (ensime-connected-p))
                                 (ensime-print-errors-at-point)))
                             t t))))
-    (define-key scala-mode-map "\C-t" 'ensime-print-type-at-point)
+    (define-key scala-mode-map "\C-t" 'ensime-type-at-point)
     (define-key scala-mode-map "\C-\M-e" 'ensime-print-errors-at-point)
     (define-key scala-mode-map "\C-c." 'ensime-forward-note)
     (define-key scala-mode-map "\C-c," 'ensime-backward-note)
