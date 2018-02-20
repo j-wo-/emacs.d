@@ -3,6 +3,7 @@
  ;; https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
  file-name-handler-alist-backup file-name-handler-alist
  file-name-handler-alist nil
+ gc-cons-threshold-default gc-cons-threshold
  gc-cons-threshold (* 100 1000 1000)
  ;; prevent echoing messages while loading
  ;; inhibit-message t
@@ -14,7 +15,7 @@
   (run-with-idle-timer
    1 nil
    (lambda ()
-     (setq gc-cons-threshold (* 2 1000 1000)))))
+     (setq gc-cons-threshold gc-cons-threshold-default))))
 (add-hook 'after-init-hook 'restore-config-post-init)
 
 (require 'cl)
@@ -206,18 +207,19 @@
     (setq company-dabbrev-downcase nil
           company-dabbrev-ignore-case nil
           company-dabbrev-code-other-buffers t
-          company-tooltip-align-annotations t)
+          company-tooltip-align-annotations t
+          company-tooltip-offset-display 'scrollbar
+          company-minimum-prefix-length 3
+          company-idle-delay 0.2)
     :config
-    (setq company-minimum-prefix-length 3
-          company-idle-delay 0.25)
     (add-to-list 'company-transformers 'company-sort-by-occurrence)
     (use-package company-statistics
       :config
       (company-statistics-mode 1))
-    (use-package company-quickhelp
-      :config
-      (setq company-quickhelp-delay 1)
-      (company-quickhelp-mode 1))
+    '(use-package company-quickhelp
+       :config
+       (setq company-quickhelp-delay 1)
+       (company-quickhelp-mode 1))
     (global-company-mode 1)))
 
 (use-package projectile
@@ -281,11 +283,13 @@
   :config
   (setq paren-face-regexp "[\\(\\)]")
   (global-paren-face-mode)
-  (face-spec-set 'parenthesis '((t (:foreground "#999999"))))
+  (face-spec-set 'parenthesis '((t (:foreground "#707070"))))
   (defface square-brackets
-    '((t (:foreground "#c0c43b"))) 'paren-face)
+    '((t (:foreground "#bbbf40")))
+    'paren-face)
   (defface curly-brackets
-    '((t (:foreground "#50a838"))) 'paren-face)
+    '((t (:foreground "#4f8f3d")))
+    'paren-face)
   (defconst clojure-brackets-keywords
     '(("\\[" 0 'square-brackets)
       ("\\]" 0 'square-brackets)
@@ -995,9 +999,9 @@
 
 (defun jeffwk/init-ui (&optional frame)
   (switch-custom-theme)
-  ;;(set-frame-font "Sauce Code Pro Medium-11")
-  ;;(set-frame-font "Inconsolata for Powerline-13")
-  ;;(set-frame-font "Fira Code Retina-11")
+  ;;(set-frame-font "Sauce Code Pro-13")
+  ;;(set-frame-font "Inconsolata for Powerline-15")
+  ;;(set-frame-font "Fira Code Retina-13")
   nil)
 
 (jeffwk/init-ui)
