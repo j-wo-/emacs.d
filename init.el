@@ -15,7 +15,7 @@
   (run-with-idle-timer
    1 nil
    (lambda ()
-     (setq gc-cons-threshold gc-cons-threshold-default))))
+     (setq gc-cons-threshold (* 4 1000 1000)))))
 (add-hook 'after-init-hook 'restore-config-post-init)
 
 (require 'cl)
@@ -41,7 +41,7 @@
 (global-auto-revert-mode t)
 
 (require 'package)
-(package-initialize)
+;; (package-initialize)
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
@@ -55,7 +55,8 @@
                    package-pinned-packages)))
 
 (dolist (pkg '(slime web-mode js2-mode tern magit markdown-mode
-                     ;; cider clojure-mode clj-refactor
+                     cider clojure-mode clj-refactor
+                     ;; company
                      ))
   (pin-stable pkg))
 
@@ -178,8 +179,37 @@
 (require 'uniquify)
 (setq uniquify-buffer-name-style 'post-forward)
 
+(defun call-stack ()
+  "Return the current call stack frames."
+  (let ((frames)
+        (frame)
+        (index 5))
+    (while (setq frame (backtrace-frame index))
+      (push frame frames)
+      (incf index))
+    (remove-if-not 'car frames)))
+
+(defun function-stack ()
+  "Like call-stack but is a list of only the function names"
+  (butlast (mapcar 'cl-second (call-stack))))
+
 (use-package aggressive-indent
-  :defer t)
+  :defer t
+  :config
+  (setq aggressive-indent-sit-for-time 0.5
+        aggressive-indent-dont-indent-if
+        (if t nil
+          (list (lambda ()
+                  (let ((active-fnames (function-stack)))
+                    (some (lambda (fname)
+                            (member fname active-fnames))
+                          '(company-capf
+                            completion-all-completions
+                            all-completions
+                            cider-complete
+                            nrepl-send-sync-request
+                            cider-sync-request:complete
+                            accept-process-output))))))))
 
 (unless (exclude-pkg? 'auto-complete)
   (use-package auto-complete
@@ -223,8 +253,6 @@
     (global-company-mode 1)))
 
 (use-package projectile
-  ;; :commands (projectile-switch-project)
-  ;; :bind ("C-c pp" . helm-projectile-switch-project)
   :config
   (use-package helm-projectile
     :config
@@ -311,7 +339,8 @@
                    (if (not (minibufferp (current-buffer)))
                        (enable-paredit-mode))))
   (define-key paredit-mode-map (kbd "C-<left>") nil)
-  (define-key paredit-mode-map (kbd "C-<right>") nil))
+  (define-key paredit-mode-map (kbd "C-<right>") nil)
+  (define-key paredit-mode-map (kbd "C-M-f") nil))
 
 (use-package smartparens
   :config
@@ -526,6 +555,7 @@
   ("\\.clj\\'" . clojure-mode)
   ("\\.cljs\\'" . clojurescript-mode)
   :config
+  (setq clojure-use-backtracking-indent t)
   (use-package paredit)
   ;; (use-package lispy)
   (use-package paren-face)
@@ -549,8 +579,8 @@
     (setq cider-repl-use-pretty-printing t)
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
-    (add-hook 'clojure-mode-hook #'aggressive-indent-mode)
-    (add-hook 'clojurescript-mode-hook #'aggressive-indent-mode)
+    ;;(add-hook 'clojure-mode-hook #'aggressive-indent-mode)
+    ;;(add-hook 'clojurescript-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'clojurescript-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
@@ -847,9 +877,10 @@
 
 ;; Make sure Emacs has the correct ssh-agent config,
 ;; in order to use tramp and git commands without requesting a password.
-(if (equal (user-login-name) "root")
-    (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
-  (setenv "SSH_AUTH_SOCK" (concat (getenv "XDG_RUNTIME_DIR") "/ssh-agent.socket")))
+(when (not (eql (window-system) 'ns))
+  (if (equal (user-login-name) "root")
+      (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
+    (setenv "SSH_AUTH_SOCK" (concat (getenv "XDG_RUNTIME_DIR") "/ssh-agent.socket"))))
 
 ;; Need to make sure emacs server daemon and emacsclient
 ;; are using the same path for the socket file.
@@ -864,7 +895,7 @@
 
 (use-package powerline
   :config
-  (setq powerline-height 48)
+  (setq powerline-height 32)
   ;; (setq powerline-default-separator 'utf-8)
   (setq powerline-default-separator 'arrow
         powerline-display-buffer-size nil
@@ -999,7 +1030,13 @@
 
 (defun jeffwk/init-ui (&optional frame)
   (switch-custom-theme)
-  ;;(set-frame-font "Sauce Code Pro-13")
+  (scroll-bar-mode -1)
+  ;; (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (when (and (graphical?) (eql (window-system) 'ns))
+    (set-frame-font "Source Code Pro 20")
+    (set-frame-width nil 190)
+    (set-frame-height nil 60))
   ;;(set-frame-font "Inconsolata for Powerline-15")
   ;;(set-frame-font "Fira Code Retina-13")
   nil)

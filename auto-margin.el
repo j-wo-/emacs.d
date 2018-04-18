@@ -2,7 +2,7 @@
 ;; to modify window margins whenever the window layout may have changed.
 
 ;; Controls max width for a centered window
-(setq custom-frame-width 110)
+(setq custom-frame-width 100)
 (setq custom-min-margin 20)
 
 (defun split-window-prefer-horizontal (&optional window)

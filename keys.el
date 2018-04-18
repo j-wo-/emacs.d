@@ -56,6 +56,12 @@
 (define-key global-map (kbd "M-q") 'indent-sexp)
 (define-key global-map (kbd "C-M-k") 'kill-sexp)
 (define-key global-map (kbd "C-M-w") 'split-window-prefer-horizontal)
+(define-key global-map (kbd "C-M-s") 'split-window-prefer-horizontal)
+(define-key global-map (kbd "C-M-f") 'toggle-frame-fullscreen)
+(define-key global-map (kbd "M-<right>") 'switch-to-next-buffer)
+(define-key global-map (kbd "M-<left>") 'switch-to-prev-buffer)
+(when (eql window-system 'ns)
+  nil)
 
 ;; swap () and [] keys
 (define-key key-translation-map (kbd "(") (kbd "["))
