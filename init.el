@@ -25,7 +25,10 @@
 
 (setq custom-emacs-theme
       ;; (if (graphical?) 'gruvbox 'sanityinc-tomorrow-night)
-      (if (graphical?) 'gruvbox 'gruvbox))
+      ;; (if (graphical?) 'gruvbox 'gruvbox)
+      ;; 'sanityinc-tomorrow-night
+      ;; (if (graphical?) 'sanityinc-tomorrow-night 'gruvbox)
+      (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt))
 
 (set-language-environment "utf-8")
 
@@ -1034,7 +1037,8 @@
   ;; (menu-bar-mode -1)
   (tool-bar-mode -1)
   (when (and (graphical?) (eql (window-system) 'ns))
-    (set-frame-font "Source Code Pro 20")
+    ;; (set-frame-font "Source Code Pro 12")
+    (set-frame-font "Inconsolata for Powerline 14")
     (set-frame-width nil 190)
     (set-frame-height nil 60))
   ;;(set-frame-font "Inconsolata for Powerline-15")
