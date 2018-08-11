@@ -25,14 +25,15 @@
 
 (setq custom-emacs-theme
       ;; (if (graphical?) 'gruvbox 'sanityinc-tomorrow-night)
-      ;; (if (graphical?) 'gruvbox 'gruvbox)
+      (if (graphical?) 'gruvbox 'gruvbox)
       ;; 'sanityinc-tomorrow-night
       ;; (if (graphical?) 'sanityinc-tomorrow-night 'gruvbox)
-      (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt))
+      ;; (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt)
+      )
 
 (set-language-environment "utf-8")
 
-(setq default-frame-alist '((left-fringe . 10) (right-fringe . 10))
+(setq default-frame-alist '((left-fringe . 8) (right-fringe . 8))
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
@@ -44,7 +45,7 @@
 (global-auto-revert-mode t)
 
 (require 'package)
-;; (package-initialize)
+(package-initialize)
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
@@ -58,7 +59,7 @@
                    package-pinned-packages)))
 
 (dolist (pkg '(slime web-mode js2-mode tern magit markdown-mode
-                     cider clojure-mode clj-refactor
+                     cider clojure-mode ;; clj-refactor
                      ;; company
                      ))
   (pin-stable pkg))
@@ -260,9 +261,10 @@
   (use-package helm-projectile
     :config
     (helm-projectile-toggle 1))
-  (define-key global-map (kbd "C-c pf") 'helm-projectile-find-file)
-  (define-key global-map (kbd "C-c pp") 'helm-projectile-switch-project)
+  ;; (define-key global-map (kbd "C-c pf") 'helm-projectile-find-file)
+  ;; (define-key global-map (kbd "C-c pp") 'helm-projectile-switch-project)
   (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
+  (define-key global-map (kbd "C-c C-p") 'projectile-command-map)
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
         projectile-enable-caching t
@@ -473,7 +475,7 @@
       :ensure nil
       :load-path "~/.emacs.d/gruvbox-theme"
       :init
-      (setq gruvbox-contrast 'soft)))
+      (setq gruvbox-contrast 'hard)))
    ((symbol-matches theme "spacemacs-dark")
     (use-package spacemacs-theme))
    ((symbol-matches theme "material")
@@ -558,15 +560,22 @@
   ("\\.clj\\'" . clojure-mode)
   ("\\.cljs\\'" . clojurescript-mode)
   :config
-  (setq clojure-use-backtracking-indent t)
   (use-package paredit)
   ;; (use-package lispy)
   (use-package paren-face)
   (use-package aggressive-indent)
-  
   (use-package cider
     :diminish cider-mode
     :init
+    (setq clojure-use-backtracking-indent t
+          cider-repl-use-pretty-printing t
+          cider-repl-popup-stacktraces t
+          cider-auto-select-error-buffer t
+          cider-prompt-for-symbol nil
+          nrepl-use-ssh-fallback-for-remote-hosts t
+          ;; cider-default-cljs-repl 'figwheel
+          ;; cider-lein-command "/usr/local/bin/lein"
+          )
     (use-package tramp)
     :config
     (unless (exclude-pkg? 'auto-complete)
@@ -578,8 +587,6 @@
         '(progn
            (add-to-list 'ac-modes 'cider-mode)
            (add-to-list 'ac-modes 'cider-repl-mode))))
-    (setq nrepl-use-ssh-fallback-for-remote-hosts t)
-    (setq cider-repl-use-pretty-printing t)
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
     ;;(add-hook 'clojure-mode-hook #'aggressive-indent-mode)
@@ -625,17 +632,17 @@
     (define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer-reload-repl)
     ;;(define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer)
     (define-key cider-mode-map (kbd "C-c n") 'cider-repl-set-ns)
+    (define-key cider-mode-map (kbd "C-c C-p") nil)
+    (define-key cider-repl-mode-map (kbd "C-c C-p") nil)
     ;; (enable-lispy 'clojure-mode-hook)
     ;; (enable-lispy 'cider-mode-hook)
     ;; (enable-lispy 'cider-repl-mode-hook)
-    (setq cider-lein-command "~/bin/lein")
-    (setq cider-repl-popup-stacktraces t)
-    (setq cider-auto-select-error-buffer t))
-  (setq cider-prompt-for-symbol nil)
+    )
   (use-package clj-refactor
     :diminish clj-refactor-mode
     :config
-    (setq cljr-warn-on-eval nil)
+    (setq cljr-warn-on-eval nil
+          cljr-suppress-middleware-warnings t)
     (defun clj-refactor-clojure-mode-hook ()
       (clj-refactor-mode 1)
       (yas-minor-mode 1)    ; for adding require/use/import statements
@@ -810,7 +817,8 @@
 ;;;
 
 (use-package less-css-mode
-  :mode "\\.less\\'")
+  :mode
+  "\\.less\\'" "\\.variables\\'" "\\.overrides\\'")
 
 (use-package web-mode
   :mode
@@ -898,9 +906,9 @@
 
 (use-package powerline
   :config
-  (setq powerline-height 32)
   ;; (setq powerline-default-separator 'utf-8)
-  (setq powerline-default-separator 'arrow
+  (setq powerline-height 30
+        powerline-default-separator 'arrow
         powerline-display-buffer-size nil
         powerline-display-mule-info nil)
   (powerline-default-theme))
@@ -1037,8 +1045,9 @@
   ;; (menu-bar-mode -1)
   (tool-bar-mode -1)
   (when (and (graphical?) (eql (window-system) 'ns))
-    ;; (set-frame-font "Source Code Pro 12")
-    (set-frame-font "Inconsolata for Powerline 14")
+    ;; (set-frame-font "Source Code Pro 17")
+    (set-frame-font "Inconsolata Nerd Font 20")
+    ;; (set-frame-font "Inconsolata for Powerline 20")
     (set-frame-width nil 190)
     (set-frame-height nil 60))
   ;;(set-frame-font "Inconsolata for Powerline-15")
@@ -1058,18 +1067,3 @@
   (when jeffwk/enable-auto-neotree
     (use-package neotree))
   '(add-hook 'after-init-hook 'helm-projectile-switch-project))
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (cider js2-mode tern yaml-mode web-mode use-package systemd spaceline smex smartparens scala-mode rainbow-mode pkgbuild-mode paren-face nginx-mode neotree mic-paren markdown-mode magit lispy jade-mode helm-projectile groovy-mode git-gutter-fringe ghc gh-md flycheck flx-ido esup elisp-slime-nav doom-themes disable-mouse company-statistics company-quickhelp color-theme-sanityinc-tomorrow clj-refactor autothemer aggressive-indent ac-slime ac-haskell-process))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
