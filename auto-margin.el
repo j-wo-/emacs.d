@@ -5,6 +5,12 @@
 (setq custom-frame-width 100)
 (setq custom-min-margin 20)
 
+(defun split-window-auto ()
+  (interactive)
+  ;; Bind threshold to allow vertical split from interactive calls
+  (let ((split-height-threshold 40))
+    (split-window-prefer-horizontal)))
+
 (defun split-window-prefer-horizontal (&optional window)
   "Modified version of `split-window-sensibly' that splits horizontally
    by default when allowed."

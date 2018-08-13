@@ -27,6 +27,7 @@
 (define-key global-map (kbd "C-1") 'delete-other-windows)
 (define-key global-map (kbd "C-x 1") 'delete-other-windows) ;; terminal
 (define-key global-map (kbd "C-2") 'delete-other-windows-vertically)
+(define-key global-map (kbd "C-M-2") 'delete-other-windows-vertically)
 (define-key global-map (kbd "C-x 2") 'delete-other-windows-vertically) ;; terminal
 (define-key global-map (kbd "C-q") 'delete-window)
 (define-key global-map (kbd "C-x x") 'split-window-below)
@@ -55,8 +56,8 @@
 (define-key global-map (kbd "C-x C-k") 'kill-region)
 (define-key global-map (kbd "M-q") 'indent-sexp)
 (define-key global-map (kbd "C-M-k") 'kill-sexp)
-(define-key global-map (kbd "C-M-w") 'split-window-prefer-horizontal)
-(define-key global-map (kbd "C-M-s") 'split-window-prefer-horizontal)
+(define-key global-map (kbd "C-M-w") 'split-window-auto)
+(define-key global-map (kbd "C-M-s") 'split-window-auto)
 (define-key global-map (kbd "C-M-f") 'toggle-frame-fullscreen)
 (define-key global-map (kbd "M-<right>") 'switch-to-next-buffer)
 (define-key global-map (kbd "M-<left>") 'switch-to-prev-buffer)
