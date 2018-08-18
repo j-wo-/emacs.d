@@ -58,10 +58,13 @@
                      (eql (first x) pkg))
                    package-pinned-packages)))
 
-(dolist (pkg '(slime web-mode js2-mode tern magit markdown-mode
-                     cider clojure-mode ;; clj-refactor
-                     ;; company
-                     ))
+(dolist (pkg '(web-mode js2-mode tern slime
+                        magit
+                        ;; cider clojure-mode
+                        ;; clj-refactor
+                        ;; company
+                        ;; markdown-mode
+                        ))
   (pin-stable pkg))
 
 ;; Install use-package from MELPA if needed
@@ -197,10 +200,12 @@
   "Like call-stack but is a list of only the function names"
   (butlast (mapcar 'cl-second (call-stack))))
 
+(defvar use-global-aggressive-indent t)
+
 (use-package aggressive-indent
-  :defer t
+  :defer (if use-global-aggressive-indent nil t)
   :config
-  (setq aggressive-indent-sit-for-time 0.5
+  (setq aggressive-indent-sit-for-time 0.05
         aggressive-indent-dont-indent-if
         (if t nil
           (list (lambda ()
@@ -213,7 +218,24 @@
                             cider-complete
                             nrepl-send-sync-request
                             cider-sync-request:complete
-                            accept-process-output))))))))
+                            accept-process-output)))))))
+  (when use-global-aggressive-indent
+    (dolist (mode '(clojure-mode
+                    clojurescript-mode
+                    cider-mode
+                    cider-repl-mode))
+      (add-to-list 'aggressive-indent-excluded-modes mode))
+
+    (when nil
+      ;; (length aggressive-indent-excluded-modes)
+      (dolist (mode '(clojure-mode
+                      clojurescript-mode
+                      cider-mode
+                      cider-repl-mode))
+        (setq aggressive-indent-excluded-modes
+              (remove mode aggressive-indent-excluded-modes))))
+
+    (aggressive-indent-global-mode)))
 
 (unless (exclude-pkg? 'auto-complete)
   (use-package auto-complete
@@ -430,7 +452,8 @@
 (use-package nginx-mode
   :mode "/nginx.conf$" "\\.nginx-site\\'"
   :config
-  (add-hook 'nginx-mode-hook #'aggressive-indent-mode))
+  (unless use-global-aggressive-indent
+    (add-hook 'nginx-mode-hook #'aggressive-indent-mode)))
 
 (use-package org
   :commands org-agenda org-store-link org-capture
@@ -563,7 +586,8 @@
   (use-package paredit)
   ;; (use-package lispy)
   (use-package paren-face)
-  (use-package aggressive-indent)
+  (unless use-global-aggressive-indent
+    (use-package aggressive-indent))
   (use-package cider
     :diminish cider-mode
     :init
@@ -589,6 +613,10 @@
            (add-to-list 'ac-modes 'cider-repl-mode))))
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
+    (add-hook 'clojure-mode-hook
+              (lambda () (aggressive-indent-mode 0)))
+    (add-hook 'clojurescript-mode-hook
+              (lambda () (aggressive-indent-mode 0)))
     ;;(add-hook 'clojure-mode-hook #'aggressive-indent-mode)
     ;;(add-hook 'clojurescript-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
@@ -610,7 +638,9 @@
         (cider-repl-return)
         (insert "(figwheel-sidecar.repl-api/cljs-repl)")
         (cider-repl-return)
-        (when (not (zerop (length cider-figwheel-connecting)))
+        (when (and nil (not (zerop (length cider-figwheel-connecting))))
+          (insert (format "(require '%s)" cider-figwheel-connecting))
+          (cider-repl-return)
           (insert (format "(in-ns '%s)" cider-figwheel-connecting))
           (cider-repl-return))))
     (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
@@ -621,7 +651,11 @@
              (if (member major-mode '(clojure-mode clojurescript-mode))
                  (clojure-expected-ns)
                "")))
-        (cider-connect "localhost" port)))
+        ;; (cider-connect "localhost" port)
+        (cider-connect `(:host "localhost" :port ,port))))
+
+    (define-key cider-mode-map (kbd "C-c C-p") nil)
+    (define-key cider-repl-mode-map (kbd "C-c C-p") nil)
     (defun cider-load-buffer-reload-repl (&optional buffer)
       (interactive)
       (let ((result (if buffer
@@ -629,27 +663,37 @@
                       (cider-load-buffer))))
         (my-cider-reload-repl-ns)
         result))
-    (define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer-reload-repl)
     ;;(define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer)
-    (define-key cider-mode-map (kbd "C-c n") 'cider-repl-set-ns)
-    (define-key cider-mode-map (kbd "C-c C-p") nil)
-    (define-key cider-repl-mode-map (kbd "C-c C-p") nil)
+    (define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer-reload-repl)
+    (defun my-cider-repl-set-ns (ns)
+      (interactive (list (if (or (derived-mode-p 'cider-repl-mode)
+                                 (null (cider-ns-form)))
+                             (completing-read "Switch to namespace: "
+                                              (cider-sync-request:ns-list))
+                           (cider-current-ns))))
+      (let ((buffer (first (cider-repl-buffers (cider-repl-type-for-buffer)))))
+        (when buffer
+          (pop-to-buffer buffer)
+          (insert (format "(require '%s)" ns))
+          (cider-repl-return)
+          (cider-repl-set-ns ns))))
+    (define-key cider-mode-map (kbd "C-c n") 'my-cider-repl-set-ns)
     ;; (enable-lispy 'clojure-mode-hook)
     ;; (enable-lispy 'cider-mode-hook)
     ;; (enable-lispy 'cider-repl-mode-hook)
     )
-  (use-package clj-refactor
-    :diminish clj-refactor-mode
-    :config
-    (setq cljr-warn-on-eval nil
-          cljr-suppress-middleware-warnings t)
-    (defun clj-refactor-clojure-mode-hook ()
-      (clj-refactor-mode 1)
-      (yas-minor-mode 1)    ; for adding require/use/import statements
-      ;; This choice of keybinding leaves cider-macroexpand-1 unbound
-      (cljr-add-keybindings-with-prefix "C-c C-m"))
-    (add-hook 'clojure-mode-hook 'clj-refactor-clojure-mode-hook)
-    (add-hook 'clojurescript-mode-hook 'clj-refactor-clojure-mode-hook))
+  '(use-package clj-refactor
+     :diminish clj-refactor-mode
+     :config
+     (setq cljr-warn-on-eval nil
+           cljr-suppress-middleware-warnings nil)
+     (defun clj-refactor-clojure-mode-hook ()
+       (clj-refactor-mode 1)
+       (yas-minor-mode 1)    ; for adding require/use/import statements
+       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+       (cljr-add-keybindings-with-prefix "C-c C-m"))
+     (add-hook 'clojure-mode-hook #'clj-refactor-clojure-mode-hook)
+     (add-hook 'clojurescript-mode-hook #'clj-refactor-clojure-mode-hook))
 
   (when nil
     (use-package flycheck-clojure
@@ -668,7 +712,8 @@
   (use-package paredit)
   ;; (use-package lispy)
   (use-package paren-face)
-  (use-package aggressive-indent)
+  (unless use-global-aggressive-indent
+    (use-package aggressive-indent))
   (add-hook 'lisp-mode-hook
             (lambda ()
               (setq-local lisp-indent-function
@@ -717,8 +762,10 @@
   (add-to-list 'projectile-globally-ignored-modes "comint-mode")
   (add-to-list 'projectile-globally-ignored-modes "slime-repl-mode")
 
-  (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
-  (add-hook 'slime-mode-hook #'aggressive-indent-mode)
+  (unless use-global-aggressive-indent
+    (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
+    (add-hook 'slime-mode-hook #'aggressive-indent-mode))
+
   (add-hook 'lisp-mode-hook 'turn-off-smartparens-mode)
   (add-hook 'slime-mode-hook 'turn-off-smartparens-mode)
   (add-hook 'slime-repl-mode-hook 'turn-off-smartparens-mode)
@@ -748,8 +795,9 @@
    (turn-on-elisp-slime-nav-mode)
    (use-package paredit)
    ;; (use-package lispy)
-   (use-package aggressive-indent)
-   (aggressive-indent-mode)
+   (unless use-global-aggressive-indent
+     (use-package aggressive-indent)
+     (aggressive-indent-mode))
    (turn-off-smartparens-mode)
    (enable-paredit-mode)
    ;; (lispy-mode 1)
@@ -824,7 +872,7 @@
   :mode
   "\\.js\\'" "\\.jsx\\'" "\\.json\\'"
   :config
-  (use-package tern)
+  ;; (use-package tern)
   (use-package flycheck)
   (use-package js2-mode
     :config
@@ -837,7 +885,7 @@
     (defun my-js2-mode-hook ()
       (setq js2-basic-offset 2)
       (flycheck-mode 1)
-      (tern-mode t)
+      ;; (tern-mode t)
       (when (executable-find "eslint")
         (flycheck-select-checker 'javascript-eslint)))
     (add-hook 'js2-mode-hook 'my-js2-mode-hook)
@@ -851,7 +899,7 @@
     (setq web-mode-css-indent-offset 2)
     (setq web-mode-code-indent-offset 2)
     (flycheck-mode 1)
-    (tern-mode t)
+    ;; (tern-mode t)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
   (add-hook 'web-mode-hook 'my-web-mode-hook))
