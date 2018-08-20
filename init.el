@@ -677,7 +677,8 @@
           (insert (format "(require '%s)" ns))
           (cider-repl-return)
           (cider-repl-set-ns ns))))
-    (define-key cider-mode-map (kbd "C-c n") 'my-cider-repl-set-ns)
+    ;; (define-key cider-mode-map (kbd "C-c n") 'my-cider-repl-set-ns)
+    (define-key cider-mode-map (kbd "C-c n") 'cider-repl-set-ns)
     ;; (enable-lispy 'clojure-mode-hook)
     ;; (enable-lispy 'cider-mode-hook)
     ;; (enable-lispy 'cider-repl-mode-hook)
@@ -954,9 +955,9 @@
 
 (use-package powerline
   :config
-  ;; (setq powerline-default-separator 'utf-8)
   (setq powerline-height 30
         powerline-default-separator 'arrow
+        ;; powerline-default-separator 'utf-8
         powerline-display-buffer-size nil
         powerline-display-mule-info nil)
   (powerline-default-theme))
