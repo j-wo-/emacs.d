@@ -60,9 +60,9 @@
 
 (dolist (pkg '(web-mode js2-mode tern slime
                         magit
-                        ;; cider clojure-mode
-                        ;; clj-refactor
-                        ;; company
+                        cider clojure-mode
+                        clj-refactor
+                        company
                         ;; markdown-mode
                         ))
   (pin-stable pkg))
@@ -287,6 +287,7 @@
   ;; (define-key global-map (kbd "C-c pp") 'helm-projectile-switch-project)
   (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
   (define-key global-map (kbd "C-c C-p") 'projectile-command-map)
+  (define-key global-map (kbd "C-c C-p C-s") 'projectile-save-project-buffers)
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
         projectile-enable-caching t
@@ -683,18 +684,18 @@
     ;; (enable-lispy 'cider-mode-hook)
     ;; (enable-lispy 'cider-repl-mode-hook)
     )
-  '(use-package clj-refactor
-     :diminish clj-refactor-mode
-     :config
-     (setq cljr-warn-on-eval nil
-           cljr-suppress-middleware-warnings nil)
-     (defun clj-refactor-clojure-mode-hook ()
-       (clj-refactor-mode 1)
-       (yas-minor-mode 1)    ; for adding require/use/import statements
-       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
-       (cljr-add-keybindings-with-prefix "C-c C-m"))
-     (add-hook 'clojure-mode-hook #'clj-refactor-clojure-mode-hook)
-     (add-hook 'clojurescript-mode-hook #'clj-refactor-clojure-mode-hook))
+  (use-package clj-refactor
+    :diminish clj-refactor-mode
+    :config
+    (setq cljr-warn-on-eval nil
+          cljr-suppress-middleware-warnings t)
+    (defun clj-refactor-clojure-mode-hook ()
+      (clj-refactor-mode 1)
+      (yas-minor-mode 1)    ; for adding require/use/import statements
+      ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+      (cljr-add-keybindings-with-prefix "C-c C-m"))
+    (add-hook 'clojure-mode-hook #'clj-refactor-clojure-mode-hook)
+    (add-hook 'clojurescript-mode-hook #'clj-refactor-clojure-mode-hook))
 
   (when nil
     (use-package flycheck-clojure
