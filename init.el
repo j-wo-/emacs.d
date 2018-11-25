@@ -142,7 +142,8 @@
    :config
    (diminish 'global-disable-mouse-mode)
    (diminish 'disable-mouse-mode)
-   (global-disable-mouse-mode))
+   (diminish 'disable-mouse-global-mode)
+   (disable-mouse-global-mode))
 
 (use-package tramp
   :defer t
@@ -288,6 +289,7 @@
   (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
   (define-key global-map (kbd "C-c C-p") 'projectile-command-map)
   (define-key global-map (kbd "C-c C-p C-s") 'projectile-save-project-buffers)
+  (define-key global-map (kbd "C-c TAB") 'helm-projectile-switch-to-buffer)
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
         projectile-enable-caching t
@@ -957,7 +959,7 @@
 (use-package powerline
   :config
   (setq powerline-height 30
-        powerline-default-separator 'arrow
+        powerline-default-separator 'box
         ;; powerline-default-separator 'utf-8
         powerline-display-buffer-size nil
         powerline-display-mule-info nil)
@@ -1017,58 +1019,59 @@
                    output)
                buffer-path))))))
 
-   (spaceline-define-segment buffer-id-with-path
-     "Name of buffer (or path relative to project root)."
-     (let ((name (propertize (if (buffer-file-name)
-                                 (file-name-nondirectory (buffer-file-name))
-                               (buffer-name))
-                             'face 'mode-line-buffer-id))
-           (path (jeffwk/buffer-path)))
-       (if path
-           (concat (propertize path 'face
-                               '(:inherit jeffwk/modeline-buffer-path))
-                   name)
-         name)))
+   (spaceline-define-segment
+    buffer-id-with-path
+    "Name of buffer (or path relative to project root)."
+    (let ((name (propertize (if (buffer-file-name)
+                                (file-name-nondirectory (buffer-file-name))
+                              (buffer-name))
+                            'face 'mode-line-buffer-id))
+          (path (jeffwk/buffer-path)))
+      (if path
+          (concat (propertize path 'face
+                              '(:inherit jeffwk/modeline-buffer-path))
+                  name)
+        name)))
 
    (defun jeffwk/spaceline-theme ()
      (spaceline-install
-       `((((((persp-name :fallback workspace-number)
-             window-number) :separator "|")
-           buffer-modified
-           buffer-size)
-          :face highlight-face
-          :priority 0)
-         (anzu :priority 4)
-         auto-compile
-         ((buffer-id-with-path remote-host)
-          :priority 5)
-         major-mode
-         (process :when active)
-         ((flycheck-error flycheck-warning flycheck-info)
-          :when active
-          :priority 3)
-         (minor-modes :when active)
-         (mu4e-alert-segment :when active)
-         (erc-track :when active)
-         (version-control :when active
-                          :priority 7)
-         (org-pomodoro :when active)
-         (org-clock :when active)
-         nyan-cat)
-       `(which-function
-         (python-pyvenv :fallback python-pyenv)
-         purpose
-         (battery :when active)
-         (selection-info :priority 2)
-         input-method
-         ((buffer-encoding-abbrev
-           point-position
-           line-column)
-          :separator " | "
-          :priority 3)
-         (global :when active)
-         (buffer-position :priority 0)
-         (hud :priority 0)))
+      `((((((persp-name :fallback workspace-number)
+            window-number) :separator "|")
+          buffer-modified
+          buffer-size)
+         :face highlight-face
+         :priority 0)
+        (anzu :priority 4)
+        auto-compile
+        ((buffer-id-with-path remote-host)
+         :priority 5)
+        major-mode
+        (process :when active)
+        ((flycheck-error flycheck-warning flycheck-info)
+         :when active
+         :priority 3)
+        (minor-modes :when active)
+        (mu4e-alert-segment :when active)
+        (erc-track :when active)
+        (version-control :when active
+                         :priority 7)
+        (org-pomodoro :when active)
+        (org-clock :when active)
+        nyan-cat)
+      `(which-function
+        (python-pyvenv :fallback python-pyenv)
+        purpose
+        (battery :when active)
+        (selection-info :priority 2)
+        input-method
+        ((buffer-encoding-abbrev
+          point-position
+          line-column)
+         :separator " | "
+         :priority 3)
+        (global :when active)
+        (buffer-position :priority 0)
+        (hud :priority 0)))
 
      (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
@@ -1096,10 +1099,13 @@
   (tool-bar-mode -1)
   (when (and (graphical?) (eql (window-system) 'ns))
     ;; (set-frame-font "Source Code Pro 17")
-    (set-frame-font "Inconsolata Nerd Font 20")
+    (set-frame-font "Inconsolata Nerd Font 19")
+    (face-spec-set 'line-number-current-line '((t (:foreground "#58d0d0"))))
+    (face-spec-set 'line-number '((t (:font "Inconsolata Nerd Font 16"))))
     ;; (set-frame-font "Inconsolata for Powerline 20")
-    (set-frame-width nil 190)
-    (set-frame-height nil 60))
+    (set-frame-width nil 180)
+    (set-frame-height nil 50))
+  (global-display-line-numbers-mode)
   ;;(set-frame-font "Inconsolata for Powerline-15")
   ;;(set-frame-font "Fira Code Retina-13")
   nil)
