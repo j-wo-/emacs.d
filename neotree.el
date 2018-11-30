@@ -5,7 +5,7 @@
 (defun jeffwk/init-neotree-font ()
   (when (null jeffwk/neotree-font-set)
     (set-face-attribute 'variable-pitch nil
-                        :font (font-spec :family "Fira Sans" :size 22))
+                        :font (font-spec :family "Fira Sans" :size 14))
     (setq jeffwk/neotree-font-set t)))
 
 (defun jeffwk/on-switch-project ()

@@ -15,7 +15,7 @@
   (run-with-idle-timer
    1 nil
    (lambda ()
-     (setq gc-cons-threshold (* 4 1000 1000)))))
+     (setq gc-cons-threshold (* 10 1000 1000)))))
 (add-hook 'after-init-hook 'restore-config-post-init)
 
 (require 'cl)
@@ -24,16 +24,14 @@
   (some #'display-graphic-p (frame-list)))
 
 (setq custom-emacs-theme
-      ;; (if (graphical?) 'gruvbox 'sanityinc-tomorrow-night)
-      (if (graphical?) 'gruvbox 'gruvbox)
-      ;; 'sanityinc-tomorrow-night
+      (if (graphical?) 'gruvbox-dark-hard 'gruvbox-dark-hard)
       ;; (if (graphical?) 'sanityinc-tomorrow-night 'gruvbox)
       ;; (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt)
       )
 
 (set-language-environment "utf-8")
 
-(setq default-frame-alist '((left-fringe . 8) (right-fringe . 8))
+(setq default-frame-alist '((left-fringe . 10) (right-fringe . 10))
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
@@ -45,7 +43,8 @@
 (global-auto-revert-mode t)
 
 (require 'package)
-(package-initialize)
+(unless (equal emacs-version "27.0.50")
+  (package-initialize))
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
@@ -204,9 +203,8 @@
 (defvar use-global-aggressive-indent t)
 
 (use-package aggressive-indent
-  :defer (if use-global-aggressive-indent nil t)
   :config
-  (setq aggressive-indent-sit-for-time 0.05
+  (setq aggressive-indent-sit-for-time 0.075
         aggressive-indent-dont-indent-if
         (if t nil
           (list (lambda ()
@@ -221,14 +219,16 @@
                             cider-sync-request:complete
                             accept-process-output)))))))
   (when use-global-aggressive-indent
-    (dolist (mode '(clojure-mode
-                    clojurescript-mode
-                    cider-mode
-                    cider-repl-mode))
+    ;; aggressive-indent-excluded-modes
+    (dolist (mode '(cider-repl-mode))
       (add-to-list 'aggressive-indent-excluded-modes mode))
-
     (when nil
-      ;; (length aggressive-indent-excluded-modes)
+      (dolist (mode '(clojure-mode
+                      clojurescript-mode
+                      cider-mode
+                      cider-repl-mode))
+        (add-to-list 'aggressive-indent-excluded-modes mode)))
+    (when nil
       (dolist (mode '(clojure-mode
                       clojurescript-mode
                       cider-mode
@@ -398,19 +398,19 @@
   :if window-system
   :config
   (do-git-gutter-config)
-  (use-package fringe-helper)
-  (fringe-helper-define
-    'git-gutter-fr:added '(center repeated)
-    "XXX.....")
-  (fringe-helper-define
-    'git-gutter-fr:modified '(center repeated)
-    "XXX.....")
-  (fringe-helper-define
-    'git-gutter-fr:deleted 'bottom
-    "X......."
-    "XX......"
-    "XXX....."
-    "XXXX...."))
+  '(use-package fringe-helper)
+  '(fringe-helper-define
+     'git-gutter-fr:added '(center repeated)
+     "XXX.....")
+  '(fringe-helper-define
+     'git-gutter-fr:modified '(center repeated)
+     "XXX.....")
+  '(fringe-helper-define
+     'git-gutter-fr:deleted 'bottom
+     "X......."
+     "XX......"
+     "XXX....."
+     "XXXX...."))
 (use-package git-gutter
   :diminish git-gutter-mode
   :if (null window-system)
@@ -526,7 +526,25 @@
   ;; reset any modified face specs
   (reset-override-faces)
   (set-override-faces
-   `(fringe ((t (:foreground "#383838" :background "#383838")))))
+   ;; `(fringe ((t (:foreground "#383838" :background "#383838"))))
+   `(fringe ((t (:foreground "#3c3836" :background "#3c3836"))))
+   `(line-number
+     ((t (:font "Inconsolata Nerd Font 18"
+                :foreground "#7c6f64"
+                :background "#3c3836"))))
+   `(line-number-current-line
+     ((t (:font "Inconsolata Nerd Font 18"
+                :foreground "#fe8019"
+                ;; :background "#504945"
+                :background "#3c3836"))))
+   `(mode-line
+     ((t (:font "Inconsolata Nerd Font 20"
+                :foreground "#d5c4a1"
+                :background "#665c54"))))
+   `(mode-line-inactive
+     ((t (:font "Inconsolata Nerd Font 20"
+                :foreground "#a89984"
+                :background "#3c3836")))))
   ;; set face specs depending on theme
   (when nil
     (cond
@@ -616,10 +634,10 @@
            (add-to-list 'ac-modes 'cider-repl-mode))))
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
-    (add-hook 'clojure-mode-hook
-              (lambda () (aggressive-indent-mode 0)))
-    (add-hook 'clojurescript-mode-hook
-              (lambda () (aggressive-indent-mode 0)))
+    '(add-hook 'clojure-mode-hook
+               (lambda () (aggressive-indent-mode 0)))
+    '(add-hook 'clojurescript-mode-hook
+               (lambda () (aggressive-indent-mode 0)))
     ;;(add-hook 'clojure-mode-hook #'aggressive-indent-mode)
     ;;(add-hook 'clojurescript-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
@@ -958,16 +976,16 @@
 
 (use-package powerline
   :config
-  (setq powerline-height 30
-        powerline-default-separator 'box
-        ;; powerline-default-separator 'utf-8
+  (setq powerline-height 40
+        powerline-default-separator nil
+        ;; powerline-default-separator 'arrow
         powerline-display-buffer-size nil
         powerline-display-mule-info nil)
   (powerline-default-theme))
 
 '(use-package spaceline
    :init
-   (setq powerline-height 54
+   (setq powerline-height 40
          powerline-default-separator 'arrow
          spaceline-separator-dir-left '(right . right)
          spaceline-separator-dir-right '(right . right)
@@ -1099,12 +1117,10 @@
   (tool-bar-mode -1)
   (when (and (graphical?) (eql (window-system) 'ns))
     ;; (set-frame-font "Source Code Pro 17")
-    (set-frame-font "Inconsolata Nerd Font 19")
-    (face-spec-set 'line-number-current-line '((t (:foreground "#58d0d0"))))
-    (face-spec-set 'line-number '((t (:font "Inconsolata Nerd Font 16"))))
-    ;; (set-frame-font "Inconsolata for Powerline 20")
-    (set-frame-width nil 180)
-    (set-frame-height nil 50))
+    (set-frame-font "Inconsolata Nerd Font 22"))
+  ;; (set-frame-font "Inconsolata for Powerline 20")
+  (set-frame-width nil 180)
+  (set-frame-height nil 50)
   (global-display-line-numbers-mode)
   ;;(set-frame-font "Inconsolata for Powerline-15")
   ;;(set-frame-font "Fira Code Retina-13")
