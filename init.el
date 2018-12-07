@@ -1139,3 +1139,118 @@
   (when jeffwk/enable-auto-neotree
     (use-package neotree))
   '(add-hook 'after-init-hook 'helm-projectile-switch-project))
+
+(defun all-sesman-sessions ()
+  (sesman-sessions (sesman--system) t))
+
+(defun test-buffer-name (buf regexp &optional exclude-regexp)
+  (and (string-match regexp (buffer-name buf))
+       (if (null exclude-regexp) t
+         (not (string-match exclude-regexp (buffer-name buf))))))
+
+(defun match-buffer-name (regexp &optional exclude-regexp)
+  (remove-if-not
+   (lambda (buf)
+     (test-buffer-name buf regexp exclude-regexp))
+   (buffer-list)))
+
+(defun match-sesman-session (regexp &optional exclude-regexp)
+  (first
+   (cl-remove-if
+    (lambda (ses)
+      (not (test-buffer-name (second ses) regexp exclude-regexp)))
+    (all-sesman-sessions))))
+
+(defun stop-cider-all ()
+  (interactive)
+  (dolist (buf (match-buffer-name "\*cider-repl\ .*"))
+    (save-excursion
+      (switch-to-buffer buf)
+      (cider-quit))))
+
+(defun run-cider-project (project-name
+                          project-file-path
+                          clj-file-path
+                          cljs-file-path
+                          figwheel-port
+                          cljs-user-ns)
+  (lexical-let ((project-name project-name)
+                (project-file-path project-file-path)
+                (clj-file-path clj-file-path)
+                (cljs-file-path cljs-file-path)
+                (figwheel-port figwheel-port)
+                (cljs-user-ns cljs-user-ns))
+    (cl-labels
+        ((open-project
+          ()
+          (find-file project-file-path))
+         (start-clj
+          ()
+          (save-excursion
+            (find-file clj-file-path)
+            (cider-connect
+             `(:host
+               "localhost"
+               :port
+               ,(second (assoc project-name (cider-locate-running-nrepl-ports)))))))
+         (start-cljs
+          ()
+          (save-excursion
+            (find-file cljs-file-path)
+            (cider-connect-figwheel))
+          (when cljs-user-ns
+            (run-with-timer
+             0.5 nil
+             (lambda ()
+               (let ((cljs-repl (first (match-buffer-name
+                                        (format ".*cider-repl.*%s.*%d.*"
+                                                project-name figwheel-port)))))
+                 (when cljs-repl
+                   (save-excursion
+                     (switch-to-buffer cljs-repl)
+                     (insert (format " (in-ns '%s)" cljs-user-ns)))))))))
+         (link-sesman-dirs
+          ()
+          (save-excursion
+            (find-file clj-file-path)
+            (when-let ((clj-ses (match-sesman-session
+                                 (format ".*cider-repl.*%s.*" project-name)
+                                 (format "%d" figwheel-port))))
+              (sesman-link-with-directory nil clj-ses)))
+          (save-excursion
+            (find-file "~/code/sysrev/src/cljs/sysrev/user.cljs")
+            (when-let ((cljs-ses (match-sesman-session
+                                  (format ".*cider-repl.*%s.*%d.*"
+                                          project-name figwheel-port))))
+              (sesman-link-with-directory nil cljs-ses))))
+         (show-repl-buffers
+          ()
+          (let ((clj-repl (first (match-buffer-name
+                                  (format ".*cider-repl.*%s.*" project-name)
+                                  (format "%d" figwheel-port))))
+                (cljs-repl (first (match-buffer-name
+                                   (format ".*cider-repl.*%s.*%d.*"
+                                           project-name figwheel-port)))))
+            (delete-other-windows)
+            (when clj-repl
+              (switch-to-buffer clj-repl))
+            (when cljs-repl
+              (if clj-repl
+                  (switch-to-buffer-other-window cljs-repl)
+                (switch-to-buffer cljs-repl))))))
+      (stop-cider-all)
+      (open-project)
+      (start-clj)
+      (start-cljs)
+      (link-sesman-dirs)
+      (show-repl-buffers))))
+
+(defun sysrev ()
+  (interactive)
+  (run-cider-project
+   "sysrev"
+   "~/code/sysrev/project.clj"
+   "~/code/sysrev/src/clj/sysrev/user.clj"
+   "~/code/sysrev/src/cljs/sysrev/user.cljs"
+   7888
+   "sysrev.user"))
