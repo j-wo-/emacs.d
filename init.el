@@ -15,7 +15,7 @@
   (run-with-idle-timer
    1 nil
    (lambda ()
-     (setq gc-cons-threshold (* 10 1000 1000)))))
+     (setq gc-cons-threshold (* 2 1000 1000)))))
 (add-hook 'after-init-hook 'restore-config-post-init)
 
 (require 'cl)
@@ -296,6 +296,8 @@
         projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
   (add-to-list 'grep-find-ignored-files "*.log")
+  (dolist (s '(".svg" ".xml" ".zip"))
+    (add-to-list 'projectile-globally-ignored-file-suffixes s))
   (projectile-global-mode))
 
 (use-package smex
