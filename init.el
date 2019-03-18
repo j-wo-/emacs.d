@@ -58,7 +58,7 @@
                    package-pinned-packages)))
 
 (dolist (pkg '(web-mode js2-mode tern slime
-                        magit
+                        magit git-commit
                         cider clojure-mode
                         clj-refactor
                         company
@@ -296,7 +296,7 @@
         projectile-mode-line
         '(:eval (format " [%s]" (projectile-project-name))))
   (add-to-list 'grep-find-ignored-files "*.log")
-  (dolist (s '(".svg" ".xml" ".zip"))
+  (dolist (s '(".svg" ".xml" ".zip" ".png" ".jpg"))
     (add-to-list 'projectile-globally-ignored-file-suffixes s))
   (projectile-global-mode))
 
@@ -417,6 +417,8 @@
   :diminish git-gutter-mode
   :if (null window-system)
   :config (do-git-gutter-config))
+
+;; (use-package git-commit)
 
 (use-package magit
   :bind
@@ -1123,7 +1125,8 @@
   ;; (set-frame-font "Inconsolata for Powerline 20")
   (set-frame-width nil 180)
   (set-frame-height nil 50)
-  (global-display-line-numbers-mode)
+  (when (graphical?)
+    (global-display-line-numbers-mode))
   ;;(set-frame-font "Inconsolata for Powerline-15")
   ;;(set-frame-font "Fira Code Retina-13")
   nil)
@@ -1174,12 +1177,14 @@
                           project-file-path
                           clj-file-path
                           cljs-file-path
+                          clj-test-file-path
                           figwheel-port
                           cljs-user-ns)
   (lexical-let ((project-name project-name)
                 (project-file-path project-file-path)
                 (clj-file-path clj-file-path)
                 (cljs-file-path cljs-file-path)
+                (clj-test-file-path clj-test-file-path)
                 (figwheel-port figwheel-port)
                 (cljs-user-ns cljs-user-ns))
     (cl-labels
@@ -1220,11 +1225,18 @@
                                  (format "%d" figwheel-port))))
               (sesman-link-with-directory nil clj-ses)))
           (save-excursion
-            (find-file "~/code/sysrev/src/cljs/sysrev/user.cljs")
+            (find-file cljs-file-path)
             (when-let ((cljs-ses (match-sesman-session
                                   (format ".*cider-repl.*%s.*%d.*"
                                           project-name figwheel-port))))
-              (sesman-link-with-directory nil cljs-ses))))
+              (sesman-link-with-directory nil cljs-ses)))
+          (save-excursion
+            (find-file clj-test-file-path)
+            (when-let ((clj-test-ses (match-sesman-session
+                                      (format ".*cider-repl.*%s.*" project-name)
+                                      (format "%d" figwheel-port))))
+              (sesman-link-with-directory nil clj-test-ses))
+            (kill-buffer)))
          (show-repl-buffers
           ()
           (let ((clj-repl (first (match-buffer-name
@@ -1254,5 +1266,6 @@
    "~/code/sysrev/project.clj"
    "~/code/sysrev/src/clj/sysrev/user.clj"
    "~/code/sysrev/src/cljs/sysrev/user.cljs"
+   "~/code/sysrev/test/clj/sysrev/test/core.clj"
    7888
    "sysrev.user"))
