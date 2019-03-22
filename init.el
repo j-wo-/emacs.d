@@ -15,7 +15,7 @@
   (run-with-idle-timer
    1 nil
    (lambda ()
-     (setq gc-cons-threshold (* 2 1000 1000)))))
+     (setq gc-cons-threshold (* 20 1000 1000)))))
 (add-hook 'after-init-hook 'restore-config-post-init)
 
 (require 'cl)
@@ -204,7 +204,7 @@
 
 (use-package aggressive-indent
   :config
-  (setq aggressive-indent-sit-for-time 0.075
+  (setq aggressive-indent-sit-for-time 0.05
         aggressive-indent-dont-indent-if
         (if t nil
           (list (lambda ()
@@ -265,9 +265,10 @@
           company-dabbrev-ignore-case nil
           company-dabbrev-code-other-buffers t
           company-tooltip-align-annotations t
-          company-tooltip-offset-display 'scrollbar
+          ;; company-tooltip-offset-display 'scrollbar
+          company-tooltip-offset-display 'lines
           company-minimum-prefix-length 3
-          company-idle-delay 0.2)
+          company-idle-delay 0.15)
     :config
     (add-to-list 'company-transformers 'company-sort-by-occurrence)
     (use-package company-statistics
@@ -531,7 +532,8 @@
   (reset-override-faces)
   (set-override-faces
    ;; `(fringe ((t (:foreground "#383838" :background "#383838"))))
-   `(fringe ((t (:foreground "#3c3836" :background "#3c3836"))))
+   `(fringe (;; (t (:foreground "#3c3836" :background "#3c3836"))
+             (t (:foreground "#373230" :background "#373230"))))
    `(line-number
      ((t (:font "Inconsolata Nerd Font 18"
                 :foreground "#7c6f64"
@@ -542,13 +544,17 @@
                 ;; :background "#504945"
                 :background "#3c3836"))))
    `(mode-line
-     ((t (:font "Inconsolata Nerd Font 20"
+     ((t (:font "Inconsolata Nerd Font Mono 21"
                 :foreground "#d5c4a1"
-                :background "#665c54"))))
+                :background "#665c54"
+                ;; :background "#554c44"
+                ))))
    `(mode-line-inactive
-     ((t (:font "Inconsolata Nerd Font 20"
+     ((t (:font "Inconsolata Nerd Font Mono 21"
                 :foreground "#a89984"
-                :background "#3c3836")))))
+                :background "#3c3836"
+                ;; :background "#2c2826"
+                )))))
   ;; set face specs depending on theme
   (when nil
     (cond
@@ -962,7 +968,8 @@
 
 ;; Make sure Emacs has the correct ssh-agent config,
 ;; in order to use tramp and git commands without requesting a password.
-(when (not (eql (window-system) 'ns))
+(when (not (or (eql (window-system) 'ns)
+               (eql (window-system) 'mac)))
   (if (equal (user-login-name) "root")
       (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
     (setenv "SSH_AUTH_SOCK" (concat (getenv "XDG_RUNTIME_DIR") "/ssh-agent.socket"))))
@@ -981,10 +988,15 @@
 (use-package powerline
   :config
   (setq powerline-height 40
-        powerline-default-separator nil
-        ;; powerline-default-separator 'arrow
+        ;; powerline-default-separator nil
+        powerline-default-separator 'arrow
         powerline-display-buffer-size nil
-        powerline-display-mule-info nil)
+        powerline-display-mule-info nil
+        powerline-display-hud nil
+        powerline-gui-use-vcs-glyph t
+        ;; powerline-text-scale-factor nil
+        )
+  ;; (powerline-revert)
   (powerline-default-theme))
 
 '(use-package spaceline
@@ -1119,14 +1131,18 @@
   (scroll-bar-mode -1)
   ;; (menu-bar-mode -1)
   (tool-bar-mode -1)
-  (when (and (graphical?) (eql (window-system) 'ns))
-    ;; (set-frame-font "Source Code Pro 17")
-    (set-frame-font "Inconsolata Nerd Font 22"))
+  (when (and (graphical?)
+             (or (eql (window-system) 'ns)
+                 (eql (window-system) 'mac)))
+    ;; (set-frame-font "Source Code Pro 19")
+    ;; (set-frame-font "SauceCodePro Nerd Font Medium 19")
+    ;; (set-frame-font "Sauce Code Powerline 19")
+    (set-frame-font "Inconsolata Nerd Font Mono 22"))
   ;; (set-frame-font "Inconsolata for Powerline 20")
-  (set-frame-width nil 180)
-  (set-frame-height nil 50)
-  (when (graphical?)
-    (global-display-line-numbers-mode))
+  (set-frame-width nil 120)
+  (set-frame-height nil 64)
+  (when (and nil (graphical?))
+    (global-display-line-numbers-mode 1))
   ;;(set-frame-font "Inconsolata for Powerline-15")
   ;;(set-frame-font "Fira Code Retina-13")
   nil)
