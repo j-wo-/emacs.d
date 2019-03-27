@@ -1,6 +1,3 @@
-(defcustom jeffwk/enable-auto-neotree nil
-  "Non-nil enables hooks to integrate neotree into various actions.")
-
 (defvar jeffwk/neotree-font-set nil)
 (defun jeffwk/init-neotree-font ()
   (when (null jeffwk/neotree-font-set)

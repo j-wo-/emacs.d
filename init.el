@@ -20,18 +20,21 @@
 
 (require 'cl)
 
-(defun graphical? ()
-  (some #'display-graphic-p (frame-list)))
+(defun graphical? () (some #'display-graphic-p (frame-list)))
+(defun laptop? () (or (equal system-name "jeff-mbp")
+                      (equal system-name "jeff-laptop")))
+(defun mac? () (eql system-type 'darwin))
+(defun gui-mac-std? () (eql window-system 'ns))
+(defun gui-emacs-mac? () (eql window-system 'mac))
+(defun gui-mac? () (or (gui-mac-std?) (gui-emacs-mac?)))
 
-(setq custom-emacs-theme
-      (if (graphical?) 'gruvbox-dark-hard 'gruvbox-dark-hard)
-      ;; (if (graphical?) 'sanityinc-tomorrow-night 'gruvbox)
-      ;; (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt)
-      )
+(defvar custom-emacs-theme 'zenburn)
+;; 'gruvbox-dark-hard 'flatland
+;; (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt)
 
 (set-language-environment "utf-8")
 
-(setq default-frame-alist '((left-fringe . 10) (right-fringe . 10))
+(setq default-frame-alist '((left-fringe . 12) (right-fringe . 12))
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
@@ -42,8 +45,16 @@
 
 (global-auto-revert-mode t)
 
+(defun symbol-matches (sym str)
+  (not (null (string-match-p str (symbol-name sym)))))
+
+;;;
+;;; Package setup
+;;;
+
 (require 'package)
-(unless (equal emacs-version "27.0.50")
+
+(unless (>= emacs-major-version 27)
   (package-initialize))
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -51,23 +62,23 @@
 
 (defun pin-stable (pkg)
   (add-to-list 'package-pinned-packages (cons pkg "melpa-stable") t))
+
 (defun unpin-pkg (pkg)
   (setq package-pinned-packages
         (remove-if (lambda (x)
                      (eql (first x) pkg))
                    package-pinned-packages)))
 
-(dolist (pkg '(web-mode js2-mode tern slime
-                        magit git-commit
-                        cider clojure-mode
-                        clj-refactor
-                        company
-                        ;; markdown-mode
-                        ))
-  (pin-stable pkg))
+(dolist (pkg '(web-mode magit git-commit js2-mode tern slime company
+                        --markdown-mode cider clojure-mode clj-refactor))
+  (unless (symbol-matches pkg "^--")
+    (pin-stable pkg)))
 
-;; Install use-package from MELPA if needed
-;; Allows automatic bootstrap from empty elpa library
+;;;
+;;; use-package bootstrapping (support automatic bootstrap from empty elpa library)
+;;;
+
+;; Install use-package from melpa if needed
 (when (not (package-installed-p 'use-package))
   (package-refresh-contents)
   (package-install 'use-package))
@@ -80,7 +91,7 @@
                pkgs)))
 
 ;; This is to get around an infinite recursion in emacs-lisp-mode-hook
-;; when bootstrapping packages
+;; when bootstrapping packages.
 (ensure-installed paren-face elisp-slime-nav paredit aggressive-indent)
 
 (require 'use-package)
@@ -101,11 +112,10 @@
   (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
 (defun minor-mode-active-p (minor-mode)
   (if (member minor-mode (active-minor-modes)) t nil))
-(defun symbol-matches (sym str)
-  (not (null (string-match str (symbol-name sym)))))
 
 (defun load-local (file)
-  (load (locate-user-emacs-file file)))
+  (let ((inhibit-message t))
+    (load (locate-user-emacs-file file))))
 
 (load-local "keys")
 (load-local "commands")
@@ -124,58 +134,68 @@
   (if (member pkg jeffwk/exclude-pkgs) t nil))
 
 (use-package dash)
+
 (use-package diminish
-  :config
-  (diminish 'eldoc-mode))
-(unless (exclude-pkg? 'evil)
-  (use-package evil
-    :config
-    (evil-mode 1)))
+  :config (diminish 'eldoc-mode))
+
+(use-package evil
+  :if (not (exclude-pkg? 'evil))
+  :config (evil-mode 1))
 
 ;;;
 ;;; general
 ;;;
 
-'(use-package disable-mouse
-   :defer 0.25
-   :config
-   (diminish 'global-disable-mouse-mode)
-   (diminish 'disable-mouse-mode)
-   (diminish 'disable-mouse-global-mode)
-   (disable-mouse-global-mode))
+(use-package disable-mouse
+  :if (laptop?)
+  :defer 0.25
+  :config
+  (diminish 'global-disable-mouse-mode)
+  (diminish 'disable-mouse-mode)
+  (diminish 'disable-mouse-global-mode)
+  (disable-mouse-global-mode))
+
+(defun --tramp-config ()
+  (setq tramp-default-method "ssh"))
+
+(defvar --tramp-use-package t)
+
+(defun ensure-tramp ()
+  (if --tramp-use-package
+      (use-package tramp)
+    (unless (member 'tramp features)
+      (require 'tramp)
+      (funcall #'--tramp-config))))
 
 (use-package tramp
+  :if --tramp-use-package
   :defer t
-  :config
-  (setq tramp-default-method "ssh"))
+  :config (funcall #'--tramp-config))
 
 (use-package rainbow-mode)
 
 (use-package helm
+  :defer t
+  :init (setq helm-follow-mode-persistent t)
   :config
   (require 'helm-buffers)
-  (dolist (b '("\\`\\*esup"
-               ;; "\\`\\*Scratch"
-               ;; "\\`\\*Messages"
-               "\\`\\*Warnings"
-               "\\`\\*Help"
-               "\\`\\*magit-"
-               "\\`\\*cider-\\*"
-               "\\`\\*tramp"
-               "\\`\\*nrepl"
-               "\\`*Compile"))
+  (dolist (b '("\\`\\*esup" "\\`\\*Warnings" "\\`\\*Help" "\\`\\*magit-"
+               "\\`\\*cider-\\*" "\\`\\*tramp" "\\`\\*nrepl" "\\`*Compile"))
     (add-to-list 'helm-boring-buffer-regexp-list b))
-  (dolist (b '("\\`\\*magit\\: "
-               "\\`\\*cider-repl "))
+  (dolist (b '("\\`\\*magit\\: " "\\`\\*cider-repl "))
     (add-to-list 'helm-white-buffer-regexp-list b))
-
   (defun jeffwk/helm-buffers-list-all ()
     (interactive)
     (let ((helm-boring-buffer-regexp-list
            '("\\` " "\\`\\*helm" "\\`\\*Echo Area" "\\`\\*Minibuf")))
       (helm-buffers-list)))
-
-  (define-key global-map (kbd "C-x B") 'jeffwk/helm-buffers-list-all))
+  (define-key global-map (kbd "C-x B") 'jeffwk/helm-buffers-list-all)
+  ;; helm-map
+  ;; helm-ag-map
+  ;; helm-do-ag-map
+  (use-package helm-ag
+    :init (setq helm-ag-insert-at-point 'symbol
+                helm-ag-use-temp-buffer t)))
 
 (use-package esup :commands esup)
 
@@ -204,102 +224,93 @@
 
 (use-package aggressive-indent
   :config
-  (setq aggressive-indent-sit-for-time 0.05
-        aggressive-indent-dont-indent-if
-        (if t nil
-          (list (lambda ()
-                  (let ((active-fnames (function-stack)))
-                    (some (lambda (fname)
-                            (member fname active-fnames))
-                          '(company-capf
-                            completion-all-completions
-                            all-completions
-                            cider-complete
-                            nrepl-send-sync-request
-                            cider-sync-request:complete
-                            accept-process-output)))))))
+  '(setq aggressive-indent-sit-for-time 0.05)
+  '(setq aggressive-indent-dont-indent-if
+         (list (lambda ()
+                 (let ((active-fnames (function-stack)))
+                   (some (lambda (fname)
+                           (member fname active-fnames))
+                         '(company-capf
+                           completion-all-completions
+                           all-completions
+                           cider-complete
+                           nrepl-send-sync-request
+                           cider-sync-request:complete
+                           accept-process-output))))))
   (when use-global-aggressive-indent
     ;; aggressive-indent-excluded-modes
     (dolist (mode '(cider-repl-mode))
       (add-to-list 'aggressive-indent-excluded-modes mode))
-    (when nil
-      (dolist (mode '(clojure-mode
-                      clojurescript-mode
-                      cider-mode
-                      cider-repl-mode))
-        (add-to-list 'aggressive-indent-excluded-modes mode)))
-    (when nil
-      (dolist (mode '(clojure-mode
-                      clojurescript-mode
-                      cider-mode
-                      cider-repl-mode))
-        (setq aggressive-indent-excluded-modes
-              (remove mode aggressive-indent-excluded-modes))))
-
+    '(dolist (mode '(clojure-mode clojurescript-mode cider-mode cider-repl-mode))
+       '(setq aggressive-indent-excluded-modes
+              (remove mode aggressive-indent-excluded-modes))
+       (add-to-list 'aggressive-indent-excluded-modes mode))
     (aggressive-indent-global-mode)))
 
-(unless (exclude-pkg? 'auto-complete)
-  (use-package auto-complete
-    :defer 0.25
-    :config
-    (ac-config-default)
-    (setq ac-delay 0.025
-          ac-max-width 50
-          ac-auto-show-menu 0.4
-          ac-quick-help-delay 0.8
-          global-auto-complete-mode t
-          ac-use-dictionary-as-stop-words nil
-          ac-use-fuzzy t)
-    (define-globalized-minor-mode real-global-auto-complete-mode
-      auto-complete-mode (lambda ()
-                           (if (not (minibufferp (current-buffer)))
-                               (auto-complete-mode 1))))
-    (real-global-auto-complete-mode t)))
+(use-package auto-complete
+  :if (not (exclude-pkg? 'auto-complete))
+  :defer 0.25
+  :config
+  (ac-config-default)
+  (setq ac-delay 0.025
+        ac-max-width 50
+        ac-auto-show-menu 0.4
+        ac-quick-help-delay 0.8
+        global-auto-complete-mode t
+        ac-use-dictionary-as-stop-words nil
+        ac-use-fuzzy t)
+  (define-globalized-minor-mode real-global-auto-complete-mode
+    auto-complete-mode (lambda ()
+                         (if (not (minibufferp (current-buffer)))
+                             (auto-complete-mode 1))))
+  (real-global-auto-complete-mode t))
 
-(unless (exclude-pkg? 'company)
-  (use-package company
-    :diminish company-mode global-company-mode
-    :init
-    ;; http://emacs.stackexchange.com/a/10838/12585
-    (setq company-dabbrev-downcase nil
-          company-dabbrev-ignore-case nil
-          company-dabbrev-code-other-buffers t
-          company-tooltip-align-annotations t
-          ;; company-tooltip-offset-display 'scrollbar
-          company-tooltip-offset-display 'lines
-          company-minimum-prefix-length 3
-          company-idle-delay 0.15)
+(use-package company
+  :if (not (exclude-pkg? 'company))
+  :diminish company-mode global-company-mode
+  :init
+  ;; http://emacs.stackexchange.com/a/10838/12585
+  (setq company-dabbrev-downcase nil
+        company-dabbrev-ignore-case nil
+        company-dabbrev-code-other-buffers t
+        company-tooltip-align-annotations t
+        ;; company-tooltip-offset-display 'scrollbar
+        company-tooltip-offset-display 'lines
+        company-minimum-prefix-length 3
+        company-idle-delay 0.15)
+  :config
+  (add-to-list 'company-transformers 'company-sort-by-occurrence)
+  (let ((inhibit-message t))
+    (use-package company-statistics :config (company-statistics-mode 1)))
+  (use-package company-quickhelp
+    :disabled true
     :config
-    (add-to-list 'company-transformers 'company-sort-by-occurrence)
-    (use-package company-statistics
-      :config
-      (company-statistics-mode 1))
-    '(use-package company-quickhelp
-       :config
-       (setq company-quickhelp-delay 1)
-       (company-quickhelp-mode 1))
-    (global-company-mode 1)))
+    (setq company-quickhelp-delay 1)
+    (company-quickhelp-mode 1))
+  (global-company-mode 1))
 
 (use-package projectile
-  :config
-  (use-package helm-projectile
-    :config
-    (helm-projectile-toggle 1))
-  ;; (define-key global-map (kbd "C-c pf") 'helm-projectile-find-file)
-  ;; (define-key global-map (kbd "C-c pp") 'helm-projectile-switch-project)
-  (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
-  (define-key global-map (kbd "C-c C-p") 'projectile-command-map)
-  (define-key global-map (kbd "C-c C-p C-s") 'projectile-save-project-buffers)
-  (define-key global-map (kbd "C-c TAB") 'helm-projectile-switch-to-buffer)
+  :bind (("C-c C-p p" . helm-projectile-switch-project))
+  :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
-        projectile-enable-caching t
-        projectile-mode-line
-        '(:eval (format " [%s]" (projectile-project-name))))
-  (add-to-list 'grep-find-ignored-files "*.log")
-  (dolist (s '(".svg" ".xml" ".zip" ".png" ".jpg"))
+        projectile-indexing-method 'hybrid
+        projectile-enable-caching nil)
+  :config
+  (use-package helm-projectile
+    :init (use-package helm)
+    :config (helm-projectile-toggle 1))
+  (define-key global-map (kbd "C-c C-p") 'projectile-command-map)
+  (define-key global-map (kbd "C-c C-p C-s") 'projectile-save-project-buffers)
+  ;; (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
+  (define-key global-map (kbd "C-c g") 'projectile-ag)
+  (define-key projectile-mode-map (kbd "C-c g") 'projectile-ag)
+  (define-key global-map (kbd "C-c TAB") 'helm-projectile-switch-to-buffer)
+  (dolist (s '(".log" ".ai" ".svg" ".xml" ".zip" ".png" ".jpg"))
+    (add-to-list 'grep-find-ignored-files (concat "*" s))
+    (add-to-list 'helm-ag-ignore-patterns (concat "*" s))
     (add-to-list 'projectile-globally-ignored-file-suffixes s))
-  (projectile-global-mode))
+  (projectile-mode))
 
 (use-package smex
   :bind ("M-x" . smex)
@@ -307,9 +318,17 @@
 
 (use-package flycheck
   :defer t
+  :init
+  (setq flycheck-global-modes '(clojure-mode clojurescript-mode))
+  (setq flycheck-disabled-checkers '(clojure-cider-typed))
   :config
-  (define-key flycheck-mode-map "\C-c ." 'flycheck-next-error)
-  (define-key flycheck-mode-map "\C-c ," 'flycheck-previous-error)
+  (progn (define-key flycheck-mode-map flycheck-keymap-prefix nil)
+         (setq flycheck-keymap-prefix (kbd "C-c f"))
+         (define-key flycheck-mode-map flycheck-keymap-prefix
+           flycheck-command-map))
+  (when nil
+    (define-key flycheck-mode-map "\C-c ." 'flycheck-next-error)
+    (define-key flycheck-mode-map "\C-c ," 'flycheck-previous-error))
   ;; because git-gutter is in the left fringe
   (setq flycheck-indication-mode 'right-fringe)
   ;; A non-descript, left-pointing arrow
@@ -323,28 +342,34 @@
     ".XXX...."
     "..XX...."
     "...X....")
-  ;; (global-flycheck-mode 1)
-  )
+  (use-package flycheck-pos-tip
+    :config (setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages))
+  '(global-flycheck-mode 1))
 
-(use-package ido
-  :config
+(use-package flx-ido
+  :init
+  (require 'ido)
+  (setq ido-enable-flex-matching t
+        ido-use-faces nil)
   (ido-mode 1)
   (ido-everywhere 1)
-  (use-package flx-ido
-    :config
-    (flx-ido-mode 1))
-  (setq ido-enable-flex-matching t
-        ido-use-faces nil))
+  :config
+  (flx-ido-mode 1))
 
 (use-package mic-paren
   :config (paren-activate))
+;; (paren-deactivate)
 
 (use-package paren-face
   :defer t
-  :config
+  :init
   (setq paren-face-regexp "[\\(\\)]")
+  :config
   (global-paren-face-mode)
-  (face-spec-set 'parenthesis '((t (:foreground "#707070"))))
+  (let ((color (cond ((symbol-matches custom-emacs-theme "zenburn")
+                      "#808080")
+                     (t "#707070"))))
+    (face-spec-set 'parenthesis `((t (:foreground ,color)))))
   (defface square-brackets
     '((t (:foreground "#bbbf40")))
     'paren-face)
@@ -355,17 +380,17 @@
     '(("\\[" 0 'square-brackets)
       ("\\]" 0 'square-brackets)
       ("[\\{\\}]" 0 'curly-brackets)))
-  (add-hook
-   'paren-face-mode-hook
-   (lambda ()
-     (if paren-face-mode
-         (font-lock-add-keywords nil clojure-brackets-keywords t)
-       (font-lock-remove-keywords nil clojure-brackets-keywords))
-     (when (called-interactively-p 'any)
-       (font-lock-fontify-buffer)))))
+  (defun --custom-paren-face-mode-hook ()
+    (if paren-face-mode
+        (font-lock-add-keywords nil clojure-brackets-keywords t)
+      (font-lock-remove-keywords nil clojure-brackets-keywords))
+    (when (called-interactively-p 'any)
+      (font-lock-fontify-buffer)))
+  (add-hook 'paren-face-mode-hook '--custom-paren-face-mode-hook))
 
 (use-package paredit
-  :diminish "" ;; (paredit-mode "()")
+  :defer t
+  :diminish (paredit-mode "()")
   :config
   (define-globalized-minor-mode real-global-paredit-mode
     paredit-mode (lambda ()
@@ -396,49 +421,38 @@
   (define-key global-map "\C-xpn" 'git-gutter:next-hunk)
   (define-key global-map "\C-xpb" 'git-gutter:previous-hunk)
   (global-git-gutter-mode t))
+
 (use-package git-gutter-fringe
   :diminish git-gutter-mode
   :if window-system
-  :config
-  (do-git-gutter-config)
-  '(use-package fringe-helper)
-  '(fringe-helper-define
-     'git-gutter-fr:added '(center repeated)
-     "XXX.....")
-  '(fringe-helper-define
-     'git-gutter-fr:modified '(center repeated)
-     "XXX.....")
-  '(fringe-helper-define
-     'git-gutter-fr:deleted 'bottom
-     "X......."
-     "XX......"
-     "XXX....."
-     "XXXX...."))
+  :config (do-git-gutter-config))
+
 (use-package git-gutter
   :diminish git-gutter-mode
   :if (null window-system)
   :config (do-git-gutter-config))
 
-;; (use-package git-commit)
-
 (use-package magit
   :bind
   ("C-x g" . magit-status)
   ("C-x C-g" . magit-dispatch-popup)
-  :init
-  (setq magit-last-seen-setup-instructions "1.4.0")
   :config
-  (setq magit-revert-buffers t)
   (define-key magit-status-mode-map (kbd "C-<tab>") nil)
   (diminish 'auto-revert-mode))
 
-(load-local "neotree")
+(defcustom jeffwk/enable-auto-neotree nil
+  "Non-nil enables hooks to integrate neotree into various actions.")
+
+(when jeffwk/enable-auto-neotree (load-local "neotree"))
 
 ;;;
 ;;; modes
 ;;;
 
-(use-package systemd)
+(use-package systemd
+  :mode
+  ("\\.service\\'" . systemd-mode)
+  ("\\.target\\'" . systemd-mode))
 
 (use-package groovy-mode
   :mode "/Jenkinsfile"
@@ -450,12 +464,12 @@
 
 (use-package markdown-mode
   :commands (markdown-mode gfm-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
+  :mode
+  ("README\\.md\\'" . gfm-mode)
+  ("\\.md\\'" . markdown-mode)
+  ("\\.markdown\\'" . markdown-mode)
   :init (setq markdown-command "multimarkdown")
-  :config
-  (use-package gh-md))
+  :config (use-package gh-md))
 
 (use-package nginx-mode
   :mode "/nginx.conf$" "\\.nginx-site\\'"
@@ -464,6 +478,7 @@
     (add-hook 'nginx-mode-hook #'aggressive-indent-mode)))
 
 (use-package org
+  :mode ("\\.org\\'" . org-mode)
   :commands org-agenda org-store-link org-capture
   :config
   (define-key global-map "\C-cl" 'org-store-link)
@@ -492,102 +507,73 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(use-package autothemer)
+(use-package autothemer
+  :disabled true)
 
 (defun switch-to-theme (theme)
   ;; try to load elpa package for theme
-  (cond
-   ((symbol-matches theme "sanityinc-tomorrow")
-    (use-package color-theme-sanityinc-tomorrow))
-   ((symbol-matches theme "sanityinc-solarized")
-    (use-package color-theme-sanityinc-solarized))
-   ((symbol-matches theme "gruvbox")
-    (use-package gruvbox-theme
-      :ensure nil
-      :load-path "~/.emacs.d/gruvbox-theme"
-      :init
-      (setq gruvbox-contrast 'hard)))
-   ((symbol-matches theme "spacemacs-dark")
-    (use-package spacemacs-theme))
-   ((symbol-matches theme "material")
-    (use-package material-theme))
-   ((symbol-matches theme "ample")
-    (use-package ample-theme))
-   ((symbol-matches theme "base16")
-    (use-package base16-theme))
-   ((symbol-matches theme "zenburn")
-    (use-package zenburn-theme))
-   ((symbol-matches theme "moe")
-    (use-package moe-theme))
-   ((symbol-matches theme "apropospriate")
-    (use-package apropospriate-theme))
-   ((symbol-matches theme "molokai")
-    (use-package molokai-theme))
-   ((symbol-matches theme "monokai")
-    (use-package monokai-theme)))
-  ;; disable any current themes
-  (dolist (active-theme custom-enabled-themes)
-    (disable-theme active-theme))
-  ;; reset any modified face specs
-  (reset-override-faces)
-  (set-override-faces
-   ;; `(fringe ((t (:foreground "#383838" :background "#383838"))))
-   `(fringe (;; (t (:foreground "#3c3836" :background "#3c3836"))
-             (t (:foreground "#373230" :background "#373230"))))
-   `(line-number
-     ((t (:font "Inconsolata Nerd Font 18"
-                :foreground "#7c6f64"
-                :background "#3c3836"))))
-   `(line-number-current-line
-     ((t (:font "Inconsolata Nerd Font 18"
-                :foreground "#fe8019"
-                ;; :background "#504945"
-                :background "#3c3836"))))
-   `(mode-line
-     ((t (:font "Inconsolata Nerd Font Mono 21"
-                :foreground "#d5c4a1"
-                :background "#665c54"
-                ;; :background "#554c44"
-                ))))
-   `(mode-line-inactive
-     ((t (:font "Inconsolata Nerd Font Mono 21"
-                :foreground "#a89984"
-                :background "#3c3836"
-                ;; :background "#2c2826"
-                )))))
-  ;; set face specs depending on theme
-  (when nil
-    (cond
-     ((symbol-matches theme "moe")
-      (set-override-faces
-       `(popup-face ((t (:foreground "#dddddd" :background "#383838"))))
-       `(popup-tip-face ((t (:foreground "#dddddd" :background "#505050"))))))
-     ((or (symbol-matches theme "tomorrow")
-          t)
-      (let ((dark-bg "#303030")
-            (bright-fg "#babcba")
-            (gray-fg "#555756")
-            (black-fg "#060606")
-            (bright-active "#505050")
-            (bright-inactive "#383838"))
-        (set-override-faces
-         `(mode-line ((t (:foreground "#888888" :background ,dark-bg :box (:line-width 2 :color ,bright-active)))))
-         `(mode-line-inactive ((t (:foreground ,gray-fg :background ,dark-bg :box (:line-width 2 :color ,dark-bg)))))
-         `(mode-line-buffer-id ((t (:foreground "#81a2be" :background ,dark-bg))))
-         `(powerline-active1 ((t (:foreground ,bright-fg :background ,bright-active))))
-         `(powerline-active2 ((t (:foreground ,bright-fg :background ,dark-bg))))
-         `(powerline-inactive1 ((t (:foreground ,gray-fg :background ,bright-inactive))))
-         `(powerline-inactive2 ((t (:foreground ,gray-fg :background ,dark-bg))))
-         `(popup-face ((t (:foreground "#dddddd" :background ,bright-inactive))))
-         `(popup-tip-face ((t (:foreground "#dddddd" :background ,bright-active)))))))))
-  ;; activate theme
-  (cond
-   ((eql theme 'moe-dark)
-    (moe-dark))
-   ((eql theme 'moe-light)
-    (moe-light))
-   (t
-    (load-theme theme t))))
+  (cl-flet ((theme-p (s) (symbol-matches theme s)))
+    (cond ((theme-p "sanityinc-tomorrow")
+           (use-package color-theme-sanityinc-tomorrow))
+          ((theme-p "sanityinc-solarized")
+           (use-package color-theme-sanityinc-solarized))
+          ((theme-p "gruvbox")          (use-package gruvbox-theme
+                                          :ensure nil
+                                          :load-path "~/.emacs.d/gruvbox-theme"
+                                          :init
+                                          (setq gruvbox-contrast 'hard)))
+          ((theme-p "spacemacs-dark")   (use-package spacemacs-theme))
+          ((theme-p "material")         (use-package material-theme))
+          ((theme-p "ample")            (use-package ample-theme))
+          ((theme-p "base16")           (use-package base16-theme))
+          ((theme-p "zenburn")          (use-package zenburn-theme))
+          ((theme-p "flatland")         (use-package flatland-theme))
+          ((theme-p "moe")              (use-package moe-theme))
+          ((theme-p "apropospriate")    (use-package apropospriate-theme))
+          ((theme-p "molokai")          (use-package molokai-theme))
+          ((theme-p "monokai")          (use-package monokai-theme)))
+    ;; disable any current themes
+    (dolist (active-theme custom-enabled-themes)
+      (disable-theme active-theme))
+    ;; activate theme
+    (cond ((eql theme 'moe-dark)   (moe-dark))
+          ((eql theme 'moe-light)  (moe-light))
+          (t                       (load-theme theme t)))
+    ;; reset any modified face specs
+    (reset-override-faces)
+    (cond ((theme-p "zenburn")
+           (set-override-faces
+            `(vertical-border
+              ((t (:foreground "#7b7b6b"))))
+            `(mode-line
+              ((t (:font "Inconsolata Nerd Font Mono 24"
+                         :foreground "#8fb28f"
+                         :background "#2b2b2b"
+                         :box ,(if nil nil `(:line-width -1 :color "#7a7a74"))))))
+            `(mode-line-inactive
+              ((t (:font "Inconsolata Nerd Font Mono 24"
+                         :foreground "#5f7f5f"
+                         :background "#383838"
+                         :box ,(if nil nil `(:line-width -1 :color "#5b5b54"))))))))
+          ((theme-p "gruvbox")
+           (set-override-faces
+            `(fringe ((t (:foreground "#373230" :background "#373230"))))
+            `(line-number
+              ((t (:font "Inconsolata Nerd Font 18"
+                         :foreground "#7c6f64"
+                         :background "#3c3836"))))
+            `(line-number-current-line
+              ((t (:font "Inconsolata Nerd Font 18"
+                         :foreground "#fe8019"
+                         :background "#3c3836"))))
+            `(mode-line
+              ((t (:font "Inconsolata Nerd Font Mono 24"
+                         :foreground "#d5c4a1"
+                         :background "#665c54"))))
+            `(mode-line-inactive
+              ((t (:font "Inconsolata Nerd Font Mono 24"
+                         :foreground "#a89984"
+                         :background "#3c3836")))))))))
 
 (defun switch-custom-theme (&optional frame)
   (let ((frame (or (and (framep frame) frame)
@@ -600,11 +586,17 @@
   (menu-bar-mode -1))
 
 ;;;
-;;; lisp
+;;; languages
 ;;;
+
+(defvar --use-lispy nil)
+
+(defun ensure-lispy ()
+  (when --use-lispy (use-package lispy)))
 
 (use-package lispy
   :defer t
+  :if --use-lispy
   :config 
   (defun enable-lispy (mode-hook)
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
@@ -615,10 +607,9 @@
   ("\\.cljs\\'" . clojurescript-mode)
   :config
   (use-package paredit)
-  ;; (use-package lispy)
+  (ensure-lispy)
   (use-package paren-face)
-  (unless use-global-aggressive-indent
-    (use-package aggressive-indent))
+  (use-package aggressive-indent)
   (use-package cider
     :diminish cider-mode
     :init
@@ -631,7 +622,7 @@
           ;; cider-default-cljs-repl 'figwheel
           ;; cider-lein-command "/usr/local/bin/lein"
           )
-    (use-package tramp)
+    (ensure-tramp)
     :config
     (unless (exclude-pkg? 'auto-complete)
       (use-package ac-cider)
@@ -644,12 +635,6 @@
            (add-to-list 'ac-modes 'cider-repl-mode))))
     (add-hook 'clojure-mode-hook #'cider-mode)
     (add-hook 'clojurescript-mode-hook #'cider-mode)
-    '(add-hook 'clojure-mode-hook
-               (lambda () (aggressive-indent-mode 0)))
-    '(add-hook 'clojurescript-mode-hook
-               (lambda () (aggressive-indent-mode 0)))
-    ;;(add-hook 'clojure-mode-hook #'aggressive-indent-mode)
-    ;;(add-hook 'clojurescript-mode-hook #'aggressive-indent-mode)
     (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'clojurescript-mode-hook 'turn-off-smartparens-mode)
     (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
@@ -682,7 +667,6 @@
              (if (member major-mode '(clojure-mode clojurescript-mode))
                  (clojure-expected-ns)
                "")))
-        ;; (cider-connect "localhost" port)
         (cider-connect `(:host "localhost" :port ,port))))
 
     (define-key cider-mode-map (kbd "C-c C-p") nil)
@@ -694,7 +678,6 @@
                       (cider-load-buffer))))
         (my-cider-reload-repl-ns)
         result))
-    ;;(define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer)
     (define-key cider-mode-map (kbd "C-c C-k") 'cider-load-buffer-reload-repl)
     (defun my-cider-repl-set-ns (ns)
       (interactive (list (if (or (derived-mode-p 'cider-repl-mode)
@@ -702,18 +685,17 @@
                              (completing-read "Switch to namespace: "
                                               (cider-sync-request:ns-list))
                            (cider-current-ns))))
-      (let ((buffer (first (cider-repl-buffers (cider-repl-type-for-buffer)))))
-        (when buffer
-          (pop-to-buffer buffer)
-          (insert (format "(require '%s)" ns))
-          (cider-repl-return)
-          (cider-repl-set-ns ns))))
+      (when-let ((buffer (first (cider-repl-buffers (cider-repl-type-for-buffer)))))
+        (pop-to-buffer buffer)
+        (insert (format "(require '%s)" ns))
+        (cider-repl-return)
+        (cider-repl-set-ns ns)))
     ;; (define-key cider-mode-map (kbd "C-c n") 'my-cider-repl-set-ns)
     (define-key cider-mode-map (kbd "C-c n") 'cider-repl-set-ns)
-    ;; (enable-lispy 'clojure-mode-hook)
-    ;; (enable-lispy 'cider-mode-hook)
-    ;; (enable-lispy 'cider-repl-mode-hook)
-    )
+    (when --use-lispy
+      (enable-lispy 'clojure-mode-hook)
+      (enable-lispy 'cider-mode-hook)
+      (enable-lispy 'cider-repl-mode-hook)))
   (use-package clj-refactor
     :diminish clj-refactor-mode
     :config
@@ -726,11 +708,9 @@
       (cljr-add-keybindings-with-prefix "C-c C-m"))
     (add-hook 'clojure-mode-hook #'clj-refactor-clojure-mode-hook)
     (add-hook 'clojurescript-mode-hook #'clj-refactor-clojure-mode-hook))
-
-  (when nil
-    (use-package flycheck-clojure
-      :config
-      (flycheck-clojure-setup))))
+  (use-package flycheck-clojure
+    :disabled true
+    :config (flycheck-clojure-setup)))
 
 (use-package slime
   :commands slime
@@ -738,14 +718,13 @@
   ("\\.lisp\\'" . lisp-mode)
   ("\\.asd\\'" . lisp-mode)
   :init
-  ;;(setq slime-contribs '(slime-fancy slime-tramp slime-company))
+  (ensure-tramp)
   (setq slime-contribs '(slime-fancy slime-tramp))
   :config
   (use-package paredit)
-  ;; (use-package lispy)
+  (ensure-lispy)
   (use-package paren-face)
-  (unless use-global-aggressive-indent
-    (use-package aggressive-indent))
+  (use-package aggressive-indent)
   (add-hook 'lisp-mode-hook
             (lambda ()
               (setq-local lisp-indent-function
@@ -754,7 +733,6 @@
   (defvar sbcl-run-command "sbcl --dynamic-space-size 2000 --noinform")
   (defvar ccl-run-command "ccl64 -K utf-8")
   (defvar ecl-run-command "ecl")
-  
   (setq inferior-lisp-program sbcl-run-command
         slime-net-coding-system 'utf-8-unix
         slime-complete-symbol-function 'slime-fuzzy-complete-symbol
@@ -813,8 +791,7 @@
   ;;(use-package slime-company)
   (use-package ac-slime
     :config
-    (defun set-up-slime-ac-fuzzy ()
-      (set-up-slime-ac t))
+    (defun set-up-slime-ac-fuzzy () (set-up-slime-ac t))
     (add-hook 'slime-mode-hook 'set-up-slime-ac-fuzzy)
     (add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy)))
 
@@ -826,26 +803,20 @@
    (use-package elisp-slime-nav :diminish "")
    (turn-on-elisp-slime-nav-mode)
    (use-package paredit)
-   ;; (use-package lispy)
+   (ensure-lispy)
    (unless use-global-aggressive-indent
      (use-package aggressive-indent)
      (aggressive-indent-mode))
    (turn-off-smartparens-mode)
    (enable-paredit-mode)
-   ;; (lispy-mode 1)
+   (when --use-lispy (lispy-mode 1))
    (eldoc-mode 1)))
-
-;;;
-;;; languages
-;;;
 
 (use-package scala-mode
   :mode
   ("\\.scala\\'" . scala-mode)
   ("\\.sbt\\'" . scala-mode)
   :config
-  ;;(setq scala-indent:default-run-on-strategy 1)
-  ;;(setq scala-indent:indent-value-expression nil)
   (use-package ensime
     :diminish ensime-mode
     :config
@@ -897,12 +868,10 @@
 ;;;
 
 (use-package less-css-mode
-  :mode
-  "\\.less\\'" "\\.variables\\'" "\\.overrides\\'")
+  :mode "\\.less\\'" "\\.variables\\'" "\\.overrides\\'")
 
 (use-package web-mode
-  :mode
-  "\\.js\\'" "\\.jsx\\'" "\\.json\\'"
+  :mode "\\.js\\'" "\\.jsx\\'" "\\.json\\'"
   :config
   ;; (use-package tern)
   (use-package flycheck)
@@ -923,9 +892,8 @@
     (add-hook 'js2-mode-hook 'my-js2-mode-hook)
     (add-hook 'js2-jsx-mode-hook 'my-js2-mode-hook))
   (flycheck-add-mode 'javascript-eslint 'web-mode)
-  (setq-default
-   flycheck-disabled-checkers
-   '(javascript-jshint json-jsonlist))
+  (add-to-list 'flycheck-disabled-checkers 'javascript-jshint)
+  (add-to-list 'flycheck-disabled-checkers 'json-jsonlist)
   (defun my-web-mode-hook ()
     (setq web-mode-markup-indent-offset 2)
     (setq web-mode-css-indent-offset 2)
@@ -936,8 +904,7 @@
       (flycheck-select-checker 'javascript-eslint)))
   (add-hook 'web-mode-hook 'my-web-mode-hook))
 
-(use-package jade-mode
-  :mode "\\.jade\\'")
+(use-package jade-mode :mode "\\.jade\\'")
 
 ;;;
 ;;; Set up copy/paste and daemon
@@ -950,26 +917,26 @@
 ;; My solution is to run a script (/usr/local/bin/emacs-reload)
 ;; in my i3wm config file to restart the emacs daemons upon
 ;; logging into an X session.
-(defun xsel-paste ()
-  (shell-command-to-string "xsel -ob"))
-(defun xsel-copy (text &optional push)
-  (let ((process-connection-type nil))
-    (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
-      (process-send-string proc text)
-      (process-send-eof proc))))
-(defun do-xsel-copy-paste-setup ()
-  (when (and (null window-system)
-             (getenv "DISPLAY")
-             (file-exists-p "/usr/bin/xsel")
-             (not (equal (user-login-name) "root")))
-    (setq interprogram-cut-function 'xsel-copy)
-    (setq interprogram-paste-function 'xsel-paste)))
-(do-xsel-copy-paste-setup)
+(unless (mac?)
+  (defun xsel-paste ()
+    (shell-command-to-string "xsel -ob"))
+  (defun xsel-copy (text &optional push)
+    (let ((process-connection-type nil))
+      (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
+        (process-send-string proc text)
+        (process-send-eof proc))))
+  (defun do-xsel-copy-paste-setup ()
+    (when (and (null window-system)
+               (getenv "DISPLAY")
+               (file-exists-p "/usr/bin/xsel")
+               (not (equal (user-login-name) "root")))
+      (setq interprogram-cut-function 'xsel-copy)
+      (setq interprogram-paste-function 'xsel-paste)))
+  (do-xsel-copy-paste-setup))
 
 ;; Make sure Emacs has the correct ssh-agent config,
 ;; in order to use tramp and git commands without requesting a password.
-(when (not (or (eql (window-system) 'ns)
-               (eql (window-system) 'mac)))
+(unless (mac?)
   (if (equal (user-login-name) "root")
       (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
     (setenv "SSH_AUTH_SOCK" (concat (getenv "XDG_RUNTIME_DIR") "/ssh-agent.socket"))))
@@ -978,12 +945,7 @@
 ;; are using the same path for the socket file.
 ;; The path is set here, and the same is set in a script
 ;; for starting emacsclient (/usr/local/bin/e).
-(setq server-socket-dir
-      (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
-
-;;;
-;;; end
-;;;
+(setq server-socket-dir (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
 
 (use-package powerline
   :config
@@ -996,124 +958,123 @@
         powerline-gui-use-vcs-glyph t
         ;; powerline-text-scale-factor nil
         )
-  ;; (powerline-revert)
   (powerline-default-theme))
 
-'(use-package spaceline
-   :init
-   (setq powerline-height 40
-         powerline-default-separator 'arrow
-         spaceline-separator-dir-left '(right . right)
-         spaceline-separator-dir-right '(right . right)
-         spaceline-workspace-numbers-unicode t)
-   ;; (setq spaceline-highlight-face-func #'spaceline-highlight-face-evil-state) ; set colouring for different evil-states
-   ;; (setq spaceline-inflation 1.4)
-   :config
-   (require 'spaceline-config)
-   ;; (spaceline-compile)
+(use-package spaceline
+  :disabled true
+  :init
+  (setq powerline-height 40
+        powerline-default-separator 'arrow
+        ;; spaceline-inflation 1.4
+        spaceline-separator-dir-left '(right . right)
+        spaceline-separator-dir-right '(right . right)
+        spaceline-workspace-numbers-unicode t)
+  :config
+  (require 'spaceline-config)
+  ;; (spaceline-compile)
 
-   (spaceline-toggle-buffer-size-off)
-   (spaceline-toggle-minor-modes-off)
-   (spaceline-toggle-buffer-encoding-abbrev-off)
-   (spaceline-toggle-buffer-position-on)
-   (spaceline-toggle-hud-off)
-   (spaceline-toggle-line-column-on)
+  (spaceline-toggle-buffer-size-off)
+  (spaceline-toggle-minor-modes-off)
+  (spaceline-toggle-buffer-encoding-abbrev-off)
+  (spaceline-toggle-buffer-position-on)
+  (spaceline-toggle-hud-off)
+  (spaceline-toggle-line-column-on)
 
-   (defface jeffwk/modeline-buffer-path
-     '((t
-        (:inherit mode-line-buffer-id
-                  :bold nil
-                  :foreground "#a89984")))
-     "Face used for the buffer name."
-     :group '+jeffwk)
+  (defface jeffwk/modeline-buffer-path
+    '((t
+       (:inherit mode-line-buffer-id
+                 :bold nil
+                 :foreground "#a89984")))
+    "Face used for the buffer name."
+    :group '+jeffwk)
 
-   (defun jeffwk/buffer-path ()
-     (when (and buffer-file-name
-                (projectile-project-p)
-                (projectile-project-root))
-       (let ((buffer-path
-              (file-relative-name (file-name-directory
-                                   (or buffer-file-truename (file-truename buffer-file-name)))
-                                  (projectile-project-root))))
-         (unless (equal buffer-path "./")
-           (let ((max-length (truncate (* (window-body-width) 0.4))))
-             (if (> (length buffer-path) max-length)
-                 (let* ((path (nreverse (split-string buffer-path "/" t)))
-                        ;; (path (subseq path 0 (min (length path) 2)))
-                        (output ""))
-                   (when (and path (equal "" (car path)))
-                     (setq path (cdr path)))
-                   (while (and path (<= (length output) (- max-length 4)))
-                     (setq output (concat (car path) "/" output)
-                           path (cdr path)))
-                   (when path
-                     (setq output (concat "../" output)))
-                   (unless (string-suffix-p "/" output)
-                     (setq output (concat output "/")))
-                   output)
-               buffer-path))))))
+  (defun jeffwk/buffer-path ()
+    (when (and buffer-file-name
+               (projectile-project-p)
+               (projectile-project-root))
+      (let ((buffer-path
+             (file-relative-name (file-name-directory
+                                  (or buffer-file-truename (file-truename buffer-file-name)))
+                                 (projectile-project-root))))
+        (unless (equal buffer-path "./")
+          (let ((max-length (truncate (* (window-body-width) 0.4))))
+            (if (> (length buffer-path) max-length)
+                (let* ((path (nreverse (split-string buffer-path "/" t)))
+                       ;; (path (subseq path 0 (min (length path) 2)))
+                       (output ""))
+                  (when (and path (equal "" (car path)))
+                    (setq path (cdr path)))
+                  (while (and path (<= (length output) (- max-length 4)))
+                    (setq output (concat (car path) "/" output)
+                          path (cdr path)))
+                  (when path
+                    (setq output (concat "../" output)))
+                  (unless (string-suffix-p "/" output)
+                    (setq output (concat output "/")))
+                  output)
+              buffer-path))))))
 
-   (spaceline-define-segment
-    buffer-id-with-path
-    "Name of buffer (or path relative to project root)."
-    (let ((name (propertize (if (buffer-file-name)
-                                (file-name-nondirectory (buffer-file-name))
-                              (buffer-name))
-                            'face 'mode-line-buffer-id))
-          (path (jeffwk/buffer-path)))
-      (if path
-          (concat (propertize path 'face
-                              '(:inherit jeffwk/modeline-buffer-path))
-                  name)
-        name)))
+  (spaceline-define-segment
+   buffer-id-with-path
+   "Name of buffer (or path relative to project root)."
+   (let ((name (propertize (if (buffer-file-name)
+                               (file-name-nondirectory (buffer-file-name))
+                             (buffer-name))
+                           'face 'mode-line-buffer-id))
+         (path (jeffwk/buffer-path)))
+     (if path
+         (concat (propertize path 'face
+                             '(:inherit jeffwk/modeline-buffer-path))
+                 name)
+       name)))
 
-   (defun jeffwk/spaceline-theme ()
-     (spaceline-install
-      `((((((persp-name :fallback workspace-number)
-            window-number) :separator "|")
-          buffer-modified
-          buffer-size)
-         :face highlight-face
-         :priority 0)
-        (anzu :priority 4)
-        auto-compile
-        ((buffer-id-with-path remote-host)
-         :priority 5)
-        major-mode
-        (process :when active)
-        ((flycheck-error flycheck-warning flycheck-info)
-         :when active
-         :priority 3)
-        (minor-modes :when active)
-        (mu4e-alert-segment :when active)
-        (erc-track :when active)
-        (version-control :when active
-                         :priority 7)
-        (org-pomodoro :when active)
-        (org-clock :when active)
-        nyan-cat)
-      `(which-function
-        (python-pyvenv :fallback python-pyenv)
-        purpose
-        (battery :when active)
-        (selection-info :priority 2)
-        input-method
-        ((buffer-encoding-abbrev
-          point-position
-          line-column)
-         :separator " | "
-         :priority 3)
-        (global :when active)
-        (buffer-position :priority 0)
-        (hud :priority 0)))
+  (defun jeffwk/spaceline-theme ()
+    (spaceline-install
+     `((((((persp-name :fallback workspace-number)
+           window-number) :separator "|")
+         buffer-modified
+         buffer-size)
+        :face highlight-face
+        :priority 0)
+       (anzu :priority 4)
+       auto-compile
+       ((buffer-id-with-path remote-host)
+        :priority 5)
+       major-mode
+       (process :when active)
+       ((flycheck-error flycheck-warning flycheck-info)
+        :when active
+        :priority 3)
+       (minor-modes :when active)
+       (mu4e-alert-segment :when active)
+       (erc-track :when active)
+       (version-control :when active
+                        :priority 7)
+       (org-pomodoro :when active)
+       (org-clock :when active)
+       nyan-cat)
+     `(which-function
+       (python-pyvenv :fallback python-pyenv)
+       purpose
+       (battery :when active)
+       (selection-info :priority 2)
+       input-method
+       ((buffer-encoding-abbrev
+         point-position
+         line-column)
+        :separator " | "
+        :priority 3)
+       (global :when active)
+       (buffer-position :priority 0)
+       (hud :priority 0)))
 
-     (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
+    (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
-   ;; (spaceline-spacemacs-theme)
-   ;; (spaceline-emacs-theme)
-   (jeffwk/spaceline-theme))
+  ;; (spaceline-spacemacs-theme)
+  ;; (spaceline-emacs-theme)
+  (jeffwk/spaceline-theme))
 
-(use-package all-the-icons)
+(use-package all-the-icons :if jeffwk/enable-auto-neotree)
 ;;(all-the-icons-install-fonts)
 
 (use-package doom-themes
@@ -1124,27 +1085,28 @@
         doom-neotree-file-icons 'simple
         doom-neotree-line-spacing 2)
   (doom-themes-visual-bell-config)
-  (doom-themes-neotree-config))
+  (when jeffwk/enable-auto-neotree
+    (doom-themes-neotree-config)))
 
 (defun jeffwk/init-ui (&optional frame)
   (switch-custom-theme)
   (scroll-bar-mode -1)
-  ;; (menu-bar-mode -1)
+  ;;(menu-bar-mode -1)
   (tool-bar-mode -1)
-  (when (and (graphical?)
-             (or (eql (window-system) 'ns)
-                 (eql (window-system) 'mac)))
-    ;; (set-frame-font "Source Code Pro 19")
-    ;; (set-frame-font "SauceCodePro Nerd Font Medium 19")
-    ;; (set-frame-font "Sauce Code Powerline 19")
-    (set-frame-font "Inconsolata Nerd Font Mono 22"))
-  ;; (set-frame-font "Inconsolata for Powerline 20")
-  (set-frame-width nil 120)
-  (set-frame-height nil 64)
-  (when (and nil (graphical?))
-    (global-display-line-numbers-mode 1))
-  ;;(set-frame-font "Inconsolata for Powerline-15")
-  ;;(set-frame-font "Fira Code Retina-13")
+  (when (gui-mac?)
+    ;;(set-frame-font "Source Code Pro 19")
+    ;;(set-frame-font "SauceCodePro Nerd Font Medium 19")
+    ;;(set-frame-font "Sauce Code Powerline 19")
+    ;;(set-frame-font "Fira Code Retina-13")
+    ;;(set-frame-font "Inconsolata for Powerline 20")
+    (set-frame-font "Inconsolata Nerd Font Mono 26"))
+
+  (cond ((equal system-name "jeff-osx")
+         (set-frame-width nil 100)
+         (set-frame-height nil 48))
+        ((equal system-name "jeff-mbp")
+         nil))
+  ;;(when (graphical?) (global-display-line-numbers-mode 1))
   nil)
 
 (jeffwk/init-ui)
@@ -1156,10 +1118,8 @@
       inhibit-message nil)
 
 (when (graphical?)
-  '(use-package projectile)
-  (when jeffwk/enable-auto-neotree
-    (use-package neotree))
-  '(add-hook 'after-init-hook 'helm-projectile-switch-project))
+  ;; (add-hook 'after-init-hook 'helm-projectile-switch-project)
+  (when jeffwk/enable-auto-neotree (use-package neotree)))
 
 (defun all-sesman-sessions ()
   (sesman-sessions (sesman--system) t))
@@ -1170,17 +1130,15 @@
          (not (string-match exclude-regexp (buffer-name buf))))))
 
 (defun match-buffer-name (regexp &optional exclude-regexp)
-  (remove-if-not
-   (lambda (buf)
-     (test-buffer-name buf regexp exclude-regexp))
-   (buffer-list)))
+  (remove-if-not (lambda (buf)
+                   (test-buffer-name buf regexp exclude-regexp))
+                 (buffer-list)))
 
 (defun match-sesman-session (regexp &optional exclude-regexp)
   (first
-   (cl-remove-if
-    (lambda (ses)
-      (not (test-buffer-name (second ses) regexp exclude-regexp)))
-    (all-sesman-sessions))))
+   (cl-remove-if (lambda (ses)
+                   (not (test-buffer-name (second ses) regexp exclude-regexp)))
+                 (all-sesman-sessions))))
 
 (defun stop-cider-all ()
   (interactive)

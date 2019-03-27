@@ -61,17 +61,12 @@
 (define-key global-map (kbd "C-M-f") 'toggle-frame-fullscreen)
 (define-key global-map (kbd "M-<right>") 'switch-to-next-buffer)
 (define-key global-map (kbd "M-<left>") 'switch-to-prev-buffer)
-(cond ((and (equal system-name "jeff-mbp")
-            (or (eql system-type 'darwin)
-                (eql system-type 'mac)))
-       (progn
-         (setq mac-command-modifier 'meta)
-         (setq mac-option-modifier 'super)))
-      ((and (graphical?)
-            (eql (window-system) 'mac))
-       (progn
-         (setq mac-command-modifier 'super)
-         (setq mac-option-modifier 'meta))))
+(cond ((and (laptop?) (gui-mac-std?))
+       (progn (setq mac-command-modifier 'meta)
+              (setq mac-option-modifier 'super)))
+      ((gui-emacs-mac?)
+       (progn (setq mac-command-modifier 'super)
+              (setq mac-option-modifier 'meta))))
 
 ;; swap () and [] keys
 (define-key key-translation-map (kbd "(") (kbd "["))
