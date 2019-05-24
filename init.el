@@ -4,31 +4,40 @@
  file-name-handler-alist-backup file-name-handler-alist
  file-name-handler-alist nil
  gc-cons-threshold-default gc-cons-threshold
- gc-cons-threshold (* 100 1000 1000)
+ gc-cons-threshold (* 20 1000 1000)
  ;; prevent echoing messages while loading
- ;; inhibit-message t
+ inhibit-message t
  inhibit-splash-screen t)
 
 (defun restore-config-post-init ()
   (setq inhibit-message nil
         file-name-handler-alist file-name-handler-alist-backup)
-  (run-with-idle-timer
-   1 nil
-   (lambda ()
-     (setq gc-cons-threshold (* 20 1000 1000)))))
+  '(run-with-idle-timer
+    1 nil
+    (lambda ()
+      (setq gc-cons-threshold (* 20 1000 1000)))))
 (add-hook 'after-init-hook 'restore-config-post-init)
 
 (require 'cl)
 
-(defun graphical? () (some #'display-graphic-p (frame-list)))
+(defun graphical? (&optional frame)
+  (if frame (display-graphic-p frame)
+    (some #'display-graphic-p (frame-list))))
 (defun laptop? () (or (equal system-name "jeff-mbp")
                       (equal system-name "jeff-laptop")))
 (defun mac? () (eql system-type 'darwin))
-(defun gui-mac-std? () (eql window-system 'ns))
-(defun gui-emacs-mac? () (eql window-system 'mac))
-(defun gui-mac? () (or (gui-mac-std?) (gui-emacs-mac?)))
+(defun windows? () (eql system-type 'windows-nt))
+(defun gui-mac-std? (&optional frame)
+  (and (graphical? frame)
+       (eql window-system 'ns)))
+(defun gui-emacs-mac? (&optional frame)
+  (and (graphical? frame)
+       (eql window-system 'mac)))
+(defun gui-mac? (&optional frame)
+  (or (gui-mac-std? frame) (gui-emacs-mac? frame)))
 
 (defvar custom-emacs-theme 'zenburn)
+;; (defvar custom-emacs-theme 'gruvbox-dark-hard)
 ;; 'gruvbox-dark-hard 'flatland
 ;; (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt)
 
@@ -294,17 +303,18 @@
   :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
-        projectile-indexing-method 'hybrid
-        projectile-enable-caching nil)
+        projectile-indexing-method 'alien
+        projectile-enable-caching t)
   :config
   (use-package helm-projectile
     :init (use-package helm)
     :config (helm-projectile-toggle 1))
   (define-key global-map (kbd "C-c C-p") 'projectile-command-map)
   (define-key global-map (kbd "C-c C-p C-s") 'projectile-save-project-buffers)
-  ;; (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
-  (define-key global-map (kbd "C-c g") 'projectile-ag)
-  (define-key projectile-mode-map (kbd "C-c g") 'projectile-ag)
+  (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
+  (define-key projectile-mode-map (kbd "C-c g") 'helm-projectile-grep)
+  ;; (define-key global-map (kbd "C-c g") 'projectile-ag)
+  ;; (define-key projectile-mode-map (kbd "C-c g") 'projectile-ag)
   (define-key global-map (kbd "C-c TAB") 'helm-projectile-switch-to-buffer)
   (dolist (s '(".log" ".ai" ".svg" ".xml" ".zip" ".png" ".jpg"))
     (add-to-list 'grep-find-ignored-files (concat "*" s))
@@ -357,6 +367,7 @@
   (flx-ido-mode 1))
 
 (use-package mic-paren
+  :disabled t
   :config (paren-activate))
 ;; (paren-deactivate)
 
@@ -449,6 +460,17 @@
 ;;; modes
 ;;;
 
+(defun --set-filename-mode (mode pattern)
+  "Associates a filename pattern with a major mode."
+  (add-to-list 'auto-mode-alist (cons pattern mode)))
+
+(defun --set-filenames-for-mode (mode patterns)
+  (dolist (pattern patterns)
+    (--set-filename-mode mode pattern)))
+
+(--set-filenames-for-mode
+ 'sh-mode '("/zlogin" "/zlogout" "/zpreztorc" "/zprofile" "/zshenv" "/zshrc"))
+
 (use-package systemd
   :mode
   ("\\.service\\'" . systemd-mode)
@@ -507,73 +529,73 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(use-package autothemer
-  :disabled true)
+(use-package autothemer)
 
 (defun switch-to-theme (theme)
-  ;; try to load elpa package for theme
-  (cl-flet ((theme-p (s) (symbol-matches theme s)))
-    (cond ((theme-p "sanityinc-tomorrow")
-           (use-package color-theme-sanityinc-tomorrow))
-          ((theme-p "sanityinc-solarized")
-           (use-package color-theme-sanityinc-solarized))
-          ((theme-p "gruvbox")          (use-package gruvbox-theme
-                                          :ensure nil
-                                          :load-path "~/.emacs.d/gruvbox-theme"
-                                          :init
-                                          (setq gruvbox-contrast 'hard)))
-          ((theme-p "spacemacs-dark")   (use-package spacemacs-theme))
-          ((theme-p "material")         (use-package material-theme))
-          ((theme-p "ample")            (use-package ample-theme))
-          ((theme-p "base16")           (use-package base16-theme))
-          ((theme-p "zenburn")          (use-package zenburn-theme))
-          ((theme-p "flatland")         (use-package flatland-theme))
-          ((theme-p "moe")              (use-package moe-theme))
-          ((theme-p "apropospriate")    (use-package apropospriate-theme))
-          ((theme-p "molokai")          (use-package molokai-theme))
-          ((theme-p "monokai")          (use-package monokai-theme)))
-    ;; disable any current themes
-    (dolist (active-theme custom-enabled-themes)
-      (disable-theme active-theme))
-    ;; activate theme
-    (cond ((eql theme 'moe-dark)   (moe-dark))
-          ((eql theme 'moe-light)  (moe-light))
-          (t                       (load-theme theme t)))
-    ;; reset any modified face specs
-    (reset-override-faces)
-    (cond ((theme-p "zenburn")
-           (set-override-faces
-            `(vertical-border
-              ((t (:foreground "#7b7b6b"))))
-            `(mode-line
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#8fb28f"
-                         :background "#2b2b2b"
-                         :box ,(if nil nil `(:line-width -1 :color "#7a7a74"))))))
-            `(mode-line-inactive
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#5f7f5f"
-                         :background "#383838"
-                         :box ,(if nil nil `(:line-width -1 :color "#5b5b54"))))))))
-          ((theme-p "gruvbox")
-           (set-override-faces
-            `(fringe ((t (:foreground "#373230" :background "#373230"))))
-            `(line-number
-              ((t (:font "Inconsolata Nerd Font 18"
-                         :foreground "#7c6f64"
-                         :background "#3c3836"))))
-            `(line-number-current-line
-              ((t (:font "Inconsolata Nerd Font 18"
-                         :foreground "#fe8019"
-                         :background "#3c3836"))))
-            `(mode-line
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#d5c4a1"
-                         :background "#665c54"))))
-            `(mode-line-inactive
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#a89984"
-                         :background "#3c3836")))))))))
+  (let ((--modeline-font "Inconsolata for Powerline 13"))
+    ;; try to load elpa package for theme
+    (cl-flet ((theme-p (s) (symbol-matches theme s)))
+      (cond ((theme-p "sanityinc-tomorrow")
+             (use-package color-theme-sanityinc-tomorrow))
+            ((theme-p "sanityinc-solarized")
+             (use-package color-theme-sanityinc-solarized))
+            ((theme-p "gruvbox")          (use-package gruvbox-theme
+                                            :ensure nil
+                                            :load-path "~/.emacs.d/gruvbox-theme"
+                                            :init
+                                            (setq gruvbox-contrast 'hard)))
+            ((theme-p "spacemacs-dark")   (use-package spacemacs-theme))
+            ((theme-p "material")         (use-package material-theme))
+            ((theme-p "ample")            (use-package ample-theme))
+            ((theme-p "base16")           (use-package base16-theme))
+            ((theme-p "zenburn")          (use-package zenburn-theme))
+            ((theme-p "flatland")         (use-package flatland-theme))
+            ((theme-p "moe")              (use-package moe-theme))
+            ((theme-p "apropospriate")    (use-package apropospriate-theme))
+            ((theme-p "molokai")          (use-package molokai-theme))
+            ((theme-p "monokai")          (use-package monokai-theme)))
+      ;; disable any current themes
+      (dolist (active-theme custom-enabled-themes)
+        (disable-theme active-theme))
+      ;; activate theme
+      (cond ((eql theme 'moe-dark)   (moe-dark))
+            ((eql theme 'moe-light)  (moe-light))
+            (t                       (load-theme theme t)))
+      ;; reset any modified face specs
+      (reset-override-faces)
+      (cond ((theme-p "zenburn")
+             (set-override-faces
+              `(vertical-border
+                ((t (:foreground "#7b7b6b"))))
+              `(mode-line
+                ((t (:font ,--modeline-font
+                           :foreground "#8fb28f"
+                           :background "#2b2b2b"
+                           :box ,(if nil nil `(:line-width -1 :color "#7a7a74"))))))
+              `(mode-line-inactive
+                ((t (:font ,--modeline-font
+                           :foreground "#5f7f5f"
+                           :background "#383838"
+                           :box ,(if nil nil `(:line-width -1 :color "#5b5b54"))))))))
+            ((theme-p "gruvbox")
+             (set-override-faces
+              `(fringe ((t (:foreground "#373230" :background "#373230"))))
+              `(line-number
+                ((t (:font ,--modeline-font
+                           :foreground "#7c6f64"
+                           :background "#3c3836"))))
+              `(line-number-current-line
+                ((t (:font ,--modeline-font
+                           :foreground "#fe8019"
+                           :background "#3c3836"))))
+              `(mode-line
+                ((t (:font ,--modeline-font
+                           :foreground "#d5c4a1"
+                           :background "#665c54"))))
+              `(mode-line-inactive
+                ((t (:font ,--modeline-font
+                           :foreground "#a89984"
+                           :background "#3c3836"))))))))))
 
 (defun switch-custom-theme (&optional frame)
   (let ((frame (or (and (framep frame) frame)
@@ -917,7 +939,7 @@
 ;; My solution is to run a script (/usr/local/bin/emacs-reload)
 ;; in my i3wm config file to restart the emacs daemons upon
 ;; logging into an X session.
-(unless (mac?)
+(unless (or t (mac?))
   (defun xsel-paste ()
     (shell-command-to-string "xsel -ob"))
   (defun xsel-copy (text &optional push)
@@ -936,7 +958,7 @@
 
 ;; Make sure Emacs has the correct ssh-agent config,
 ;; in order to use tramp and git commands without requesting a password.
-(unless (mac?)
+(unless (or t (mac?))
   (if (equal (user-login-name) "root")
       (setenv "SSH_AUTH_SOCK" "/run/ssh-agent.socket")
     (setenv "SSH_AUTH_SOCK" (concat (getenv "XDG_RUNTIME_DIR") "/ssh-agent.socket"))))
@@ -949,7 +971,7 @@
 
 (use-package powerline
   :config
-  (setq powerline-height 40
+  (setq powerline-height 55
         ;; powerline-default-separator nil
         powerline-default-separator 'arrow
         powerline-display-buffer-size nil
@@ -1089,7 +1111,7 @@
     (doom-themes-neotree-config)))
 
 (defun jeffwk/init-ui (&optional frame)
-  (switch-custom-theme)
+  (switch-custom-theme frame)
   (scroll-bar-mode -1)
   ;;(menu-bar-mode -1)
   (tool-bar-mode -1)
@@ -1101,21 +1123,26 @@
     ;;(set-frame-font "Inconsolata for Powerline 20")
     (set-frame-font "Inconsolata Nerd Font Mono 26"))
 
-  (cond ((equal system-name "jeff-osx")
-         (set-frame-width nil 100)
-         (set-frame-height nil 48))
-        ((equal system-name "jeff-mbp")
-         nil))
+  (when (windows?)
+    (menu-bar-mode -1)
+    ;;(set-frame-font "Noto Mono for Powerline 16")
+    (set-frame-font "Inconsolata for Powerline 13")
+    ;;(set-frame-font "Inconsolata 13")
+    nil)
+
+  (when (graphical? frame)
+    (cond ((equal system-name "jeff-osx")
+           (set-frame-width frame 100)
+           (set-frame-height frame 48))
+          ((equal system-name "jeff-mbp")
+           nil)
+          ;;((windows?) nil)
+          (t
+           (set-frame-width frame 100)
+           (set-frame-height frame 48))))
   ;;(when (graphical?) (global-display-line-numbers-mode 1))
+  (run-at-time 0.1 nil #'redraw-display)
   nil)
-
-(jeffwk/init-ui)
-(add-hook 'after-make-frame-functions #'jeffwk/init-ui)
-
-(load-local "auto-margin")
-
-(setq file-name-handler-alist file-name-handler-alist-backup
-      inhibit-message nil)
 
 (when (graphical?)
   ;; (add-hook 'after-init-hook 'helm-projectile-switch-project)
@@ -1243,3 +1270,9 @@
    "~/code/sysrev/test/clj/sysrev/test/core.clj"
    7888
    "sysrev.user"))
+
+;; (jeffwk/init-ui)
+(add-hook 'after-init-hook 'jeffwk/init-ui)
+(add-hook 'after-make-frame-functions 'jeffwk/init-ui)
+
+(load-local "auto-margin")
