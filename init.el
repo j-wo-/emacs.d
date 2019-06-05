@@ -28,7 +28,12 @@
 (defun gui-emacs-mac? () (eql window-system 'mac))
 (defun gui-mac? () (or (gui-mac-std?) (gui-emacs-mac?)))
 
-(defvar custom-emacs-theme 'zenburn)
+;; (defvar custom-emacs-theme 'zenburn)
+;; (defvar custom-emacs-theme 'gruvbox-dark-hard)
+(defvar custom-emacs-theme
+  (if (graphical?)
+      'gruvbox-dark-medium
+    'sanityinc-tomorrow-night-rxvt))
 ;; 'gruvbox-dark-hard 'flatland
 ;; (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt)
 
@@ -69,7 +74,7 @@
                      (eql (first x) pkg))
                    package-pinned-packages)))
 
-(dolist (pkg '(web-mode magit git-commit js2-mode tern slime company
+(dolist (pkg '(web-mode --magit --git-commit js2-mode tern slime company
                         --markdown-mode cider clojure-mode clj-refactor))
   (unless (symbol-matches pkg "^--")
     (pin-stable pkg)))
@@ -156,7 +161,15 @@
   (disable-mouse-global-mode))
 
 (defun --tramp-config ()
-  (setq tramp-default-method "ssh"))
+  (setq tramp-default-method "ssh")
+  (add-to-list 'tramp-methods '("vcsh"
+                                (tramp-login-program "vcsh")
+                                (tramp-login-args
+                                 (("enter")
+                                  ("%h")))
+                                (tramp-remote-shell "/bin/sh")
+                                (tramp-remote-shell-args
+                                 ("-c")))))
 
 (defvar --tramp-use-package t)
 
@@ -171,6 +184,8 @@
   :if --tramp-use-package
   :defer t
   :config (funcall #'--tramp-config))
+
+(ensure-tramp)
 
 (use-package rainbow-mode)
 
@@ -302,10 +317,11 @@
     :config (helm-projectile-toggle 1))
   (define-key global-map (kbd "C-c C-p") 'projectile-command-map)
   (define-key global-map (kbd "C-c C-p C-s") 'projectile-save-project-buffers)
-  ;; (define-key global-map (kbd "C-c g") 'helm-projectile-grep)
-  (define-key global-map (kbd "C-c g") 'projectile-ag)
-  (define-key projectile-mode-map (kbd "C-c g") 'projectile-ag)
-  (define-key global-map (kbd "C-c TAB") 'helm-projectile-switch-to-buffer)
+  (define-key global-map (kbd "C-c g") 'projectile-grep)
+  (define-key projectile-mode-map (kbd "C-c g") 'projectile-grep)
+  ;; (define-key global-map (kbd "C-c g") 'projectile-ag)
+  ;; (define-key projectile-mode-map (kbd "C-c g") 'projectile-ag)
+  (define-key global-map (kbd "C-c TAB") 'projectile-switch-to-buffer)
   (dolist (s '(".log" ".ai" ".svg" ".xml" ".zip" ".png" ".jpg"))
     (add-to-list 'grep-find-ignored-files (concat "*" s))
     (add-to-list 'helm-ag-ignore-patterns (concat "*" s))
@@ -507,8 +523,7 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(use-package autothemer
-  :disabled true)
+(use-package autothemer)
 
 (defun switch-to-theme (theme)
   ;; try to load elpa package for theme
@@ -546,34 +561,34 @@
             `(vertical-border
               ((t (:foreground "#7b7b6b"))))
             `(mode-line
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#8fb28f"
-                         :background "#2b2b2b"
-                         :box ,(if nil nil `(:line-width -1 :color "#7a7a74"))))))
+              ((t (;; :font "Inconsolata Nerd Font Mono 24"
+                   :foreground "#8fb28f"
+                   :background "#2b2b2b"
+                   :box ,(if nil nil `(:line-width -1 :color "#7a7a74"))))))
             `(mode-line-inactive
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#5f7f5f"
-                         :background "#383838"
-                         :box ,(if nil nil `(:line-width -1 :color "#5b5b54"))))))))
+              ((t (;; :font "Inconsolata Nerd Font Mono 24"
+                   :foreground "#5f7f5f"
+                   :background "#383838"
+                   :box ,(if nil nil `(:line-width -1 :color "#5b5b54"))))))))
           ((theme-p "gruvbox")
            (set-override-faces
             `(fringe ((t (:foreground "#373230" :background "#373230"))))
             `(line-number
-              ((t (:font "Inconsolata Nerd Font 18"
-                         :foreground "#7c6f64"
-                         :background "#3c3836"))))
+              ((t (;; :font "Inconsolata Nerd Font 12"
+                   :foreground "#7c6f64"
+                   :background "#3c3836"))))
             `(line-number-current-line
-              ((t (:font "Inconsolata Nerd Font 18"
-                         :foreground "#fe8019"
-                         :background "#3c3836"))))
+              ((t (;; :font "Inconsolata Nerd Font 12"
+                   :foreground "#fe8019"
+                   :background "#3c3836"))))
             `(mode-line
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#d5c4a1"
-                         :background "#665c54"))))
+              ((t (;; :font "Inconsolata Nerd Font Mono 24"
+                   :foreground "#d5c4a1"
+                   :background "#665c54"))))
             `(mode-line-inactive
-              ((t (:font "Inconsolata Nerd Font Mono 24"
-                         :foreground "#a89984"
-                         :background "#3c3836")))))))))
+              ((t (;; :font "Inconsolata Nerd Font Mono 24"
+                   :foreground "#a89984"
+                   :background "#3c3836")))))))))
 
 (defun switch-custom-theme (&optional frame)
   (let ((frame (or (and (framep frame) frame)
@@ -1100,6 +1115,10 @@
     ;;(set-frame-font "Fira Code Retina-13")
     ;;(set-frame-font "Inconsolata for Powerline 20")
     (set-frame-font "Inconsolata Nerd Font Mono 26"))
+
+  ;;(set-frame-font "Inconsolata for Powerline:pixelsize=24")
+  ;;(set-frame-font "Inconsolata for Powerline 10")
+  ;;(set-frame-font "SauceCodePro Medium:pixelsize=20")
 
   (cond ((equal system-name "jeff-osx")
          (set-frame-width nil 100)
