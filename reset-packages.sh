@@ -1,4 +1,4 @@
 #!/bin/bash
-rm -r elpa
+rm -rf elpa
 mkdir elpa
-cp -r color-theme-sanity* elpa/
+# cp -r color-theme-sanity* elpa/

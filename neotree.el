@@ -1,17 +1,18 @@
-(defvar jeffwk/neotree-font-set nil)
-(defun jeffwk/init-neotree-font ()
-  (when (null jeffwk/neotree-font-set)
+(defvar jeff/neotree-font-set nil)
+
+(defun jeff/init-neotree-font ()
+  (when (null jeff/neotree-font-set)
     (set-face-attribute 'variable-pitch nil
                         :font (font-spec :family "Fira Sans" :size 14))
-    (setq jeffwk/neotree-font-set t)))
+    (setq jeff/neotree-font-set t)))
 
-(defun jeffwk/on-switch-project ()
+(defun jeff/on-switch-project ()
   (remove-frame-margins)
   (neotree-projectile-action)
   (autoset-frame-margins)
   (helm-projectile))
 
-(defun jeffwk/neotree-buffer ()
+(defun jeff/neotree-buffer ()
   (let ((result nil))
     (mapcar (lambda (window)
               (let ((buffer (window-buffer window)))
@@ -22,11 +23,11 @@
             (window-list))
     result))
 
-(defun jeffwk/neotree-open-p ()
-  (if (jeffwk/neotree-buffer) t nil))
+(defun jeff/neotree-open-p ()
+  (if (jeff/neotree-buffer) t nil))
 
-(defun jeffwk/neotree-expanded-dirs ()
-  (let ((buffer (jeffwk/neotree-buffer))
+(defun jeff/neotree-expanded-dirs ()
+  (let ((buffer (jeff/neotree-buffer))
         (result nil))
     (when buffer
       (save-excursion
@@ -34,59 +35,59 @@
           (setq result neo-buffer--expanded-node-list)))
       result)))
 
-(defun jeffwk/neotree-unexpand-dir (dir)
-  (let ((buffer (jeffwk/neotree-buffer)))
+(defun jeff/neotree-unexpand-dir (dir)
+  (let ((buffer (jeff/neotree-buffer)))
     (when buffer
       (save-excursion
         (with-current-buffer buffer
           (setq neo-buffer--expanded-node-list
                 (remove dir neo-buffer--expanded-node-list)))))))
 
-(defvar jeffwk/neotree-latest-file nil)
-(defvar jeffwk/neotree-temp-dirs nil)
+(defvar jeff/neotree-latest-file nil)
+(defvar jeff/neotree-temp-dirs nil)
 
-(defun jeffwk/update-neotree-file ()
-  (when (jeffwk/neotree-open-p)
+(defun jeff/update-neotree-file ()
+  (when (jeff/neotree-open-p)
     (let ((file (buffer-file-name)))
-      (when (and file (not (equal file jeffwk/neotree-latest-file)))
-        (if (and jeffwk/neotree-latest-file
+      (when (and file (not (equal file jeff/neotree-latest-file)))
+        (if (and jeff/neotree-latest-file
                  (equal (file-name-directory file)
-                        (file-name-directory jeffwk/neotree-latest-file)))
+                        (file-name-directory jeff/neotree-latest-file)))
             ;; directory hasn't changed
             (progn
-              (setq jeffwk/neotree-latest-file file)
+              (setq jeff/neotree-latest-file file)
               (neotree-refresh t))
-          (let ((temp-dirs jeffwk/neotree-temp-dirs))
-            (setq jeffwk/neotree-latest-file file)
+          (let ((temp-dirs jeff/neotree-temp-dirs))
+            (setq jeff/neotree-latest-file file)
             ;; unexpand directories in neotree buffer
             (dolist (dir temp-dirs)
-              (jeffwk/neotree-unexpand-dir dir))
+              (jeff/neotree-unexpand-dir dir))
             ;; record temp directories expanded by this action
-            (let* ((pre-dirs (jeffwk/neotree-expanded-dirs))
+            (let* ((pre-dirs (jeff/neotree-expanded-dirs))
                    (_refresh (neotree-refresh t))
-                   (post-dirs (jeffwk/neotree-expanded-dirs))
+                   (post-dirs (jeff/neotree-expanded-dirs))
                    (new-dirs (remove-if (lambda (d)
                                           (member d pre-dirs))
                                         post-dirs)))
-              (setq jeffwk/neotree-temp-dirs new-dirs))
+              (setq jeff/neotree-temp-dirs new-dirs))
             (neotree-refresh t)))))))
 
-(defun jeffwk/do-neotree-toggle ()
+(defun jeff/do-neotree-toggle ()
   (interactive)
-  (jeffwk/init-neotree-font)
+  (jeff/init-neotree-font)
   (remove-frame-margins)
   (neotree-toggle)
   (autoset-frame-margins))
 
-(defun jeffwk/neotree-project-dir ()
+(defun jeff/neotree-project-dir ()
   "Open NeoTree using the git root."
   (interactive)
   (use-package projectile)
-  (jeffwk/init-neotree-font)
+  (jeff/init-neotree-font)
   (let ((project-dir (and (projectile-project-p)
                           (projectile-project-root)))
         (file-name (buffer-file-name)))
-    (jeffwk/do-neotree-toggle)
+    (jeff/do-neotree-toggle)
     (if project-dir
         (if (neo-global--window-exists-p)
             (progn
@@ -94,13 +95,8 @@
               (neotree-find file-name)))
       (message "Could not find git project root"))))
 
-(define-key global-map "\C-xn" 'jeffwk/neotree-project-dir)
-
 (use-package neotree
-  :commands
-  (neotree-toggle
-   jeffwk/do-neotree-toggle
-   jeffwk/neotree-project-dir)
+  :commands neotree-toggle jeff/do-neotree-toggle jeff/neotree-project-dir
   :config
   (setq neo-create-file-auto-open nil
         neo-auto-indent-point nil
@@ -125,6 +121,6 @@
           "^\\.\\(sync\\|export\\|attach\\)$"
           "~$"
           "^#.*#$"))
-  (when jeffwk/enable-auto-neotree
-    (setq projectile-switch-project-action 'jeffwk/on-switch-project)
-    (add-hook 'post-command-hook 'jeffwk/update-neotree-file)))
+  (when jeff/enable-auto-neotree
+    (setq projectile-switch-project-action 'jeff/on-switch-project)
+    (add-hook 'post-command-hook 'jeff/update-neotree-file)))

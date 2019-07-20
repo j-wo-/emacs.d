@@ -4,3 +4,6 @@
 [submodule "eval-sexp-fu.el"]
 	path = eval-sexp-fu.el
 	url = git@github.com:jeffwk/eval-sexp-fu.el.git
+[submodule "alect-themes"]
+	path = alect-themes
+	url = git@github.com:jeffwk/alect-themes.git

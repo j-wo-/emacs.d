@@ -1,72 +1,78 @@
-(defun scroll-down-one-line ()
+(defun jeff/scroll-down-one-line ()
   (interactive)
   (scroll-up 1)
   (forward-line 1))
 
-(defun scroll-up-one-line ()
+(defun jeff/scroll-up-one-line ()
   (interactive)
   (scroll-down 1)
   (forward-line -1))
 
-(defun recenter-top-bottom-refresh (&optional arg)
+(defun jeff/recenter-top-bottom-refresh (&optional arg)
   (interactive)
   (recenter-top-bottom arg)
   (redraw-display))
 
-(defun jeffwk/forward-sexp ()
+(defun jeff/forward-sexp ()
   (interactive)
   (forward-sexp)
-  (redraw-modeline))
-(defun jeffwk/backward-sexp ()
+  (force-mode-line-update))
+(defun jeff/backward-sexp ()
   (interactive)
   (backward-sexp)
-  (redraw-modeline))
+  (force-mode-line-update))
 
-;; redefine bad default bindings
-(define-key global-map (kbd "C-o") 'other-window)
-(define-key global-map (kbd "C-1") 'delete-other-windows)
-(define-key global-map (kbd "C-x 1") 'delete-other-windows) ;; terminal
-(define-key global-map (kbd "C-2") 'delete-other-windows-vertically)
-(define-key global-map (kbd "C-M-2") 'delete-other-windows-vertically)
-(define-key global-map (kbd "C-x 2") 'delete-other-windows-vertically) ;; terminal
-(define-key global-map (kbd "C-q") 'delete-window)
-(define-key global-map (kbd "C-x x") 'split-window-below)
-(define-key global-map (kbd "C-<tab>") 'helm-mini)
-(define-key global-map (kbd "C-x TAB") 'helm-mini) ;; terminal
-(define-key global-map (kbd "C-x s") 'save-buffer)
-(define-key global-map (kbd "C-x C-s") 'save-buffer)
-(define-key global-map (kbd "C-x f") 'helm-find-files)
-(define-key global-map (kbd "C-x C-f") 'helm-find-files)
-;; unset defaults
-(define-key global-map (kbd "C-x o") nil) ;; 'other-window
-(define-key global-map (kbd "C-x 0") nil) ;; 'delete-window
-(define-key global-map (kbd "C-x 3") nil) ;; 'split-window-right
-(define-key global-map (kbd "C-x b") nil) ;; 'ido-switch-buffer
+(defun jeff/helm-buffers-list-all ()
+  (interactive)
+  (let ((helm-boring-buffer-regexp-list
+         '("\\` " "\\`\\*helm" "\\`\\*Echo Area" "\\`\\*Minibuf")))
+    (helm-buffers-list)))
 
-(define-key global-map (kbd "C-<left>") 'previous-buffer)
-(define-key global-map (kbd "C-<right>") 'next-buffer)
-(define-key global-map (kbd "C-x k") 'kill-this-buffer)
-(define-key global-map (kbd "C-l") 'recenter-top-bottom-refresh)
-(define-key global-map (kbd "C-<down>") 'scroll-down-one-line)
-(define-key global-map (kbd "C-<up>") 'scroll-up-one-line)
-(define-key global-map (kbd "C-f") 'jeffwk/forward-sexp)
-(define-key global-map (kbd "C-b") 'jeffwk/backward-sexp)
-(define-key global-map (kbd "C-t") 'transpose-sexps)
-(define-key global-map (kbd "C-w") 'backward-kill-word)
-(define-key global-map (kbd "C-x C-k") 'kill-region)
-(define-key global-map (kbd "M-q") 'indent-sexp)
-(define-key global-map (kbd "C-M-k") 'kill-sexp)
-(define-key global-map (kbd "C-M-w") 'split-window-auto)
-(define-key global-map (kbd "C-M-s") 'split-window-auto)
-(define-key global-map (kbd "C-M-f") 'toggle-frame-fullscreen)
-(define-key global-map (kbd "M-<right>") 'switch-to-next-buffer)
-(define-key global-map (kbd "M-<left>") 'switch-to-prev-buffer)
-(cond ((and (laptop?) (gui-mac-std?))
-       (progn (setq mac-command-modifier 'meta)
-              (setq mac-option-modifier 'super)))
-      ((gui-emacs-mac?)
-       (progn (setq mac-command-modifier 'super)
-              (setq mac-option-modifier 'meta))))
+(define-map-keys global-map
+  ;; redefine bad default bindings
+  ("C-o"          'other-window)
+  ("C-1"          'delete-other-windows)
+  ("C-x 1"        'delete-other-windows) ; terminal
+  ("C-2"          'delete-other-windows-vertically)
+  ("C-M-2"        'delete-other-windows-vertically)
+  ("C-x 2"        'delete-other-windows-vertically) ; terminal
+  ("C-q"          'delete-window)
+  ("C-x x"        'split-window-below)
+  ("M-<tab>"      'helm-mini)
+  ("C-<tab>"      'helm-mini)
+  ("C-x TAB"      'helm-mini)           ; terminal
+  ("C-x s"        'save-buffer)
+  ("C-x C-s"      'save-buffer)
+  ("C-x f"        'helm-find-files)
+  ("C-x C-f"      'helm-find-files)
+  ("C-x F"        'find-file)
+  ;; unset defaults
+  ("C-x o"        nil)                  ; other-window
+  ("C-x 0"        nil)                  ; delete-window
+  ("C-x 3"        nil)                  ; split-window-right
+  ("C-x b"        nil)                  ; ido-switch-buffer
+  ;; custom bindings
+  ("C-<left>"     'previous-buffer)
+  ("C-<right>"    'next-buffer)
+  ("M-<left>"     'previous-buffer)
+  ("M-<right>"    'next-buffer)
+  ("C-x k"        'kill-this-buffer)
+  ("C-x b"        'helm-buffers-list)
+  ("C-x B"        'jeff/helm-buffers-list-all)
+  ("C-l"          'jeff/recenter-top-bottom-refresh)
+  ("C-<down>"     'jeff/scroll-down-one-line)
+  ("C-<up>"       'jeff/scroll-up-one-line)
+  ("C-f"          'jeff/forward-sexp)
+  ("C-b"          'jeff/backward-sexp)
+  ("C-t"          'transpose-sexps)
+  ("C-w"          'backward-kill-word)
+  ("C-x C-k"      'kill-region)
+  ("M-q"          'indent-sexp)
+  ("C-M-k"        'kill-sexp)
+  ("C-M-w"        'split-window-auto)
+  ("C-M-s"        'split-window-auto)
+  ("C-M-f"        'toggle-frame-fullscreen)
+  ("C-x n"        'jeff/neotree-project-dir))
 
 ;; swap () and [] keys
 (define-key key-translation-map (kbd "(") (kbd "["))
@@ -76,3 +82,12 @@
 
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+
+;; set modifier keys for MacOS
+(when (mac?)
+  (cond ((and (laptop?) (gui-mac-std?))
+         (progn (setq mac-command-modifier 'meta)
+                (setq mac-option-modifier 'super)))
+        ((gui-emacs-mac?)
+         (progn (setq mac-command-modifier 'super)
+                (setq mac-option-modifier 'meta)))))
