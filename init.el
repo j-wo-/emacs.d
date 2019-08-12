@@ -67,14 +67,18 @@
 
 (set-language-environment "utf-8")
 
-(setq default-frame-alist '((left-fringe . 17) (right-fringe . 17))
+(setq default-frame-alist '((left-fringe . 18) (right-fringe . 18))
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
-      make-backup-files nil)
+      make-backup-files nil
+      echo-keystrokes 0.1)
+
+(defalias 'yes-or-no-p 'y-or-n-p)
 
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
+;; (setq-default fill-column 70)
 
 (global-auto-revert-mode t)
 (transient-mark-mode t)
@@ -132,6 +136,12 @@
 ;; when bootstrapping packages.
 (ensure-installed paren-face elisp-slime-nav paredit aggressive-indent)
 
+(defun cleanup-buffer ()
+  (interactive)
+  (when (not indent-tabs-mode)
+    (untabify (point-min) (point-max)))
+  (delete-trailing-whitespace (point-min) (point-max)))
+
 ;; Add a hook to convert all tabs to spaces when saving any file,
 ;; unless its buffer mode is set to use tabs for indentation.
 ;;
@@ -139,9 +149,8 @@
 ;;  so the syntactic tabs in Makefile files will be maintained)
 (add-hook 'write-file-hooks
           (lambda ()
-            (when (not indent-tabs-mode)
-              (untabify (point-min) (point-max))
-              nil)))
+            (cleanup-buffer)
+            nil))
 
 (defun active-minor-modes ()
   (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
@@ -177,9 +186,33 @@
   (diminish 'eldoc-mode)
   (diminish 'isearch-mode))
 
+(use-package outshine
+  :diminish outshine-mode
+  :init (require 'outline)
+  :config
+  (diminish 'outline-minor-mode
+            (if (graphical?) " " " ▼")) ;; " " " " " "
+  (add-hook 'outline-minor-mode-hook 'outshine-mode)
+  (add-hook 'prog-mode-hook 'outline-minor-mode)
+  (defvar outline-display-table (make-display-table))
+  (set-display-table-slot outline-display-table 'selective-display
+                          ;; (vector (make-glyph-code ?▼ 'escape-glyph))
+                          (vector " "))
+  (defun set-outline-display-table ()
+    (setf buffer-display-table outline-display-table))
+  (add-hook 'outline-mode-hook 'set-outline-display-table)
+  (add-hook 'outline-minor-mode-hook 'set-outline-display-table))
+
 (use-package evil
-  :if (not (exclude-pkg? 'evil))
-  :config (evil-mode 1))
+  :disabled true
+  :pin melpa
+  :config
+  (evil-mode 1)
+  (diminish 'undo-tree-mode)
+  (use-package evil-lisp-state
+    :pin melpa
+    :config
+    (evil-lisp-state-leader ", l")))
 
 ;;;
 ;;; general
@@ -222,16 +255,28 @@
 (ensure-tramp)
 
 (defun symbol-suffix (sym suffix)
-  (make-symbol (concat (symbol-name sym) suffix)))
+  (intern (concat (symbol-name sym) suffix)))
+
+(defmacro set-mode-name (mode name)
+  (let ((func-name (intern (concat "--set-mode-name--" (symbol-name mode)))))
+    `(progn
+       (defun ,func-name () (setq mode-name ,name))
+       (add-hook ',(symbol-suffix mode "-hook") #',func-name 100)
+       (when (eql major-mode ',mode)
+         (,func-name)))))
+
+(set-mode-name emacs-lisp-mode "ELisp")
 
 (defun rainbow-mode-1 () (rainbow-mode 1))
 
 (defun use-rainbow-mode (mode &optional mode-hook)
+  (use-package rainbow-mode)
   (let ((mode-hook (or mode-hook (symbol-suffix mode "-hook"))))
     (when (symbolp mode-hook)
       (add-hook mode-hook 'rainbow-mode-1))))
 
 (use-package rainbow-mode
+  :defer 0.5
   :diminish rainbow-mode
   :init
   (setq rainbow-html-colors t
@@ -246,10 +291,23 @@
   (dolist (mode '(sh-mode shell-mode))
     (use-rainbow-mode mode)))
 
+(use-package sh-script
+  :mode (("/zshrc$"     . sh-mode)
+         ("/zshenv$"    . sh-mode)
+         ("/zprofile$"  . sh-mode)
+         ("/zlogin$"    . sh-mode)
+         ("/zlogout$"   . sh-mode)
+         ("/zpreztorc$" . sh-mode)
+         ("\\.zsh\\'"   . sh-mode))
+  :config
+  (set-mode-name sh-mode "Sh"))
+
 (use-package python-mode
   :pin melpa
   :mode ("\\.py\\'" . python-mode)
-  :config (use-rainbow-mode 'python-mode))
+  :config
+  (use-rainbow-mode 'python-mode)
+  (set-mode-name python-mode "Python"))
 
 (use-package helm
   :defer t
@@ -309,9 +367,8 @@
                jeff/indent-disable-functions))))
 
 (use-package aggressive-indent
-  :diminish (aggressive-indent-mode "<|>")
-  :commands aggressive-indent-mode
   :config
+  (diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr")) ;; " "
   (setq aggressive-indent-sit-for-time 0.05)
   (unless (null jeff/indent-disable-functions)
     (add-to-list 'aggressive-indent-dont-indent-if
@@ -361,7 +418,7 @@
   (let ((inhibit-message t))
     (use-package company-statistics :config (company-statistics-mode 1)))
   (use-package company-quickhelp
-    :disabled t
+    :if t
     :config
     (setq company-quickhelp-delay 1)
     (company-quickhelp-mode 1))
@@ -376,8 +433,8 @@
   :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
-        projectile-indexing-method 'alien ; 'hybrid
-        projectile-enable-caching nil
+        projectile-indexing-method 'hybrid ; 'alien
+        projectile-enable-caching t
         projectile-mode-line-prefix "")
   :config
   (use-package helm-projectile
@@ -403,8 +460,12 @@
   (projectile-mode))
 
 (use-package smex
-  :bind ("M-x" . smex)
-  :config (smex-initialize))
+  :bind (("M-x" . smex)
+         ("M-X" . smex-major-mode-commands))
+  :init
+  (setq smex-save-file (expand-file-name ".smex-items" user-emacs-directory))
+  :config
+  (smex-initialize))
 
 (defcustom jeff/flycheck-global nil
   "Runs (global-flycheck-mode 1) if non-nil."
@@ -457,7 +518,7 @@
   (flx-ido-mode 1))
 
 (use-package mic-paren
-  :defer 1.0
+  :defer 0.5
   :config (paren-activate))
 ;; (paren-deactivate)
 
@@ -514,6 +575,7 @@
   :config
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
+  (diminish 'smartparens-mode " SP")
   (when nil
     (global-set-key (kbd "C-{")
                     (lambda (&optional arg)
@@ -524,6 +586,46 @@
                       (interactive "P")
                       (sp-wrap-with-pair "["))))
   (smartparens-global-mode t))
+
+(defun activate-paxedit ()
+  (use-package paxedit)
+  (paxedit-mode 1))
+
+(use-package paxedit
+  :defer t
+  :diminish "Pax"
+  :pin melpa
+  :config
+  (setq paxedit-alignment-cleanup t
+        paxedit-whitespace-cleanup t)
+  (define-map-keys paxedit-mode-map
+    ("s-<right>"      'paxedit-transpose-forward)
+    ("s-<left>"       'paxedit-transpose-backward)
+    ("s-<up>"         'paxedit-backward-up)
+    ("s-<down>"       'paxedit-backward-end)
+    ("s-b"            'paxedit-previous-symbol)
+    ("s-f"            'paxedit-next-symbol)
+    ("s-c"            'paxedit-copy)
+    ("s-k"            'paxedit-kill)
+    ("s-<backspace>"  'paxedit-delete)
+    ("M-s-<up>"       'paxedit-sexp-raise)
+    ;; symbol backward/forward kill
+    ("C-w"            'paxedit-backward-kill)
+    ("M-w"            'paxedit-forward-kill)
+    ;; symbol manipulation
+    ("M-u"            'paxedit-symbol-change-case)
+    ("M-s-k"          'paxedit-symbol-kill)
+    ("M-s-c"          'paxedit-symbol-copy)
+    ;; special
+    ("s-d"            'paxedit-dissolve)
+    ("s-0"            'paxedit-compress)
+    ("s-1"            'paxedit-format-1)
+    ;; parens
+    ("("              'paxedit-open-round)
+    ("["              'paxedit-open-bracket)
+    ("{"              'paxedit-open-curly)
+    ("s-'"            'paxedit-open-quoted-round))
+  (add-to-list 'emacs-lisp-mode-hook 'activate-paxedit))
 
 (defun do-git-gutter-config ()
   (define-map-keys global-map
@@ -544,9 +646,8 @@
   :config (do-git-gutter-config))
 
 (use-package magit
-  :bind
-  ("C-x g" . magit-status)
-  ("C-x C-g" . magit-dispatch-popup)
+  :bind (("C-x g" . magit-status)
+         ("C-x C-g" . magit-dispatch-popup))
   :config
   (diminish 'auto-revert-mode)
   (define-map-keys magit-status-mode-map
@@ -598,17 +699,16 @@
 
 (use-package org
   :mode ("\\.org\\'" . org-mode)
-  :commands org-agenda org-store-link org-capture
+  :bind (("C-c l" . org-store-link)
+         ("C-c a" . org-agenda)
+         ("C-c c" . org-capture))
   :config
   (setq org-log-done 'time
         org-agenda-files '("~/org/self.org"
                            "~/org/schedule.org"
                            "~/org/work.org"
-                           "~/org/sysrev.org"))
-  (define-map-keys global-map
-    ("C-c l" 'org-store-link)
-    ("C-c a" 'org-agenda)
-    ("C-c c" 'org-capture))
+                           "~/org/sysrev.org")
+        org-agenda-timegrid-use-ampm t)
   (define-map-keys org-mode-map
     ("C-S-<left>"     'org-metaleft)
     ("C-S-<right>"    'org-metaright)
@@ -637,7 +737,7 @@
       "")
     (setq org-pomodoro-length 25
           org-pomodoro-short-break-length 5
-          org-pomodoro-audio-player (executable-find "aplay")
+          org-pomodoro-audio-player (executable-find "mpv-quiet")
           org-clock-clocked-in-display nil
           ;; org-clock-string-limit 1
           org-clock-heading-function #'jeff/org-clock-heading))
@@ -672,7 +772,7 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(defcustom modeline-font "InconsolataGo Nerd Font Mono:pixelsize=21"
+(defcustom modeline-font "InconsolataGo Nerd Font:pixelsize=25"
   "Alternate font used for modeline."
   :group 'jeff)
 
@@ -799,16 +899,15 @@
 (use-package lispy
   :defer t
   :if --use-lispy
-  :config 
+  :config
   (defun enable-lispy (mode-hook)
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
 (use-package clojure-mode
   :pin melpa-stable
-  :mode
-  ("\\.clj\\'" . clojure-mode)
-  ("\\.cljs\\'" . clojurescript-mode)
-  ("\\.edn\\'" . clojure-mode)
+  :mode (("\\.clj\\'" . clojure-mode)
+         ("\\.cljs\\'" . clojurescript-mode)
+         ("\\.edn\\'" . clojure-mode))
   :config
   (let ((inhibit-message t))
     (use-package paredit)
@@ -820,6 +919,7 @@
       :diminish cider-mode
       :init
       (setq clojure-use-backtracking-indent t
+            clojure-indent-style 'always-align ;; 'align-arguments
             cider-repl-use-pretty-printing t
             cider-repl-popup-stacktraces t
             cider-auto-select-error-buffer t
@@ -827,6 +927,7 @@
             nrepl-use-ssh-fallback-for-remote-hosts t)
       (ensure-tramp)
       :config
+      ;; (setq-default clojure-docstring-fill-column 70)
       (unless (exclude-pkg? 'auto-complete)
         (use-package ac-cider)
         (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
@@ -836,12 +937,8 @@
           `(progn
              (add-to-list 'ac-modes 'cider-mode)
              (add-to-list 'ac-modes 'cider-repl-mode))))
-      (add-hook 'clojure-mode-hook
-                (lambda () (setq mode-name "CLJ"))
-                100)
-      (add-hook 'clojurescript-mode-hook
-                (lambda () (setq mode-name "CLJS"))
-                100)
+      (set-mode-name clojure-mode "CLJ")
+      (set-mode-name clojurescript-mode "CLJS")
       (add-hook 'clojure-mode-hook 'cider-mode)
       (add-hook 'clojurescript-mode-hook 'cider-mode)
       (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
@@ -850,6 +947,8 @@
       (add-hook 'clojure-mode-hook 'enable-paredit-mode)
       (add-hook 'clojurescript-mode-hook 'enable-paredit-mode)
       (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
+      (add-hook 'clojure-mode-hook 'paxedit-mode)
+      (add-hook 'clojurescript-mode-hook 'paxedit-mode)
       (defun my-cider-reload-repl-ns ()
         (cider-nrepl-request:eval
          (format "(require '%s :reload)"
@@ -895,7 +994,7 @@
       (define-map-keys cider-repl-mode-map
         ("C-c C-p" nil)))
     (use-package clj-refactor
-      :pin melpa-stable
+      :pin melpa
       :diminish clj-refactor-mode
       :config
       (setq cljr-warn-on-eval nil
@@ -930,7 +1029,7 @@
             (lambda ()
               (setq-local lisp-indent-function
                           'common-lisp-indent-function)))
-  
+
   (defvar sbcl-run-command "sbcl --dynamic-space-size 2000 --noinform")
   (defvar ccl-run-command "ccl64 -K utf-8")
   (defvar ecl-run-command "ecl")
@@ -983,7 +1082,7 @@
   (add-hook 'lisp-mode-hook 'enable-paredit-mode)
   (add-hook 'slime-mode-hook 'enable-paredit-mode)
   (add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
-  
+
   ;; (enable-lispy 'lisp-mode-hook)
   ;; (enable-lispy 'slime-mode-hook)
   ;; (enable-lispy 'slime-repl-mode-hook)
@@ -998,6 +1097,7 @@
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
+            (use-package paxedit)
             (use-package rainbow-mode)
             (use-package paren-face)
             (require 'ielm)
@@ -1013,10 +1113,6 @@
             (when --use-lispy (lispy-mode 1))
             (eldoc-mode 1)
             (rainbow-mode 1)))
-
-(add-hook 'emacs-lisp-mode-hook
-          (lambda () (setq mode-name "ELisp"))
-          100)
 
 (use-package scala-mode
   :mode
@@ -1166,15 +1262,16 @@
 (use-package powerline
   :if (not jeff/use-spaceline)
   :config
-  (setq powerline-height 39
+  (setq powerline-height 45
         powerline-default-separator 'arrow
         powerline-display-buffer-size nil
         powerline-display-mule-info nil
         powerline-display-hud nil
         powerline-gui-use-vcs-glyph t
-        powerline-text-scale-factor 0.9)
+        powerline-text-scale-factor 0.8)
   (powerline-reset)
-  (powerline-default-theme))
+  (powerline-default-theme)
+  (force-mode-line-update))
 
 (when jeff/use-spaceline
   (load-local "spaceline" t))
@@ -1235,8 +1332,8 @@
   ;;(set-frame-font "Inconsolata for Powerline 10")
   ;;(set-frame-font "SauceCodePro Medium:pixelsize=20")
   ;;(set-frame-font "Inconsolata for Powerline:pixelsize=30")
-  ;;(set-frame-font "InconsolataGo Nerd Font Mono:pixelsize=30")
-  ;;(set-frame-font "Inconsolata Nerd Font Mono:pixelsize=30")
+  ;;(set-frame-font "InconsolataGo Nerd Font Mono:pixelsize=31")
+  ;;(set-frame-font "Inconsolata Nerd Font Mono:pixelsize=32")
 
   (cond ((equal system-name "jeff-osx")
          (set-frame-width nil 100)
@@ -1254,6 +1351,8 @@
   ;; (add-hook 'after-init-hook 'helm-projectile-switch-project)
   (when jeff/enable-auto-neotree (use-package neotree)))
 
+(add-hook 'post-command-hook 'force-mode-line-update)
+
 (jeff/init-ui)
 (add-hook 'after-make-frame-functions #'jeff/init-ui)
 
@@ -1263,8 +1362,8 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(alect-themes cyberpunk-theme leuven-theme anti-zenburn-theme color-theme-sanityinc-solarized monokai-theme molokai-theme apropospriate-theme moe-theme material-theme base16-theme spacemacs-theme flatland-theme gh-md python-mode clj-refactor cider zenburn-theme yasnippet web-mode use-package systemd smex smartparens scala-mode rainbow-mode powerline pkgbuild-mode paren-face paredit paradox org-pomodoro org-bullets nginx-mode mpv mic-paren markdown-mode magit lispy jade-mode helm-projectile helm-ag groovy-mode git-gutter-fringe ghc flycheck-pos-tip flx-ido evil esup elisp-slime-nav doom-themes disable-mouse diminish default-text-scale company-statistics color-theme-sanityinc-tomorrow clojure-mode autothemer all-the-icons aggressive-indent ac-slime ac-haskell-process)))
-
+   (quote
+    (cider sh-scriptf zenburn-theme web-mode use-package systemd spacemacs-theme smex scala-mode rainbow-mode python-mode powerline pkgbuild-mode paxedit paren-face paradox outshine org-pomodoro org-bullets nginx-mode mpv monokai-theme molokai-theme moe-theme mic-paren material-theme markdown-mode magit lispy leuven-theme jade-mode helm-projectile helm-ag groovy-mode git-gutter-fringe ghc gh-md flycheck-pos-tip flx-ido flatland-theme evil-lisp-state elisp-slime-nav doom-themes disable-mouse diminish default-text-scale cyberpunk-theme company-statistics company-quickhelp color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor base16-theme autothemer apropospriate-theme anti-zenburn-theme all-the-icons alect-themes aggressive-indent ac-slime ac-haskell-process))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

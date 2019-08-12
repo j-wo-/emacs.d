@@ -1,26 +1,16 @@
 (defun jeff/scroll-down-one-line ()
   (interactive)
   (scroll-up 1)
-  (forward-line 1))
+  (next-line)
+  ;; (forward-line 1)
+  )
 
 (defun jeff/scroll-up-one-line ()
   (interactive)
   (scroll-down 1)
-  (forward-line -1))
-
-(defun jeff/recenter-top-bottom-refresh (&optional arg)
-  (interactive)
-  (recenter-top-bottom arg)
-  (redraw-display))
-
-(defun jeff/forward-sexp ()
-  (interactive)
-  (forward-sexp)
-  (force-mode-line-update))
-(defun jeff/backward-sexp ()
-  (interactive)
-  (backward-sexp)
-  (force-mode-line-update))
+  (previous-line)
+  ;; (forward-line -1)
+  )
 
 (defun jeff/helm-buffers-list-all ()
   (interactive)
@@ -48,7 +38,7 @@
   ("C-x F"        'find-file)
   ;; unset defaults
   ("C-x o"        nil)                  ; other-window
-  ("C-x 0"        nil)                  ; delete-window
+  ;; ("C-x 0"        nil)                  ; delete-window
   ("C-x 3"        nil)                  ; split-window-right
   ("C-x b"        nil)                  ; ido-switch-buffer
   ;; custom bindings
@@ -59,11 +49,11 @@
   ("C-x k"        'kill-this-buffer)
   ("C-x b"        'helm-buffers-list)
   ("C-x B"        'jeff/helm-buffers-list-all)
-  ("C-l"          'jeff/recenter-top-bottom-refresh)
+  ("C-l"          'recenter-top-bottom)
   ("C-<down>"     'jeff/scroll-down-one-line)
   ("C-<up>"       'jeff/scroll-up-one-line)
-  ("C-f"          'jeff/forward-sexp)
-  ("C-b"          'jeff/backward-sexp)
+  ("C-f"          'forward-sexp)
+  ("C-b"          'backward-sexp)
   ("C-t"          'transpose-sexps)
   ("C-w"          'backward-kill-word)
   ("C-x C-k"      'kill-region)
@@ -72,7 +62,8 @@
   ("C-M-w"        'split-window-auto)
   ("C-M-s"        'split-window-auto)
   ("C-M-f"        'toggle-frame-fullscreen)
-  ("C-x n"        'jeff/neotree-project-dir))
+  ("C-x n"        'jeff/neotree-project-dir)
+  ("C-;"          'comment-or-uncomment-region))
 
 ;; swap () and [] keys
 (define-key key-translation-map (kbd "(") (kbd "["))

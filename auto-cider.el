@@ -157,14 +157,14 @@
                        (dolist (s clj-repl-forms)
                          (insert (format "%s" s))
                          (cider-repl-return)))))))
-               0.1 300))
+               0.2 300))
             (when cljs-repl
               (wait-on-buffer-text
                cljs-repl
                "cljs\.user>"
                (lambda ()
                  (run-with-timer
-                  1.0 nil
+                  2.0 nil
                   (lambda ()
                     (let ((ns (save-excursion
                                 (find-file cljs-file-path)
@@ -173,13 +173,13 @@
                       (insert (format "(in-ns '%s)" ns))
                       (cider-repl-return))
                     (run-with-timer
-                     1.0 nil
+                     2.0 nil
                      (lambda ()
                        (switch-to-buffer cljs-repl)
                        (dolist (s cljs-repl-forms)
                          (insert (format "%s" s))
                          (cider-repl-return)))))))
-               0.1 300)))))
+               0.2 300)))))
       (stop-cider-all)
       (open-project)
       (start-clj)
