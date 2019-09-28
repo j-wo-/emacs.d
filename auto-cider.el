@@ -175,6 +175,9 @@
                     (run-with-timer
                      2.0 nil
                      (lambda ()
+                       (save-excursion
+                         (find-file cljs-file-path)
+                         (cider-load-buffer-reload-repl))
                        (switch-to-buffer cljs-repl)
                        (dolist (s cljs-repl-forms)
                          (insert (format "%s" s))

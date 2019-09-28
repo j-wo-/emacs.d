@@ -707,7 +707,8 @@
         org-agenda-files '("~/org/self.org"
                            "~/org/schedule.org"
                            "~/org/work.org"
-                           "~/org/sysrev.org")
+                           ;; "~/org/sysrev.org"
+                           "~/code/sysrev/sysrev-tasks.org")
         org-agenda-timegrid-use-ampm t)
   (define-map-keys org-mode-map
     ("C-S-<left>"     'org-metaleft)
@@ -772,7 +773,7 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(defcustom modeline-font "InconsolataGo Nerd Font:pixelsize=25"
+(defcustom modeline-font "Inconsolata Nerd Font 13" ;; "Inconsolata Nerd Font:pixelsize=26"
   "Alternate font used for modeline."
   :group 'jeff)
 
@@ -1262,13 +1263,13 @@
 (use-package powerline
   :if (not jeff/use-spaceline)
   :config
-  (setq powerline-height 45
+  (setq powerline-height 43
         powerline-default-separator 'arrow
         powerline-display-buffer-size nil
         powerline-display-mule-info nil
         powerline-display-hud nil
         powerline-gui-use-vcs-glyph t
-        powerline-text-scale-factor 0.8)
+        powerline-text-scale-factor 0.875)
   (powerline-reset)
   (powerline-default-theme)
   (force-mode-line-update))
@@ -1329,11 +1330,12 @@
     (set-frame-font "Inconsolata Nerd Font Mono 26"))
 
   ;;(set-frame-font "Inconsolata for Powerline:pixelsize=24")
-  ;;(set-frame-font "Inconsolata for Powerline 10")
-  ;;(set-frame-font "SauceCodePro Medium:pixelsize=20")
+  ;;(set-frame-font "Inconsolata for Powerline 16")
+  ;;(set-frame-font "SauceCodePro Medium:pixelsize=28")
   ;;(set-frame-font "Inconsolata for Powerline:pixelsize=30")
   ;;(set-frame-font "InconsolataGo Nerd Font Mono:pixelsize=31")
-  ;;(set-frame-font "Inconsolata Nerd Font Mono:pixelsize=32")
+  ;;(set-frame-font "Inconsolata Nerd Font Mono 15")
+  ;;(set-frame-font "InconsolataGo Nerd Font Mono 15")
 
   (cond ((equal system-name "jeff-osx")
          (set-frame-width nil 100)
