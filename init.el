@@ -925,7 +925,10 @@
             cider-repl-popup-stacktraces t
             cider-auto-select-error-buffer t
             cider-prompt-for-symbol nil
-            nrepl-use-ssh-fallback-for-remote-hosts t)
+            nrepl-use-ssh-fallback-for-remote-hosts t
+            cider-preferred-build-tool 'shadow-cljs
+            cider-default-cljs-repl 'shadow-select
+            cider-shadow-default-options ":dev")
       (ensure-tramp)
       :config
       ;; (setq-default clojure-docstring-fill-column 70)
@@ -968,7 +971,7 @@
             (cider-repl-return)
             (insert (format "(in-ns '%s)" cider-figwheel-connecting))
             (cider-repl-return))))
-      (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
+;;; (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
       (defun cider-connect-figwheel (&optional port)
         (interactive)
         (let ((port (or port 7888))

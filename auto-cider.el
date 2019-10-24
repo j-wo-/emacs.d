@@ -85,7 +85,8 @@
           ()
           (save-excursion
             (find-file cljs-file-path)
-            (cider-connect-figwheel)))
+            (cider-connect-cljs
+             `(:host "localhost" :port ,figwheel-port :cljs-repl-type shadow-select))))
          (link-sesman-dirs
           ()
           (save-excursion
@@ -157,7 +158,7 @@
                        (dolist (s clj-repl-forms)
                          (insert (format "%s" s))
                          (cider-repl-return)))))))
-               0.2 300))
+               0.2 150))
             (when cljs-repl
               (wait-on-buffer-text
                cljs-repl
@@ -182,10 +183,10 @@
                        (dolist (s cljs-repl-forms)
                          (insert (format "%s" s))
                          (cider-repl-return)))))))
-               0.2 300)))))
+               0.2 150)))))
       (stop-cider-all)
       (open-project)
       (start-clj)
       (start-cljs)
       (link-sesman-dirs)
-      (wait-on-condition #'have-repl-buffers #'show-repl-buffers 0.1 200))))
+      (wait-on-condition #'have-repl-buffers #'show-repl-buffers 0.2 100))))
