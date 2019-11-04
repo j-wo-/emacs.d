@@ -61,13 +61,23 @@
 ;; 'cyberpunk
 
 (defvar custom-emacs-theme
-  (if (graphical?) 'base16-eighties 'gruvbox-dark-medium))
+  (if (graphical?) 'gruvbox-dark-medium 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'base16-eighties 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'zenburn 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'gruvbox-dark-soft 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'sanityinc-solarized-light 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'sanityinc-solarized-dark 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'sanityinc-tomorrow-night 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'leuven 'gruvbox-dark-medium)
+  ;; (if (graphical?) 'gruvbox-dark-medium 'gruvbox-dark-medium)
+  )
 
 ;; (defvar custom-emacs-theme 'sanityinc-tomorrow-night)
 
 (set-language-environment "utf-8")
 
-(setq default-frame-alist '((left-fringe . 18) (right-fringe . 18))
+(setq default-frame-alist '((left-fringe . 18) (right-fringe . 18)
+                            (internal-border-width . 8))
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
@@ -187,11 +197,12 @@
   (diminish 'isearch-mode))
 
 (use-package outshine
+  :pin melpa-stable
   :diminish outshine-mode
   :init (require 'outline)
   :config
   (diminish 'outline-minor-mode
-            (if (graphical?) " " " ▼")) ;; " " " " " "
+            (if (graphical?) " " " ▼")) ;; " " " " " "
   (add-hook 'outline-minor-mode-hook 'outshine-mode)
   (add-hook 'prog-mode-hook 'outline-minor-mode)
   (defvar outline-display-table (make-display-table))
@@ -303,7 +314,7 @@
   (set-mode-name sh-mode "Sh"))
 
 (use-package python-mode
-  :pin melpa
+  :pin melpa-stable
   :mode ("\\.py\\'" . python-mode)
   :config
   (use-rainbow-mode 'python-mode)
@@ -322,13 +333,17 @@
   ;; helm-map helm-ag-map helm-do-ag-map
   (use-package helm-ag
     :init (setq helm-ag-insert-at-point 'symbol
-                helm-ag-use-temp-buffer t)))
+                helm-ag-use-temp-buffer t
+                helm-ag-use-grep-ignore-list t))
+  '(setq helm-grep-input-idle-delay 0.7
+         helm-input-idle-delay 0.035))
 
 (use-package esup
-  :disabled true
+  :disabled t
   :commands esup)
 
 (use-package yasnippet
+  :pin melpa-stable
   :defer t
   :diminish yas-minor-mode)
 
@@ -368,7 +383,10 @@
 
 (use-package aggressive-indent
   :config
-  (diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr")) ;; " "
+  ;; " "
+  ;; " "
+  ;; unicode 2004 U+2004 (thick space)
+  (diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr"))
   (setq aggressive-indent-sit-for-time 0.05)
   (unless (null jeff/indent-disable-functions)
     (add-to-list 'aggressive-indent-dont-indent-if
@@ -412,7 +430,7 @@
         company-tooltip-align-annotations t
         company-tooltip-offset-display 'lines ; 'scrollbar
         company-minimum-prefix-length 3
-        company-idle-delay 0.15)
+        company-idle-delay 0.10)
   :config
   (add-to-list 'company-transformers 'company-sort-by-occurrence)
   (let ((inhibit-message t))
@@ -439,11 +457,7 @@
   :config
   (use-package helm-projectile
     :init (use-package helm)
-    :config
-    (helm-projectile-toggle 1)
-    (setq helm-ag-use-grep-ignore-list t)
-    '(setq helm-grep-input-idle-delay 0.7
-           helm-input-idle-delay 0.035))
+    :config (helm-projectile-toggle 1))
   (let ((search-fn (if jeff/use-projectile-ag 'projectile-ag 'projectile-grep)))
     (define-map-keys projectile-mode-map
       ("C-c g" search-fn))
@@ -467,14 +481,15 @@
   :config
   (smex-initialize))
 
-(defcustom jeff/flycheck-global nil
+(defcustom jeff/flycheck-global t
   "Runs (global-flycheck-mode 1) if non-nil."
   :group 'jeff)
 
 (use-package flycheck
+  :pin melpa-stable
   :defer t
   :init
-  (setq flycheck-global-modes '(clojure-mode clojurescript-mode)
+  (setq flycheck-global-modes '(clojure-mode clojurec-mode clojurescript-mode)
         flycheck-disabled-checkers '(clojure-cider-typed)
         ;; because git-gutter is in the left fringe
         flycheck-indication-mode 'right-fringe)
@@ -646,6 +661,7 @@
   :config (do-git-gutter-config))
 
 (use-package magit
+  :pin melpa-stable
   :bind (("C-x g" . magit-status)
          ("C-x C-g" . magit-dispatch-popup))
   :config
@@ -654,7 +670,7 @@
     ("C-<tab>" nil)))
 
 (use-package paradox
-  :pin melpa
+  :pin melpa-stable
   :commands list-packages paradox-list-packages
   :config (paradox-enable))
 
@@ -683,6 +699,7 @@
   (add-hook 'groovy-mode-hook #'do-groovy-mode-config))
 
 (use-package markdown-mode
+  :pin melpa-stable
   :commands markdown-mode gfm-mode
   :mode
   ("README\\.md\\'" . gfm-mode)
@@ -773,7 +790,10 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(defcustom modeline-font "Inconsolata Nerd Font 13" ;; "Inconsolata Nerd Font:pixelsize=26"
+(defcustom modeline-font "Input Mono Narrow:pixelsize=22"
+  ;; "AnkaCoder Nerd Font:pixelsize=24"
+  ;; "Inconsolata Nerd Font 13"
+  ;; "Inconsolata Nerd Font:pixelsize=24"
   "Alternate font used for modeline."
   :group 'jeff)
 
@@ -843,7 +863,8 @@
                            :box nil))))))
             ((theme-p "gruvbox")
              (set-override-faces
-              `(fringe ((t (:background "#373230"))))
+              ;; `(fringe ((t (:background "#373230"))))
+              `(fringe ((t (:background "#332c2a"))))
               `(line-number
                 ((t (:foreground "#7c6f64" :background "#3c3836"))))
               `(line-number-current-line
@@ -867,13 +888,18 @@
             (t
              (set-override-faces
               `(fringe ((t (:background "#404040"))))
+              ;; `(fringe ((t (:background "#2a292c"))))
               `(vertical-border ((t (:foreground "#505050"))))
               `(mode-line
                 ((t (:font ,modeline-font
-                           :box (:line-width -2 :color "#555555" :style nil)))))
+                           :box (:line-width -1 :color "#555555" :style nil)
+                           ;; :box nil
+                           ))))
               `(mode-line-inactive
                 ((t (:font ,modeline-font
-                           :box (:line-width -2 :color "#555555" :style nil))))))))
+                           :box (:line-width -1 :color "#555555" :style nil)
+                           ;; :box nil
+                           )))))))
       ;; ensure powerline colors are updated
       (powerline-reset)
       (powerline-default-theme))))
@@ -907,6 +933,7 @@
 (use-package clojure-mode
   :pin melpa-stable
   :mode (("\\.clj\\'" . clojure-mode)
+         ("\\.cljc\\'" . clojurec-mode)
          ("\\.cljs\\'" . clojurescript-mode)
          ("\\.edn\\'" . clojure-mode))
   :config
@@ -943,6 +970,7 @@
              (add-to-list 'ac-modes 'cider-repl-mode))))
       (set-mode-name clojure-mode "CLJ")
       (set-mode-name clojurescript-mode "CLJS")
+      (set-mode-name clojurec-mode "CLJC")
       (add-hook 'clojure-mode-hook 'cider-mode)
       (add-hook 'clojurescript-mode-hook 'cider-mode)
       (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
@@ -1010,10 +1038,12 @@
         (cljr-add-keybindings-with-prefix "C-c C-m"))
       (add-hook 'clojure-mode-hook #'clj-refactor-clojure-mode-hook)
       (add-hook 'clojurescript-mode-hook #'clj-refactor-clojure-mode-hook))
+    (use-package flycheck)
     (use-package flycheck-clojure
-      :disabled t
-      :init (use-package flycheck)
-      :config (flycheck-clojure-setup))))
+      :pin melpa-stable
+      :config (flycheck-clojure-setup))
+    (use-package flycheck-clj-kondo
+      :config (require 'flycheck-clj-kondo))))
 
 (use-package slime
   :pin melpa-stable
@@ -1272,7 +1302,7 @@
         powerline-display-mule-info nil
         powerline-display-hud nil
         powerline-gui-use-vcs-glyph t
-        powerline-text-scale-factor 0.875)
+        powerline-text-scale-factor 0.85)
   (powerline-reset)
   (powerline-default-theme)
   (force-mode-line-update))
@@ -1324,21 +1354,31 @@
   ;;(menu-bar-mode -1)
   (tool-bar-mode -1)
 
+  ;;(set-frame-parameter nil 'internal-border-width 4)
+
   (when (gui-mac?)
     ;;(set-frame-font "Source Code Pro 19")
     ;;(set-frame-font "SauceCodePro Nerd Font Medium 19")
     ;;(set-frame-font "Sauce Code Powerline 19")
-    ;;(set-frame-font "Fira Code Retina-13")
-    ;;(set-frame-font "Inconsolata for Powerline 20")
+    ;;(set-frame-font "Fira Code-13")
+    ;;(set-frame-font "Inconsolata for Powerline 15")
     (set-frame-font "Inconsolata Nerd Font Mono 26"))
 
   ;;(set-frame-font "Inconsolata for Powerline:pixelsize=24")
   ;;(set-frame-font "Inconsolata for Powerline 16")
-  ;;(set-frame-font "SauceCodePro Medium:pixelsize=28")
-  ;;(set-frame-font "Inconsolata for Powerline:pixelsize=30")
-  ;;(set-frame-font "InconsolataGo Nerd Font Mono:pixelsize=31")
+  ;;(set-frame-font "SauceCodePro Medium:pixelsize=26")
+  ;;(set-frame-font "Inconsolata for Powerline:pixelsize=31")
+  ;;(set-frame-font "Inconsolata Nerd Font Mono:pixelsize=29")
+  ;;(set-frame-font "InconsolataGo Nerd Font Mono:pixelsize=29")
   ;;(set-frame-font "Inconsolata Nerd Font Mono 15")
   ;;(set-frame-font "InconsolataGo Nerd Font Mono 15")
+  ;;(set-frame-font "Inconsolata Nerd Font Mono 15")
+  ;;(set-frame-font "InconsolataGo Nerd Font Mono 15")
+  ;;(set-frame-font "Anka/Coder Condensed:pixelsize=28")
+  ;;(set-frame-font "AnkaCoder Nerd Font Mono:pixelsize=26")
+  ;;(set-frame-font "AnkaCoder Nerd Font Mono:pixelsize=28")
+  ;;(set-frame-font "Anka/Coder:pixelsize=26")
+  ;;(set-frame-font "Input Mono:pixelsize=23")
 
   (cond ((equal system-name "jeff-osx")
          (set-frame-width nil 100)
