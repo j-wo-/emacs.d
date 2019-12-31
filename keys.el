@@ -66,10 +66,11 @@
   ("C-;"          'comment-or-uncomment-region))
 
 ;; swap () and [] keys
-(define-key key-translation-map (kbd "(") (kbd "["))
-(define-key key-translation-map (kbd ")") (kbd "]"))
-(define-key key-translation-map (kbd "[") (kbd "("))
-(define-key key-translation-map (kbd "]") (kbd ")"))
+(when t ;; (graphical?)
+  (define-key key-translation-map (kbd "(") (kbd "["))
+  (define-key key-translation-map (kbd ")") (kbd "]"))
+  (define-key key-translation-map (kbd "[") (kbd "("))
+  (define-key key-translation-map (kbd "]") (kbd ")")))
 
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)

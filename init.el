@@ -4,7 +4,7 @@
  file-name-handler-alist-backup file-name-handler-alist
  file-name-handler-alist nil
  gc-cons-threshold-default gc-cons-threshold
- gc-cons-threshold (* 100 1000 1000)
+ gc-cons-threshold (* 20 1000 1000)
  ;; prevent echoing messages while loading
  inhibit-message nil
  inhibit-splash-screen t)
@@ -61,10 +61,10 @@
 ;; 'cyberpunk
 
 (defvar custom-emacs-theme
-  (if (graphical?) 'gruvbox-dark-medium 'gruvbox-dark-medium)
   ;; (if (graphical?) 'base16-eighties 'gruvbox-dark-medium)
   ;; (if (graphical?) 'zenburn 'gruvbox-dark-medium)
   ;; (if (graphical?) 'gruvbox-dark-soft 'gruvbox-dark-medium)
+  (if (graphical?) 'gruvbox-dark-medium 'gruvbox-dark-medium)
   ;; (if (graphical?) 'sanityinc-solarized-light 'gruvbox-dark-medium)
   ;; (if (graphical?) 'sanityinc-solarized-dark 'gruvbox-dark-medium)
   ;; (if (graphical?) 'sanityinc-tomorrow-night 'gruvbox-dark-medium)
@@ -76,8 +76,8 @@
 
 (set-language-environment "utf-8")
 
-(setq default-frame-alist '((left-fringe . 18) (right-fringe . 18)
-                            (internal-border-width . 8))
+(setq default-frame-alist '((left-fringe . 18)
+                            (right-fringe . 18))
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
@@ -126,6 +126,8 @@
 ;;;
 ;;; use-package bootstrapping (support automatic bootstrap from empty elpa library)
 ;;;
+
+(pin-pkg 'use-package "melpa-stable")
 
 ;; Install use-package from melpa if needed
 (when (not (package-installed-p 'use-package))
@@ -309,9 +311,13 @@
          ("/zlogin$"    . sh-mode)
          ("/zlogout$"   . sh-mode)
          ("/zpreztorc$" . sh-mode)
-         ("\\.zsh\\'"   . sh-mode))
+         ("\\.zsh\\'"   . sh-mode)
+         ("/prompt_.*_setup$" . sh-mode))
+  :init (setq sh-basic-offset 2)
   :config
-  (set-mode-name sh-mode "Sh"))
+  (set-mode-name sh-mode "Sh")
+  (defun jeff/sh-mode-hook () (setq-local tab-width 2))
+  (add-hook 'sh-mode-hook 'jeff/sh-mode-hook))
 
 (use-package python-mode
   :pin melpa-stable
@@ -332,6 +338,7 @@
     (add-to-list 'helm-white-buffer-regexp-list b))
   ;; helm-map helm-ag-map helm-do-ag-map
   (use-package helm-ag
+    :disabled t
     :init (setq helm-ag-insert-at-point 'symbol
                 helm-ag-use-temp-buffer t
                 helm-ag-use-grep-ignore-list t))
@@ -447,6 +454,7 @@
   :group 'jeff)
 
 (use-package projectile
+  :demand t
   :bind (("C-c C-p p" . helm-projectile-switch-project))
   :init
   (setq projectile-use-git-grep t
@@ -468,7 +476,7 @@
       ("C-c TAB" 'projectile-switch-to-buffer)))
   (dolist (s '(".log" ".ai" ".svg" ".xml" ".zip" ".png" ".jpg"))
     (add-to-list 'grep-find-ignored-files (concat "*" s))
-    (add-to-list 'helm-ag-ignore-patterns (concat "*" s))
+    ;; (add-to-list 'helm-ag-ignore-patterns (concat "*" s))
     (add-to-list 'helm-grep-ignored-files (concat "*" s))
     (add-to-list 'projectile-globally-ignored-file-suffixes s))
   (projectile-mode))
@@ -790,7 +798,8 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(defcustom modeline-font "Input Mono Narrow:pixelsize=22"
+(defcustom modeline-font "InputMono Nerd Font:pixelsize=21"
+  ;; "InputMono Nerd Font:pixelsize=23"
   ;; "AnkaCoder Nerd Font:pixelsize=24"
   ;; "Inconsolata Nerd Font 13"
   ;; "Inconsolata Nerd Font:pixelsize=24"
@@ -809,9 +818,7 @@
                                             (use-package autothemer)
                                             (use-package gruvbox-theme
                                               :ensure nil
-                                              :load-path "~/.emacs.d/gruvbox-theme"
-                                              :init
-                                              (setq gruvbox-contrast 'hard))))
+                                              :load-path "~/.emacs.d/gruvbox-theme")))
             ((theme-p "spacemacs-dark")   (use-package spacemacs-theme))
             ((theme-p "material")         (use-package material-theme))
             ((theme-p "ample")            (use-package ample-theme))
@@ -887,8 +894,8 @@
                            :box (:line-width -2 :color "#555555" :style nil)))))))
             (t
              (set-override-faces
-              `(fringe ((t (:background "#404040"))))
-              ;; `(fringe ((t (:background "#2a292c"))))
+              `(fringe ((t (:background "#2a292c"))))
+              ;; `(fringe ((t (:background "#373230"))))
               `(vertical-border ((t (:foreground "#505050"))))
               `(mode-line
                 ((t (:font ,modeline-font
@@ -910,6 +917,37 @@
     (with-selected-frame frame
       (switch-to-theme custom-emacs-theme))))
 
+(require 'faces)
+
+;; modified from faces.el to rewrite #xxxxxx00 to #xxxxxx
+(defun color-values (color &optional frame)
+  "Return a description of the color named COLOR on frame FRAME.
+COLOR should be a string naming a color (e.g. \"white\"), or a
+string specifying a color's RGB components (e.g. \"#ff12ec\").
+
+Return a list of three integers, (RED GREEN BLUE), each between 0
+and either 65280 or 65535 (the maximum depends on the system).
+Use `color-name-to-rgb' if you want RGB floating-point values
+normalized to 1.0.
+
+If FRAME is omitted or nil, use the selected frame.
+If FRAME cannot display COLOR, the value is nil.
+
+COLOR can also be the symbol `unspecified' or one of the strings
+\"unspecified-fg\" or \"unspecified-bg\", in which case the
+return value is nil."
+  (when (and (stringp color)
+             (string-equal (substring color 0 1) "#")
+             (= (length color) (+ 1 8)))
+    (setq color (substring color 0 7)))
+  (cond
+   ((member color '(unspecified "unspecified-fg" "unspecified-bg"))
+    nil)
+   ((memq (framep (or frame (selected-frame))) '(x w32 ns))
+    (xw-color-values color frame))
+   (t
+    (tty-color-values color frame))))
+
 (when (null window-system)
   ;; need to call this for terminal mode because the .Xdefaults settings won't apply
   (menu-bar-mode -1))
@@ -930,6 +968,120 @@
   (defun enable-lispy (mode-hook)
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
+(use-package cider
+  :pin melpa-stable
+  :diminish cider-mode
+  :init
+  (setq clojure-use-backtracking-indent t
+        clojure-indent-style 'always-align ;; 'align-arguments
+        cider-repl-use-pretty-printing t
+        cider-repl-popup-stacktraces t
+        cider-auto-select-error-buffer t
+        cider-prompt-for-symbol nil
+        nrepl-use-ssh-fallback-for-remote-hosts t
+        cider-preferred-build-tool 'shadow-cljs
+        cider-default-cljs-repl 'shadow-select
+        cider-shadow-default-options ":dev")
+  (ensure-tramp)
+  :config
+  (let ((inhibit-message t))
+    ;; (setq-default clojure-docstring-fill-column 70)
+    (unless (exclude-pkg? 'auto-complete)
+      (use-package ac-cider)
+      (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
+      (add-hook 'cider-mode-hook 'ac-cider-setup)
+      (add-hook 'cider-repl-mode-hook 'ac-cider-setup)
+      (eval-after-load "auto-complete"
+        `(progn
+           (add-to-list 'ac-modes 'cider-mode)
+           (add-to-list 'ac-modes 'cider-repl-mode))))
+    (set-mode-name clojure-mode "CLJ")
+    (set-mode-name clojurescript-mode "CLJS")
+    (set-mode-name clojurec-mode "CLJC")
+    (add-hook 'clojure-mode-hook 'cider-mode)
+    (add-hook 'clojurescript-mode-hook 'cider-mode)
+    (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'clojurescript-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
+    (add-hook 'clojure-mode-hook 'enable-paredit-mode)
+    (add-hook 'clojurescript-mode-hook 'enable-paredit-mode)
+    (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
+    (add-hook 'clojure-mode-hook 'paxedit-mode)
+    (add-hook 'clojurescript-mode-hook 'paxedit-mode)
+    (defun my-cider-reload-repl-ns ()
+      (let ((ns (buffer-local-value 'cider-buffer-ns (cl-first (cider-repl-buffers)))))
+        (when ns
+          (cider-nrepl-request:eval
+           (format "(require '%s :reload)" ns)
+           (lambda (_response) nil)))))
+    (defvar cider-figwheel-connecting nil)
+    (defun cider-figwheel-init ()
+      (when cider-figwheel-connecting
+        (pop-to-buffer (cl-first (cider-repl-buffers)))
+        (insert "(require 'figwheel-sidecar.repl-api)")
+        (cider-repl-return)
+        (insert "(figwheel-sidecar.repl-api/cljs-repl)")
+        (cider-repl-return)
+        (when (and nil (not (zerop (length cider-figwheel-connecting))))
+          (insert (format "(require '%s)" cider-figwheel-connecting))
+          (cider-repl-return)
+          (insert (format "(in-ns '%s)" cider-figwheel-connecting))
+          (cider-repl-return))))
+;;; (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
+    (defun cider-connect-figwheel (&optional port)
+      (interactive)
+      (let ((port (or port 7888))
+            (cider-figwheel-connecting
+             (if (member major-mode '(clojure-mode clojurescript-mode))
+                 (clojure-expected-ns)
+               "")))
+        (cider-connect `(:host "localhost" :port ,port))))
+    (defun cider-load-buffer-reload-repl (&optional buffer)
+      (interactive)
+      (let ((result (if buffer
+                        (cider-load-buffer buffer)
+                      (cider-load-buffer))))
+        (my-cider-reload-repl-ns)
+        result))
+    (add-hook 'cider-file-loaded-hook 'my-cider-reload-repl-ns)
+    (when --use-lispy
+      (enable-lispy 'clojure-mode-hook)
+      (enable-lispy 'cider-mode-hook)
+      (enable-lispy 'cider-repl-mode-hook))
+    (define-map-keys cider-mode-map
+      ("C-c C-k" 'cider-load-buffer)
+      ("C-c n" 'cider-repl-set-ns)
+      ("C-c C-p" nil))
+    (define-map-keys cider-repl-mode-map
+      ("C-c C-p" nil))))
+
+(use-package clj-refactor
+  :defer t
+  :pin melpa
+  :diminish clj-refactor-mode
+  :config
+  (setq cljr-warn-on-eval nil
+        cljr-suppress-middleware-warnings t)
+  (defun clj-refactor-clojure-mode-hook ()
+    (clj-refactor-mode 1)
+    (yas-minor-mode 1)  ; for adding require/use/import statements
+    ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+    (cljr-add-keybindings-with-prefix "C-c C-m"))
+  (add-hook 'clojure-mode-hook #'clj-refactor-clojure-mode-hook)
+  (add-hook 'clojurescript-mode-hook #'clj-refactor-clojure-mode-hook))
+
+(use-package flycheck-clojure
+  :defer t
+  :pin melpa-stable
+  ;; :disabled t
+  :init (use-package flycheck)
+  :config (flycheck-clojure-setup))
+
+(use-package flycheck-clj-kondo
+  :defer t
+  :init (use-package flycheck)
+  :config (require 'flycheck-clj-kondo))
+
 (use-package clojure-mode
   :pin melpa-stable
   :mode (("\\.clj\\'" . clojure-mode)
@@ -942,108 +1094,10 @@
     (ensure-lispy)
     (use-package paren-face)
     (use-package aggressive-indent)
-    (use-package cider
-      :pin melpa-stable
-      :diminish cider-mode
-      :init
-      (setq clojure-use-backtracking-indent t
-            clojure-indent-style 'always-align ;; 'align-arguments
-            cider-repl-use-pretty-printing t
-            cider-repl-popup-stacktraces t
-            cider-auto-select-error-buffer t
-            cider-prompt-for-symbol nil
-            nrepl-use-ssh-fallback-for-remote-hosts t
-            cider-preferred-build-tool 'shadow-cljs
-            cider-default-cljs-repl 'shadow-select
-            cider-shadow-default-options ":dev")
-      (ensure-tramp)
-      :config
-      ;; (setq-default clojure-docstring-fill-column 70)
-      (unless (exclude-pkg? 'auto-complete)
-        (use-package ac-cider)
-        (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
-        (add-hook 'cider-mode-hook 'ac-cider-setup)
-        (add-hook 'cider-repl-mode-hook 'ac-cider-setup)
-        (eval-after-load "auto-complete"
-          `(progn
-             (add-to-list 'ac-modes 'cider-mode)
-             (add-to-list 'ac-modes 'cider-repl-mode))))
-      (set-mode-name clojure-mode "CLJ")
-      (set-mode-name clojurescript-mode "CLJS")
-      (set-mode-name clojurec-mode "CLJC")
-      (add-hook 'clojure-mode-hook 'cider-mode)
-      (add-hook 'clojurescript-mode-hook 'cider-mode)
-      (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
-      (add-hook 'clojurescript-mode-hook 'turn-off-smartparens-mode)
-      (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
-      (add-hook 'clojure-mode-hook 'enable-paredit-mode)
-      (add-hook 'clojurescript-mode-hook 'enable-paredit-mode)
-      (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
-      (add-hook 'clojure-mode-hook 'paxedit-mode)
-      (add-hook 'clojurescript-mode-hook 'paxedit-mode)
-      (defun my-cider-reload-repl-ns ()
-        (cider-nrepl-request:eval
-         (format "(require '%s :reload)"
-                 (buffer-local-value 'cider-buffer-ns (cl-first (cider-repl-buffers))))
-         (lambda (_response) nil)))
-      (defvar cider-figwheel-connecting nil)
-      (defun cider-figwheel-init ()
-        (when cider-figwheel-connecting
-          (pop-to-buffer (cl-first (cider-repl-buffers)))
-          (insert "(require 'figwheel-sidecar.repl-api)")
-          (cider-repl-return)
-          (insert "(figwheel-sidecar.repl-api/cljs-repl)")
-          (cider-repl-return)
-          (when (and nil (not (zerop (length cider-figwheel-connecting))))
-            (insert (format "(require '%s)" cider-figwheel-connecting))
-            (cider-repl-return)
-            (insert (format "(in-ns '%s)" cider-figwheel-connecting))
-            (cider-repl-return))))
-;;; (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
-      (defun cider-connect-figwheel (&optional port)
-        (interactive)
-        (let ((port (or port 7888))
-              (cider-figwheel-connecting
-               (if (member major-mode '(clojure-mode clojurescript-mode))
-                   (clojure-expected-ns)
-                 "")))
-          (cider-connect `(:host "localhost" :port ,port))))
-      (defun cider-load-buffer-reload-repl (&optional buffer)
-        (interactive)
-        (let ((result (if buffer
-                          (cider-load-buffer buffer)
-                        (cider-load-buffer))))
-          (my-cider-reload-repl-ns)
-          result))
-      (when --use-lispy
-        (enable-lispy 'clojure-mode-hook)
-        (enable-lispy 'cider-mode-hook)
-        (enable-lispy 'cider-repl-mode-hook))
-      (define-map-keys cider-mode-map
-        ("C-c C-k" 'cider-load-buffer-reload-repl)
-        ("C-c n" 'cider-repl-set-ns)
-        ("C-c C-p" nil))
-      (define-map-keys cider-repl-mode-map
-        ("C-c C-p" nil)))
-    (use-package clj-refactor
-      :pin melpa
-      :diminish clj-refactor-mode
-      :config
-      (setq cljr-warn-on-eval nil
-            cljr-suppress-middleware-warnings t)
-      (defun clj-refactor-clojure-mode-hook ()
-        (clj-refactor-mode 1)
-        (yas-minor-mode 1)  ; for adding require/use/import statements
-        ;; This choice of keybinding leaves cider-macroexpand-1 unbound
-        (cljr-add-keybindings-with-prefix "C-c C-m"))
-      (add-hook 'clojure-mode-hook #'clj-refactor-clojure-mode-hook)
-      (add-hook 'clojurescript-mode-hook #'clj-refactor-clojure-mode-hook))
-    (use-package flycheck)
-    (use-package flycheck-clojure
-      :pin melpa-stable
-      :config (flycheck-clojure-setup))
-    (use-package flycheck-clj-kondo
-      :config (require 'flycheck-clj-kondo))))
+    (use-package cider)
+    (use-package clj-refactor)
+    (use-package flycheck-clojure)
+    (use-package flycheck-clj-kondo)))
 
 (use-package slime
   :pin melpa-stable
@@ -1208,6 +1262,25 @@
   :mode "\\.less\\'" "\\.variables\\'" "\\.overrides\\'"
   :config (use-rainbow-mode 'less-css-mode))
 
+(use-package js2-mode
+  :defer t
+  :pin melpa-stable
+  :config
+  (flycheck-add-mode 'javascript-eslint 'js2-mode)
+  (flycheck-add-mode 'javascript-eslint 'js2-jsx-mode)
+  (setq js2-include-node-externs t)
+  (setq js2-include-browser-externs t)
+  (setq js2-strict-trailing-comma-warning nil)
+  (setq js2-indent-switch-body t)
+  (defun my-js2-mode-hook ()
+    (setq js2-basic-offset 2)
+    (flycheck-mode 1)
+    ;; (tern-mode t)
+    (when (executable-find "eslint")
+      (flycheck-select-checker 'javascript-eslint)))
+  (add-hook 'js2-mode-hook 'my-js2-mode-hook)
+  (add-hook 'js2-jsx-mode-hook 'my-js2-mode-hook))
+
 (use-package web-mode
   :pin melpa-stable
   :mode "\\.js\\'" "\\.jsx\\'" "\\.json\\'"
@@ -1216,23 +1289,7 @@
     :disabled t
     :pin melpa-stable)
   (use-package flycheck)
-  (use-package js2-mode
-    :pin melpa-stable
-    :config
-    (flycheck-add-mode 'javascript-eslint 'js2-mode)
-    (flycheck-add-mode 'javascript-eslint 'js2-jsx-mode)
-    (setq js2-include-node-externs t)
-    (setq js2-include-browser-externs t)
-    (setq js2-strict-trailing-comma-warning nil)
-    (setq js2-indent-switch-body t)
-    (defun my-js2-mode-hook ()
-      (setq js2-basic-offset 2)
-      (flycheck-mode 1)
-      ;; (tern-mode t)
-      (when (executable-find "eslint")
-        (flycheck-select-checker 'javascript-eslint)))
-    (add-hook 'js2-mode-hook 'my-js2-mode-hook)
-    (add-hook 'js2-jsx-mode-hook 'my-js2-mode-hook))
+  (use-package js2-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   (add-to-list 'flycheck-disabled-checkers 'javascript-jshint)
   (add-to-list 'flycheck-disabled-checkers 'json-jsonlist)
@@ -1296,7 +1353,7 @@
 (use-package powerline
   :if (not jeff/use-spaceline)
   :config
-  (setq powerline-height 43
+  (setq powerline-height 45
         powerline-default-separator 'arrow
         powerline-display-buffer-size nil
         powerline-display-mule-info nil
@@ -1354,8 +1411,6 @@
   ;;(menu-bar-mode -1)
   (tool-bar-mode -1)
 
-  ;;(set-frame-parameter nil 'internal-border-width 4)
-
   (when (gui-mac?)
     ;;(set-frame-font "Source Code Pro 19")
     ;;(set-frame-font "SauceCodePro Nerd Font Medium 19")
@@ -1379,12 +1434,14 @@
   ;;(set-frame-font "AnkaCoder Nerd Font Mono:pixelsize=28")
   ;;(set-frame-font "Anka/Coder:pixelsize=26")
   ;;(set-frame-font "Input Mono:pixelsize=23")
+  ;;(set-frame-font "InputMono Medium:pixelsize=25")
 
   (cond ((equal system-name "jeff-osx")
          (set-frame-width nil 100)
          (set-frame-height nil 48))
         ((equal system-name "jeff-mbp")
          nil))
+  (set-frame-parameter frame 'internal-border-width (if (graphical?) 7 0))
   ;;(when (graphical?) (global-display-line-numbers-mode 1))
   (powerline-reset)
   (powerline-default-theme)
@@ -1396,11 +1453,18 @@
   ;; (add-hook 'after-init-hook 'helm-projectile-switch-project)
   (when jeff/enable-auto-neotree (use-package neotree)))
 
+;; make sure all deferred packages are still installed on initial bootstrap
+(ensure-installed outshine rainbow-mode python-mode helm yasnippet company projectile
+                  helm-projectile smex flycheck fringe-helper flycheck-pos-tip mic-paren
+                  paredit paxedit magit paradox systemd groovy-mode markdown-mode nginx-mode
+                  org org-bullets org-pomodoro mpv pkgbuild-mode clojure-mode cider
+                  clj-refactor flycheck-clojure flycheck-clj-kondo slime less-css-mode
+                  web-mode js2-mode)
+
 (add-hook 'post-command-hook 'force-mode-line-update)
 
 (jeff/init-ui)
 (add-hook 'after-make-frame-functions #'jeff/init-ui)
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
