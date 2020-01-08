@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (setq
  ;; startup time optimization
  ;; https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
@@ -199,6 +201,7 @@
   (diminish 'isearch-mode))
 
 (use-package outshine
+  :defer t
   :pin melpa-stable
   :diminish outshine-mode
   :init (require 'outline)
@@ -215,6 +218,13 @@
     (setf buffer-display-table outline-display-table))
   (add-hook 'outline-mode-hook 'set-outline-display-table)
   (add-hook 'outline-minor-mode-hook 'set-outline-display-table))
+
+(use-package outline
+  :defer t
+  :config
+  (defun -use-package-outshine ()
+    (use-package outshine))
+  (add-hook 'outline-minor-mode-hook '-use-package-outshine))
 
 (use-package evil
   :disabled true
@@ -265,7 +275,7 @@
   :defer t
   :config (funcall #'--tramp-config))
 
-(ensure-tramp)
+;; (ensure-tramp)
 
 (defun symbol-suffix (sym suffix)
   (intern (concat (symbol-name sym) suffix)))
@@ -289,7 +299,7 @@
       (add-hook mode-hook 'rainbow-mode-1))))
 
 (use-package rainbow-mode
-  :defer 0.5
+  :defer 1.0
   :diminish rainbow-mode
   :init
   (setq rainbow-html-colors t
@@ -426,7 +436,7 @@
 
 (use-package company
   :pin melpa-stable
-  :defer 0.5
+  :defer 0.75
   :if (not (exclude-pkg? 'company))
   :diminish company-mode global-company-mode
   :init
@@ -454,7 +464,7 @@
   :group 'jeff)
 
 (use-package projectile
-  :demand t
+  ;; :demand t
   :bind (("C-c C-p p" . helm-projectile-switch-project))
   :init
   (setq projectile-use-git-grep t
@@ -550,6 +560,7 @@
     (symbol-matches custom-emacs-theme theme)))
 
 (use-package paren-face
+  :defer 0.5
   :config
   (setq paren-face-regexp "[\\(\\)]")
   (global-paren-face-mode)
@@ -675,7 +686,8 @@
   :config
   (diminish 'auto-revert-mode)
   (define-map-keys magit-status-mode-map
-    ("C-<tab>" nil)))
+    ("C-<tab>" nil))
+  (use-package projectile))
 
 (use-package paradox
   :pin melpa-stable
@@ -969,6 +981,7 @@ return value is nil."
     (add-hook mode-hook (lambda () (lispy-mode 1)))))
 
 (use-package cider
+  :defer t
   :pin melpa-stable
   :diminish cider-mode
   :init
@@ -1472,7 +1485,7 @@ return value is nil."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (cider sh-scriptf zenburn-theme web-mode use-package systemd spacemacs-theme smex scala-mode rainbow-mode python-mode powerline pkgbuild-mode paxedit paren-face paradox outshine org-pomodoro org-bullets nginx-mode mpv monokai-theme molokai-theme moe-theme mic-paren material-theme markdown-mode magit lispy leuven-theme jade-mode helm-projectile helm-ag groovy-mode git-gutter-fringe ghc gh-md flycheck-pos-tip flx-ido flatland-theme evil-lisp-state elisp-slime-nav doom-themes disable-mouse diminish default-text-scale cyberpunk-theme company-statistics company-quickhelp color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clj-refactor base16-theme autothemer apropospriate-theme anti-zenburn-theme all-the-icons alect-themes aggressive-indent ac-slime ac-haskell-process))))
+    (flycheck-clj-kondo flycheck-clojure cider js2-mode gh-md base16-theme web-mode use-package systemd smex smartparens scala-mode rainbow-mode python-mode powerline pkgbuild-mode paxedit paren-face paradox outshine org-pomodoro org-bullets nginx-mode mpv mic-paren markdown-mode magit lispy jade-mode helm-projectile helm-ag groovy-mode git-gutter-fringe ghc flycheck-pos-tip flx-ido elisp-slime-nav doom-themes disable-mouse diminish default-text-scale company-statistics company-quickhelp clj-refactor autothemer aggressive-indent ac-slime ac-haskell-process))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
