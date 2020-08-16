@@ -17,6 +17,7 @@ projectile-bookmarks.eld
 /elpa/
 .cask/
 /company-statistics-cache.el
+/company-statistics-cache.el.backup
 /recentf
 /network-security.data
 /transient

@@ -1,26 +1,5 @@
 ;;; -*- lexical-binding: t -*-
 
-(setq
- ;; startup time optimization
- ;; https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
- file-name-handler-alist-backup file-name-handler-alist
- file-name-handler-alist nil
- gc-cons-threshold-default gc-cons-threshold
- gc-cons-threshold (* 20 1000 1000)
- ;; prevent echoing messages while loading
- inhibit-message nil
- inhibit-splash-screen t)
-
-(defun restore-config-post-init ()
-  (setq inhibit-message nil
-        file-name-handler-alist file-name-handler-alist-backup)
-  (run-with-idle-timer
-   1.0 nil
-   (lambda ()
-     (setq gc-cons-threshold (* 10 1000 1000)))))
-
-(add-hook 'after-init-hook 'restore-config-post-init)
-
 (require 'cl-lib)
 
 (defun graphical? () (cl-some #'display-graphic-p (frame-list)))
@@ -30,6 +9,7 @@
 (defun gui-mac-std? () (eql window-system 'ns))
 (defun gui-emacs-mac? () (eql window-system 'mac))
 (defun gui-mac? () (or (gui-mac-std?) (gui-emacs-mac?)))
+(defun wayland? () (and (getenv "DISPLAY") (getenv "WAYLAND_DISPLAY") t))
 
 ;;; Favorite themes (dark)
 ;; 'base16-eighties
@@ -76,16 +56,6 @@
 
 ;; (defvar custom-emacs-theme 'sanityinc-tomorrow-night)
 
-(set-language-environment "utf-8")
-
-(setq default-frame-alist '((left-fringe . 18)
-                            (right-fringe . 18))
-      custom-safe-themes t
-      auto-save-default nil
-      vc-follow-symlinks t
-      make-backup-files nil
-      echo-keystrokes 0.1)
-
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 (setq-default indent-tabs-mode nil)
@@ -129,7 +99,7 @@
 ;;; use-package bootstrapping (support automatic bootstrap from empty elpa library)
 ;;;
 
-(pin-pkg 'use-package "melpa-stable")
+(pin-pkg 'use-package "melpa")
 
 ;; Install use-package from melpa if needed
 (when (not (package-installed-p 'use-package))
@@ -168,20 +138,23 @@
 
 (defun active-minor-modes ()
   (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
+;;(insert "\n" (prin1-to-string (active-minor-modes)))
 (defun minor-mode-active-p (minor-mode)
   (if (member minor-mode (active-minor-modes)) t nil))
 
 (defun load-local (file &optional no-byte-compile)
   (let ((path (locate-user-emacs-file file))
-        (ext (if no-byte-compile ".el" ".elc")))
-    (unless no-byte-compile
-      (byte-recompile-file (concat path ".el") nil 0 nil))
+        ;;(ext (if no-byte-compile ".el" ".elc"))
+        (ext ".el"))
+    ;;(unless no-byte-compile
+    ;;  (byte-recompile-file (concat path ".el") nil 0 nil))
     (load (concat path ext) nil t t)))
 
 (load-local "keys")
 (load-local "commands")
 
-(windmove-default-keybindings)
+(windmove-default-keybindings '(shift))
+(windmove-default-keybindings '(control meta))
 
 ;;;
 ;;; load packages
@@ -243,7 +216,7 @@
 
 (use-package disable-mouse
   :if (laptop?)
-  :defer 0.25
+  ;; :defer 0.25
   :config
   (diminish 'global-disable-mouse-mode)
   (diminish 'disable-mouse-mode)
@@ -333,6 +306,7 @@
   :pin melpa-stable
   :mode ("\\.py\\'" . python-mode)
   :config
+  (setq py-company-pycomplete-p nil)
   (use-rainbow-mode 'python-mode)
   (set-mode-name python-mode "Python"))
 
@@ -418,7 +392,7 @@
 
 (use-package auto-complete
   :if (not (exclude-pkg? 'auto-complete))
-  :defer 0.25
+  ;; :defer 0.25
   :config
   (ac-config-default)
   (setq ac-delay 0.025
@@ -435,8 +409,8 @@
   (real-global-auto-complete-mode t))
 
 (use-package company
-  :pin melpa-stable
-  :defer 0.75
+  :pin melpa
+  :defer 0.5
   :if (not (exclude-pkg? 'company))
   :diminish company-mode global-company-mode
   :init
@@ -447,7 +421,7 @@
         company-tooltip-align-annotations t
         company-tooltip-offset-display 'lines ; 'scrollbar
         company-minimum-prefix-length 3
-        company-idle-delay 0.10)
+        company-idle-delay 0.15)
   :config
   (add-to-list 'company-transformers 'company-sort-by-occurrence)
   (let ((inhibit-message t))
@@ -463,27 +437,41 @@
   "Use ag for projectile search if non-nil; otherwise use git grep."
   :group 'jeff)
 
+(defvar jeff/projectile-search-fn
+  (if jeff/use-projectile-ag 'helm-projectile-ag 'helm-projectile-grep))
+
 (use-package projectile
-  ;; :demand t
-  :bind (("C-c C-p p" . helm-projectile-switch-project))
+  :defer t
   :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
         projectile-indexing-method 'hybrid ; 'alien
         projectile-enable-caching t
         projectile-mode-line-prefix "")
+  :bind (
+         ;; ("C-c C-p"     . 'projectile-command-map)
+         ("C-c C-p p"   . helm-projectile-switch-project)
+         ("C-c C-p f"   . helm-projectile-find-file)
+         ("C-c C-p S"   . projectile-save-project-buffers)
+         ("C-c C-p C-s" . projectile-save-project-buffers)
+         ("C-c TAB"     . helm-projectile-switch-to-buffer)
+         ("C-c g"       . helm-projectile-grep))
   :config
+  (define-map-keys global-map
+    ("C-c C-p" 'projectile-command-map))
   (use-package helm-projectile
     :init (use-package helm)
     :config (helm-projectile-toggle 1))
-  (let ((search-fn (if jeff/use-projectile-ag 'projectile-ag 'projectile-grep)))
-    (define-map-keys projectile-mode-map
-      ("C-c g" search-fn))
-    (define-map-keys global-map
-      ("C-c g" search-fn)
-      ("C-c C-p" 'projectile-command-map)
-      ("C-c C-p C-s" 'projectile-save-project-buffers)
-      ("C-c TAB" 'projectile-switch-to-buffer)))
+  (define-map-keys projectile-mode-map
+    ("C-c g"         jeff/projectile-search-fn))
+  (define-map-keys global-map
+    ("C-c C-p"      'projectile-command-map)
+    ("C-c C-p p"    'helm-projectile-switch-project)
+    ("C-c C-p f"    'helm-projectile-find-file)
+    ("C-c C-p S"    'projectile-save-project-buffers)
+    ("C-c C-p C-s"  'projectile-save-project-buffers)
+    ("C-c TAB"      'helm-projectile-switch-to-buffer)
+    ("C-c g"        jeff/projectile-search-fn))
   (dolist (s '(".log" ".ai" ".svg" ".xml" ".zip" ".png" ".jpg"))
     (add-to-list 'grep-find-ignored-files (concat "*" s))
     ;; (add-to-list 'helm-ag-ignore-patterns (concat "*" s))
@@ -504,10 +492,11 @@
   :group 'jeff)
 
 (use-package flycheck
-  :pin melpa-stable
+  :pin melpa
   :defer t
   :init
-  (setq flycheck-global-modes '(clojure-mode clojurec-mode clojurescript-mode)
+  (setq flycheck-global-modes '(clojure-mode clojurec-mode clojurescript-mode
+                                             groovy-mode)
         flycheck-disabled-checkers '(clojure-cider-typed)
         ;; because git-gutter is in the left fringe
         flycheck-indication-mode 'right-fringe)
@@ -601,9 +590,13 @@
                    (if (not (minibufferp (current-buffer)))
                        (enable-paredit-mode))))
   (define-map-keys paredit-mode-map
-    ("C-<left>" nil)
-    ("C-<right>" nil)
-    ("C-M-f" nil)))
+    ("C-<left>"     nil)
+    ("C-<right>"    nil)
+    ("C-M-<left>"   nil)
+    ("C-M-<right>"  nil)
+    ("C-M-<up>"     nil)
+    ("C-M-<down>"   nil)
+    ("C-M-f"        nil)))
 
 (use-package smartparens
   :config
@@ -752,12 +745,25 @@
     ("C-S-<right>"    'org-metaright)
     ("C-S-<down>"     'org-metadown)
     ("C-S-<up>"       'org-metaup)
-    ("C-S-<return>"   'org-meta-return)
-    ("M-<return>"     'org-meta-return))
+    ("C-S-<return>"   'org-meta-return))
   ;; unbind conflicting keys
   (define-map-keys org-mode-map
     ("C-c C-p" nil)
     ("C-<tab>" nil))
+  (use-package org-present
+    :pin melpa)
+  (use-package org-projectile
+    :pin melpa)
+  (use-package helm-org-rifle
+    :pin melpa)
+  (use-package org-super-agenda
+    :pin melpa)
+  (use-package org-gcal
+    :pin melpa)
+  (use-package org-fancy-priorities
+    :pin melpa)
+  (use-package org-alert
+    :pin melpa)
   (use-package org-bullets
     :pin melpa
     :config
@@ -788,7 +794,9 @@
                                 (org-file-complete-link arg)
                                 t t))))
 
-(use-package pkgbuild-mode :mode "/PKGBUILD$")
+(use-package pkgbuild-mode :mode "/PKGBUILD")
+
+(use-package yaml-mode :mode "\\.yml\\'")
 
 ;;;
 ;;; theming
@@ -810,7 +818,7 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(defcustom modeline-font "InputMono Nerd Font:pixelsize=21"
+(defcustom modeline-font "InputMono Nerd Font 17"
   ;; "InputMono Nerd Font:pixelsize=23"
   ;; "AnkaCoder Nerd Font:pixelsize=24"
   ;; "Inconsolata Nerd Font 13"
@@ -820,7 +828,9 @@
 
 (defun switch-to-theme (theme)
   (cl-flet ((theme-p (s) (symbol-matches theme s)))
-    (let ()
+    (let ((lnum-font "Inconsolata:pixelsize=22")
+          (lnum-weight1 'semi-bold)
+          (lnum-weight2 'semi-bold))
       ;; load elpa package for theme
       (cond ((theme-p "sanityinc-tomorrow")
              (use-package color-theme-sanityinc-tomorrow))
@@ -831,7 +841,7 @@
                                             (use-package gruvbox-theme
                                               :ensure nil
                                               :load-path "~/.emacs.d/gruvbox-theme")))
-            ((theme-p "spacemacs-dark")   (use-package spacemacs-theme))
+            ;; ((theme-p "spacemacs-dark")   (use-package spacemacs-theme))
             ((theme-p "material")         (use-package material-theme))
             ((theme-p "ample")            (use-package ample-theme))
             ((theme-p "base16")           (use-package base16-theme))
@@ -852,6 +862,10 @@
         (disable-theme active-theme))
       ;; reset any modified face specs
       (reset-override-faces)
+      (set-override-faces `(line-number
+                            ((t (:font ,lnum-font :weight ,lnum-weight1))))
+                          `(line-number-current-line
+                            ((t (:font ,lnum-font :weight ,lnum-weight2)))))
       (cond ((theme-p "alect-dark")
              (alect-create-theme dark))
             ((theme-p "alect-dark-alt")
@@ -883,11 +897,17 @@
             ((theme-p "gruvbox")
              (set-override-faces
               ;; `(fringe ((t (:background "#373230"))))
-              `(fringe ((t (:background "#332c2a"))))
+              ;; `(fringe ((t (:background "#332c2a"))))
+              `(fringe ((t (:background "#37312b"))))
               `(line-number
-                ((t (:foreground "#7c6f64" :background "#3c3836"))))
+                ((t (;; :foreground "#7c6f64" :background "#3c3836"
+                     ;; :foreground "#6c5f54" :background "#363230"
+                     ;; :foreground "#5f5046" :background "#37312b"
+                     :foreground "#635448" :background "#37312b"
+                     :font ,lnum-font :weight ,lnum-weight1))))
               `(line-number-current-line
-                ((t (:foreground "#fe8019" :background "#3c3836"))))
+                ((t (:foreground "#fe8019" :background "#37312b"
+                                 :font ,lnum-font :weight ,lnum-weight2))))
               `(mode-line
                 ((t (:font ,modeline-font :foreground "#d5c4a1" :background "#665c54"))))
               `(mode-line-inactive
@@ -960,10 +980,6 @@ return value is nil."
    (t
     (tty-color-values color frame))))
 
-(when (null window-system)
-  ;; need to call this for terminal mode because the .Xdefaults settings won't apply
-  (menu-bar-mode -1))
-
 ;;;
 ;;; languages
 ;;;
@@ -982,15 +998,15 @@ return value is nil."
 
 (use-package cider
   :defer t
-  :pin melpa-stable
+  :pin melpa
   :diminish cider-mode
   :init
   (setq clojure-use-backtracking-indent t
         clojure-indent-style 'always-align ;; 'align-arguments
         cider-repl-use-pretty-printing t
-        cider-repl-popup-stacktraces t
         cider-auto-select-error-buffer t
         cider-prompt-for-symbol nil
+        cider-save-file-on-load t
         nrepl-use-ssh-fallback-for-remote-hosts t
         cider-preferred-build-tool 'shadow-cljs
         cider-default-cljs-repl 'shadow-select
@@ -1085,7 +1101,7 @@ return value is nil."
 
 (use-package flycheck-clojure
   :defer t
-  :pin melpa-stable
+  :pin melpa
   ;; :disabled t
   :init (use-package flycheck)
   :config (flycheck-clojure-setup))
@@ -1096,7 +1112,7 @@ return value is nil."
   :config (require 'flycheck-clj-kondo))
 
 (use-package clojure-mode
-  :pin melpa-stable
+  :pin melpa
   :mode (("\\.clj\\'" . clojure-mode)
          ("\\.cljc\\'" . clojurec-mode)
          ("\\.cljs\\'" . clojurescript-mode)
@@ -1188,7 +1204,7 @@ return value is nil."
   ;; (enable-lispy 'slime-mode-hook)
   ;; (enable-lispy 'slime-repl-mode-hook)
 
-  (use-package slime-annot)
+  ;;(use-package slime-annot)
   ;;(use-package slime-company)
   (use-package ac-slime
     :config
@@ -1221,6 +1237,7 @@ return value is nil."
   ("\\.sbt\\'" . scala-mode)
   :config
   (use-package ensime
+    :disabled t
     :diminish ensime-mode
     :config
     (setq ensime-startup-snapshot-notification nil)
@@ -1278,6 +1295,7 @@ return value is nil."
 (use-package js2-mode
   :defer t
   :pin melpa-stable
+  :mode "\\.config/waybar/config\\'"
   :config
   (flycheck-add-mode 'javascript-eslint 'js2-mode)
   (flycheck-add-mode 'javascript-eslint 'js2-jsx-mode)
@@ -1321,7 +1339,7 @@ return value is nil."
 ;;;
 ;;; Set up copy/paste and daemon
 ;;;
-
+;;
 ;; This sets up terminal-mode Emacs instances to use the X shared clipboard
 ;; for kill and yank commands.
 ;;
@@ -1329,22 +1347,43 @@ return value is nil."
 ;; My solution is to run a script (/usr/local/bin/emacs-reload)
 ;; in my i3wm config file to restart the emacs daemons upon
 ;; logging into an X session.
-(unless (mac?)
-  (defun xsel-paste ()
-    (shell-command-to-string "xsel -ob"))
-  (defun xsel-copy (text &optional push)
-    (let ((process-connection-type nil))
-      (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
-        (process-send-string proc text)
-        (process-send-eof proc))))
-  (defun do-xsel-copy-paste-setup ()
-    (when (and (null window-system)
-               (getenv "DISPLAY")
-               (file-exists-p "/usr/bin/xsel")
-               (not (equal (user-login-name) "root")))
-      (setq interprogram-cut-function 'xsel-copy)
-      (setq interprogram-paste-function 'xsel-paste)))
-  (do-xsel-copy-paste-setup))
+(defun xsel-paste ()
+  (shell-command-to-string "xsel -ob"))
+(defun xsel-copy (text &optional push)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
+(defun do-xsel-copy-paste-setup ()
+  (when (and (not (mac?))
+             (null window-system)
+             (getenv "DISPLAY")
+             (file-exists-p "/usr/bin/xsel")
+             (not (equal (user-login-name) "root")))
+    (setq interprogram-cut-function 'xsel-copy)
+    (setq interprogram-paste-function 'xsel-paste)))
+;;;
+;;; copy/paste for Wayland
+;;;
+(defun wl-paste ()
+  (shell-command-to-string "wl-paste -n"))
+(defun wl-copy (text &optional push)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "wl-copy" "*Messages*" "wl-copy")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
+(defun do-wayland-copy-paste-setup ()
+  (when (and (wayland?)
+             (null window-system)
+             (file-exists-p "/usr/bin/wl-copy")
+             (file-exists-p "/usr/bin/wl-paste")
+             (not (equal (user-login-name) "root")))
+    (setq interprogram-cut-function 'wl-copy)
+    (setq interprogram-paste-function 'wl-paste)))
+;;;
+(cond ((mac?)     nil)
+      ((wayland?) (do-wayland-copy-paste-setup))
+      (t          (do-xsel-copy-paste-setup)))
 
 ;; Make sure Emacs has the correct ssh-agent config,
 ;; in order to use tramp and git commands without requesting a password.
@@ -1366,7 +1405,8 @@ return value is nil."
 (use-package powerline
   :if (not jeff/use-spaceline)
   :config
-  (setq powerline-height 45
+  (setq powerline-height 29
+        ;; powerline-height 48
         powerline-default-separator 'arrow
         powerline-display-buffer-size nil
         powerline-display-mule-info nil
@@ -1418,46 +1458,54 @@ return value is nil."
    '("(->> (all-projects) count time)")
    '("@(subscribe [:active-panel])")))
 
-(defun jeff/init-ui (&optional frame)
-  (switch-custom-theme)
-  (scroll-bar-mode -1)
-  ;;(menu-bar-mode -1)
-  (tool-bar-mode -1)
+(defun jeff/init-display (&optional frame)
+  ;;(force-window-update)
+  (redraw-frame frame))
 
-  (when (gui-mac?)
+(defun jeff/init-ui (&optional frame initial full)
+  (when (or initial full)
+    (switch-custom-theme))
+
+  ;;(scroll-bar-mode -1)
+  ;;(menu-bar-mode -1)
+  ;;(tool-bar-mode -1)
+
+  (when (and full (gui-mac?))
     ;;(set-frame-font "Source Code Pro 19")
     ;;(set-frame-font "SauceCodePro Nerd Font Medium 19")
     ;;(set-frame-font "Sauce Code Powerline 19")
     ;;(set-frame-font "Fira Code-13")
     ;;(set-frame-font "Inconsolata for Powerline 15")
-    (set-frame-font "Inconsolata Nerd Font Mono 26"))
+    (set-frame-font "Inconsolata Nerd Font Mono 26" nil t))
 
-  ;;(set-frame-font "Inconsolata for Powerline:pixelsize=24")
   ;;(set-frame-font "Inconsolata for Powerline 16")
   ;;(set-frame-font "SauceCodePro Medium:pixelsize=26")
   ;;(set-frame-font "Inconsolata for Powerline:pixelsize=31")
   ;;(set-frame-font "Inconsolata Nerd Font Mono:pixelsize=29")
   ;;(set-frame-font "InconsolataGo Nerd Font Mono:pixelsize=29")
-  ;;(set-frame-font "Inconsolata Nerd Font Mono 15")
-  ;;(set-frame-font "InconsolataGo Nerd Font Mono 15")
-  ;;(set-frame-font "Inconsolata Nerd Font Mono 15")
-  ;;(set-frame-font "InconsolataGo Nerd Font Mono 15")
   ;;(set-frame-font "Anka/Coder Condensed:pixelsize=28")
   ;;(set-frame-font "AnkaCoder Nerd Font Mono:pixelsize=26")
-  ;;(set-frame-font "AnkaCoder Nerd Font Mono:pixelsize=28")
   ;;(set-frame-font "Anka/Coder:pixelsize=26")
-  ;;(set-frame-font "Input Mono:pixelsize=23")
-  ;;(set-frame-font "InputMono Medium:pixelsize=25")
+  ;;(set-frame-font "Input Mono Medium:pixelsize=25")
+  ;;(set-frame-font "InputMono Nerd Font:pixelsize=27")
+  ;;(set-frame-font "InputMono Nerd Font Medium 20")
+  ''(when (and full (graphical?))
+      (set-frame-font "InputMono Nerd Font:medium:pixelsize=26" nil t))
 
   (cond ((equal system-name "jeff-osx")
          (set-frame-width nil 100)
          (set-frame-height nil 48))
         ((equal system-name "jeff-mbp")
          nil))
-  (set-frame-parameter frame 'internal-border-width (if (graphical?) 7 0))
-  ;;(when (graphical?) (global-display-line-numbers-mode 1))
-  (powerline-reset)
-  (powerline-default-theme)
+
+  (when (and initial (graphical?))
+    (global-display-line-numbers-mode 0))
+  (when full
+    (powerline-reset)
+    (powerline-default-theme)
+    ;;(run-with-timer 0.1 nil 'jeff/init-display frame)
+    )
+
   nil)
 
 (load-local "auto-margin")
@@ -1474,21 +1522,26 @@ return value is nil."
                   clj-refactor flycheck-clojure flycheck-clj-kondo slime less-css-mode
                   web-mode js2-mode)
 
-(add-hook 'post-command-hook 'force-mode-line-update)
+;;(add-hook 'post-command-hook 'force-mode-line-update)
 
-(jeff/init-ui)
-(add-hook 'after-make-frame-functions #'jeff/init-ui)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (flycheck-clj-kondo flycheck-clojure cider js2-mode gh-md base16-theme web-mode use-package systemd smex smartparens scala-mode rainbow-mode python-mode powerline pkgbuild-mode paxedit paren-face paradox outshine org-pomodoro org-bullets nginx-mode mpv mic-paren markdown-mode magit lispy jade-mode helm-projectile helm-ag groovy-mode git-gutter-fringe ghc flycheck-pos-tip flx-ido elisp-slime-nav doom-themes disable-mouse diminish default-text-scale company-statistics company-quickhelp clj-refactor autothemer aggressive-indent ac-slime ac-haskell-process))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(defun jeff/describe-init ()
+  (message (emacs-init-time)))
+
+(defun jeff/after-init ()
+  (jeff/init-ui nil t)
+  (setq file-name-handler-alist file-name-handler-alist-backup
+        inhibit-message nil)
+  (run-with-timer 0.1 nil 'jeff/describe-init)
+  (run-with-timer 1.0 nil 'jeff/describe-init))
+
+;;(jeff/init-ui)
+(add-hook 'after-init-hook 'jeff/after-init)
+(add-hook 'after-make-frame-functions 'jeff/init-ui)
+
+;;(native-compile-async "~/.emacs.d/elpa/" t t)
+;;(native-compile-async "/usr/local/share/emacs/28.0.50/lisp" t t)
+
+;;(native-comp-available-p)
+;;(functionp 'json-serialize)
+
+;;(byte-recompile-file (locate-user-emacs-file "init.el") nil 0 nil)

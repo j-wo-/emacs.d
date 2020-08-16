@@ -1,16 +1,14 @@
 (defun jeff/scroll-down-one-line ()
   (interactive)
   (scroll-up 1)
-  (next-line)
-  ;; (forward-line 1)
-  )
+  ;; (next-line)
+  (forward-line 1))
 
 (defun jeff/scroll-up-one-line ()
   (interactive)
   (scroll-down 1)
-  (previous-line)
-  ;; (forward-line -1)
-  )
+  ;; (previous-line)
+  (forward-line -1))
 
 (defun jeff/helm-buffers-list-all ()
   (interactive)
@@ -74,6 +72,9 @@
 
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+
+(defvar mac-command-modifier)
+(defvar mac-option-modifier)
 
 ;; set modifier keys for MacOS
 (when (mac?)
