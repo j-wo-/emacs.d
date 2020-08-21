@@ -7,3 +7,9 @@
 [submodule "alect-themes"]
 	path = alect-themes
 	url = git@github.com:jeffwk/alect-themes.git
+[submodule "aggressive-indent-mode"]
+	path = aggressive-indent-mode
+	url = git@github.com:jeffwk/aggressive-indent-mode.git
+[submodule "org-alert"]
+	path = org-alert
+	url = git@github.com:jeffwk/org-alert.git

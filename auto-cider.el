@@ -1,8 +1,5 @@
 ;;; -*- lexical-binding: t -*-
 
-(eval-when-compile
-  (use-package cider))
-
 (require 'cl-lib)
 
 (defun all-sesman-sessions ()

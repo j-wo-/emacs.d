@@ -1,3 +1,10 @@
+(defmacro define-map-keys (map &rest defs)
+  `(progn
+     ,@(mapcar (lambda (entry)
+                 (cl-destructuring-bind (kbd-str func) entry
+                   `(define-key ,map (kbd ,kbd-str) ,func)))
+               defs)))
+
 (defun jeff/scroll-down-one-line ()
   (interactive)
   (scroll-up 1)
@@ -27,7 +34,7 @@
   ("C-q"          'delete-window)
   ("C-x x"        'split-window-below)
   ("M-<tab>"      'helm-mini)
-  ("C-<tab>"      'helm-mini)
+  ("C-<tab>"      'helm-projectile-switch-to-buffer)
   ("C-x TAB"      'helm-mini)           ; terminal
   ("C-x s"        'save-buffer)
   ("C-x C-s"      'save-buffer)

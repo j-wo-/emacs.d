@@ -1,10 +1,12 @@
 ;;; -*- lexical-binding: t -*-
 
+(set-language-environment "utf-8")
+
 (require 'cl-lib)
 
 (defun graphical? () (cl-some #'display-graphic-p (frame-list)))
-(defun laptop? () (or (equal system-name "jeff-mbp")
-                      (equal system-name "jeff-laptop")))
+(defun laptop? () (or (equal (system-name) "jeff-mbp")
+                      (equal (system-name) "jeff-laptop")))
 (defun mac? () (eql system-type 'darwin))
 (defun gui-mac-std? () (eql window-system 'ns))
 (defun gui-emacs-mac? () (eql window-system 'mac))
@@ -118,7 +120,7 @@
 
 ;; This is to get around an infinite recursion in emacs-lisp-mode-hook
 ;; when bootstrapping packages.
-(ensure-installed paren-face elisp-slime-nav paredit aggressive-indent)
+(ensure-installed paren-face elisp-slime-nav paredit)
 
 (defun cleanup-buffer ()
   (interactive)
@@ -136,18 +138,23 @@
             (cleanup-buffer)
             nil))
 
+(defun print-to-buffer (x)
+  ;;(insert "\n" (prin1-to-string x))
+  (princ (concat "\n" (with-output-to-string (print x))) (current-buffer)))
+
 (defun active-minor-modes ()
   (--filter (and (boundp it) (symbol-value it)) minor-mode-list))
-;;(insert "\n" (prin1-to-string (active-minor-modes)))
+;;(print-to-buffer (active-minor-modes))
+
 (defun minor-mode-active-p (minor-mode)
   (if (member minor-mode (active-minor-modes)) t nil))
 
 (defun load-local (file &optional no-byte-compile)
   (let ((path (locate-user-emacs-file file))
-        ;;(ext (if no-byte-compile ".el" ".elc"))
-        (ext ".el"))
-    ;;(unless no-byte-compile
-    ;;  (byte-recompile-file (concat path ".el") nil 0 nil))
+        ;;(ext ".el")
+        (ext (if no-byte-compile ".el" ".elc")))
+    (unless no-byte-compile
+      (byte-recompile-file (concat path ".el") nil 0 nil))
     (load (concat path ext) nil t t)))
 
 (load-local "keys")
@@ -173,9 +180,11 @@
   (diminish 'eldoc-mode)
   (diminish 'isearch-mode))
 
+(use-package vterm)
+
 (use-package outshine
   :defer t
-  :pin melpa-stable
+  :pin melpa
   :diminish outshine-mode
   :init (require 'outline)
   :config
@@ -223,7 +232,9 @@
   (diminish 'disable-mouse-global-mode)
   (disable-mouse-global-mode))
 
-(defun --tramp-config ()
+(use-package tramp
+  :defer t
+  :config
   (setq tramp-default-method "ssh")
   (add-to-list 'tramp-methods '("vcsh"
                                 (tramp-login-program "vcsh")
@@ -234,21 +245,8 @@
                                 (tramp-remote-shell-args
                                  ("-c")))))
 
-(defvar --tramp-use-package t)
-
 (defun ensure-tramp ()
-  (if --tramp-use-package
-      (use-package tramp)
-    (unless (member 'tramp features)
-      (require 'tramp)
-      (funcall #'--tramp-config))))
-
-(use-package tramp
-  :if --tramp-use-package
-  :defer t
-  :config (funcall #'--tramp-config))
-
-;; (ensure-tramp)
+  (use-package tramp))
 
 (defun symbol-suffix (sym suffix)
   (intern (concat (symbol-name sym) suffix)))
@@ -272,7 +270,7 @@
       (add-hook mode-hook 'rainbow-mode-1))))
 
 (use-package rainbow-mode
-  :defer 1.0
+  :defer 0.5
   :diminish rainbow-mode
   :init
   (setq rainbow-html-colors t
@@ -303,7 +301,7 @@
   (add-hook 'sh-mode-hook 'jeff/sh-mode-hook))
 
 (use-package python-mode
-  :pin melpa-stable
+  :pin melpa
   :mode ("\\.py\\'" . python-mode)
   :config
   (setq py-company-pycomplete-p nil)
@@ -334,7 +332,7 @@
   :commands esup)
 
 (use-package yasnippet
-  :pin melpa-stable
+  :pin melpa
   :defer t
   :diminish yas-minor-mode)
 
@@ -372,13 +370,14 @@
       (cl-some (lambda (fname) (member fname active-fnames))
                jeff/indent-disable-functions))))
 
-(use-package aggressive-indent
-  :config
+(defun jeff/load-aggressive-indent ()
+  (add-to-list 'load-path "~/.emacs.d/aggressive-indent-mode")
+  (require 'aggressive-indent)
   ;; " "
   ;; " "
   ;; unicode 2004 U+2004 (thick space)
   (diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr"))
-  (setq aggressive-indent-sit-for-time 0.05)
+  (setq aggressive-indent-sit-for-time 0.0)
   (unless (null jeff/indent-disable-functions)
     (add-to-list 'aggressive-indent-dont-indent-if
                  'jeff/indent-disable-function-active))
@@ -387,8 +386,14 @@
       (add-to-list 'aggressive-indent-excluded-modes mode))
     (aggressive-indent-global-mode)))
 
-(when jeff/use-global-aggressive-indent
-  (use-package aggressive-indent))
+(jeff/load-aggressive-indent)
+
+(use-package aggressive-indent
+  ;; :pin "melpa-stable"
+  :disabled t
+  :ensure nil
+  :load-path "~/.emacs.d/aggressive-indent-mode"
+  :init (jeff/load-aggressive-indent))
 
 (use-package auto-complete
   :if (not (exclude-pkg? 'auto-complete))
@@ -410,7 +415,7 @@
 
 (use-package company
   :pin melpa
-  :defer 0.5
+  :defer 0.25
   :if (not (exclude-pkg? 'company))
   :diminish company-mode global-company-mode
   :init
@@ -419,7 +424,7 @@
         company-dabbrev-ignore-case nil
         company-dabbrev-code-other-buffers t
         company-tooltip-align-annotations t
-        company-tooltip-offset-display 'lines ; 'scrollbar
+        company-tooltip-offset-display 'scrollbar ; 'lines
         company-minimum-prefix-length 3
         company-idle-delay 0.15)
   :config
@@ -429,7 +434,7 @@
   (use-package company-quickhelp
     :if t
     :config
-    (setq company-quickhelp-delay 1)
+    (setq company-quickhelp-delay 0.5)
     (company-quickhelp-mode 1))
   (global-company-mode 1))
 
@@ -445,7 +450,7 @@
   :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
-        projectile-indexing-method 'hybrid ; 'alien
+        projectile-indexing-method 'alien ;; 'hybrid
         projectile-enable-caching t
         projectile-mode-line-prefix "")
   :bind (
@@ -491,13 +496,29 @@
   "Runs (global-flycheck-mode 1) if non-nil."
   :group 'jeff)
 
+;;(print-to-buffer byte-compile-warning-types)
+
+;; (redefine
+;;  callargs
+;;  free-vars
+;;  unresolved
+;;  obsolete
+;;  noruntime
+;;  cl-functions
+;;  interactive-only
+;;  make-local
+;;  mapcar
+;;  constants
+;;  suspicious
+;;  lexical)
+
 (use-package flycheck
   :pin melpa
-  :defer t
+  :demand t
   :init
-  (setq flycheck-global-modes '(clojure-mode clojurec-mode clojurescript-mode
-                                             groovy-mode)
-        flycheck-disabled-checkers '(clojure-cider-typed)
+  (setq flycheck-global-modes t
+        ;; '(clojure-mode clojurec-mode clojurescript-mode groovy-mode)
+        flycheck-disabled-checkers '(clojure-cider-typed emacs-lisp-checkdoc)
         ;; because git-gutter is in the left fringe
         flycheck-indication-mode 'right-fringe)
   :config
@@ -673,7 +694,7 @@
   :config (do-git-gutter-config))
 
 (use-package magit
-  :pin melpa-stable
+  :pin melpa
   :bind (("C-x g" . magit-status)
          ("C-x C-g" . magit-dispatch-popup))
   :config
@@ -683,7 +704,7 @@
   (use-package projectile))
 
 (use-package paradox
-  :pin melpa-stable
+  :pin melpa
   :commands list-packages paradox-list-packages
   :config (paradox-enable))
 
@@ -712,7 +733,7 @@
   (add-hook 'groovy-mode-hook #'do-groovy-mode-config))
 
 (use-package markdown-mode
-  :pin melpa-stable
+  :pin melpa
   :commands markdown-mode gfm-mode
   :mode
   ("README\\.md\\'" . gfm-mode)
@@ -726,6 +747,18 @@
   :config
   (unless jeff/use-global-aggressive-indent
     (add-hook 'nginx-mode-hook #'aggressive-indent-mode)))
+
+(use-package alert
+  :pin melpa
+  :config
+  (setq alert-default-style 'libnotify
+        alert-fade-time 10))
+
+(defun jeff/init-time (&optional as-string)
+  (let ((init-time (float-time
+                    (time-subtract after-init-time before-init-time))))
+    (if as-string (format "%.2fs" init-time) init-time)))
+;;(jeff/init-time t)
 
 (use-package org
   :mode ("\\.org\\'" . org-mode)
@@ -763,7 +796,10 @@
   (use-package org-fancy-priorities
     :pin melpa)
   (use-package org-alert
-    :pin melpa)
+    :load-path "~/.emacs.d/org-alert"
+    :config
+    (setq org-alert-interval 600)
+    (org-alert-disable))
   (use-package org-bullets
     :pin melpa
     :config
@@ -818,7 +854,7 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(defcustom modeline-font "InputMono Nerd Font 17"
+(defcustom modeline-font "InputMono Nerd Font:medium:pixelsize=25"
   ;; "InputMono Nerd Font:pixelsize=23"
   ;; "AnkaCoder Nerd Font:pixelsize=24"
   ;; "Inconsolata Nerd Font 13"
@@ -852,8 +888,8 @@
             ((theme-p "apropospriate")    (use-package apropospriate-theme))
             ((theme-p "molokai")          (use-package molokai-theme))
             ((theme-p "monokai")          (use-package monokai-theme))
-            ((theme-p "leuven")           (use-package leuven-theme :pin melpa))
-            ((theme-p "cyberpunk")        (use-package cyberpunk-theme :pin melpa))
+            ((theme-p "leuven")           (use-package leuven-theme))
+            ((theme-p "cyberpunk")        (use-package cyberpunk-theme))
             ((theme-p "alect")            (use-package alect-themes
                                             :ensure nil
                                             :load-path "~/.emacs.d/alect-themes")))
@@ -1122,14 +1158,13 @@ return value is nil."
     (use-package paredit)
     (ensure-lispy)
     (use-package paren-face)
-    (use-package aggressive-indent)
     (use-package cider)
     (use-package clj-refactor)
     (use-package flycheck-clojure)
     (use-package flycheck-clj-kondo)))
 
 (use-package slime
-  :pin melpa-stable
+  :pin melpa
   :commands slime
   :mode
   ("\\.lisp\\'" . lisp-mode)
@@ -1141,7 +1176,6 @@ return value is nil."
   (use-package paredit)
   (ensure-lispy)
   (use-package paren-face)
-  (use-package aggressive-indent)
   (add-hook 'lisp-mode-hook
             (lambda ()
               (setq-local lisp-indent-function
@@ -1222,9 +1256,6 @@ return value is nil."
             (turn-on-elisp-slime-nav-mode)
             (use-package paredit)
             (ensure-lispy)
-            (unless jeff/use-global-aggressive-indent
-              (use-package aggressive-indent)
-              (aggressive-indent-mode))
             (turn-off-smartparens-mode)
             (enable-paredit-mode)
             (when --use-lispy (lispy-mode 1))
@@ -1294,7 +1325,7 @@ return value is nil."
 
 (use-package js2-mode
   :defer t
-  :pin melpa-stable
+  :pin melpa
   :mode "\\.config/waybar/config\\'"
   :config
   (flycheck-add-mode 'javascript-eslint 'js2-mode)
@@ -1312,15 +1343,21 @@ return value is nil."
   (add-hook 'js2-mode-hook 'my-js2-mode-hook)
   (add-hook 'js2-jsx-mode-hook 'my-js2-mode-hook))
 
+(use-package js-mode
+  :ensure nil
+  :mode ("\\.js\\'" "\\.json\\'"
+         "\\.config/waybar/config\\'"))
+
 (use-package web-mode
-  :pin melpa-stable
-  :mode "\\.js\\'" "\\.jsx\\'" "\\.json\\'"
+  :pin melpa
+  ;; :mode ("\\.js\\'" "\\.jsx\\'" "\\.json\\'")
+  :mode "\\.jsx\\'"
   :config
   (use-package tern
     :disabled t
-    :pin melpa-stable)
+    :pin melpa)
   (use-package flycheck)
-  (use-package js2-mode)
+  (use-package js-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   (add-to-list 'flycheck-disabled-checkers 'javascript-jshint)
   (add-to-list 'flycheck-disabled-checkers 'json-jsonlist)
@@ -1492,14 +1529,14 @@ return value is nil."
   ''(when (and full (graphical?))
       (set-frame-font "InputMono Nerd Font:medium:pixelsize=26" nil t))
 
-  (cond ((equal system-name "jeff-osx")
+  (cond ((equal (system-name) "jeff-osx")
          (set-frame-width nil 100)
          (set-frame-height nil 48))
-        ((equal system-name "jeff-mbp")
+        ((equal (system-name) "jeff-mbp")
          nil))
 
   (when (and initial (graphical?))
-    (global-display-line-numbers-mode 0))
+    (global-display-line-numbers-mode 1))
   (when full
     (powerline-reset)
     (powerline-default-theme)
@@ -1522,16 +1559,19 @@ return value is nil."
                   clj-refactor flycheck-clojure flycheck-clj-kondo slime less-css-mode
                   web-mode js2-mode)
 
-;;(add-hook 'post-command-hook 'force-mode-line-update)
+(add-hook 'post-command-hook 'force-mode-line-update)
 
 (defun jeff/describe-init ()
-  (message (emacs-init-time)))
+  (interactive)
+  (let ((alert-fade-time (if (display-graphic-p) 5 2)))
+    (alert (format "Emacs started in %s" (jeff/init-time t))
+           :title (format "Emacs <%s>" (buffer-name))
+           :category 'emacs-init)))
 
 (defun jeff/after-init ()
   (jeff/init-ui nil t)
   (setq file-name-handler-alist file-name-handler-alist-backup
         inhibit-message nil)
-  (run-with-timer 0.1 nil 'jeff/describe-init)
   (run-with-timer 1.0 nil 'jeff/describe-init))
 
 ;;(jeff/init-ui)
@@ -1544,4 +1584,32 @@ return value is nil."
 ;;(native-comp-available-p)
 ;;(functionp 'json-serialize)
 
+(defun native-comp? ()
+  (and (functionp 'native-comp-available-p)
+       (native-comp-available-p)))
+
+(defmacro jeff/with-exec-time (& body)
+  `(let ((time-start (time-since before-init-time)))
+     ,@body
+     (let ((elapsed (time-since time-start)))
+       elapsed)))
+
+(defun jeff/native-comp-all ()
+  (when (native-comp?)
+    (dolist (x '("~/.emacs.d/elpa"
+                 "~/.emacs.d/aggressive-indent-mode"
+                 "~/.emacs.d/gruvbox-theme"
+                 "~/.emacs.d/eval-sexp-fu.el"
+                 "~/.emacs.d/commands.el"
+                 "~/.emacs.d/keys.el"
+                 "~/.emacs.d/auto-margin.el"
+                 "/usr/share/emacs/28.0.50/"
+                 ;;"~/repos/elisp-benchmarks/benchmarks/"
+                 ))
+      (native-compile-async x t t))))
+
 ;;(byte-recompile-file (locate-user-emacs-file "init.el") nil 0 nil)
+
+;; Local Variables:
+;; byte-compile-warnings: (not free-vars make-local callargs)
+;; End:
