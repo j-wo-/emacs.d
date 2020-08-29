@@ -13,6 +13,58 @@
 (defun gui-mac? () (or (gui-mac-std?) (gui-emacs-mac?)))
 (defun wayland? () (and (getenv "DISPLAY") (getenv "WAYLAND_DISPLAY") t))
 
+(defvar jeff/all-config-files
+  (list "~/.emacs.d/init.el"
+        "~/.emacs.d/early-init.el"
+        "~/.gitconfig"
+        "~/.ssh/config"
+        "~/.config/mpv/mpv.conf"
+        "~/.config/sway/config"
+        "~/.config/mako/config"
+        "~/.config/waybar/config"
+        "~/.config/wofi/config"
+        "~/.config/alacritty/alacritty.yml"
+        "~/bin/vcsh/launch-sway-programs"
+        "~/bin/vcsh/makepkg-chroot"
+        "~/abs/build"
+        "~/abs/build-one"
+        "~/abs/build-all"))
+
+(defun --launch-user-main ()
+  (interactive)
+  (with-delay 0.5
+    (delete-other-windows)
+    (dolist (f (append jeff/all-config-files '("~/.emacs.d/init.el")))
+      (message "opened: %s" f)
+      (find-file-existing f))
+    (when (and nil (graphical?))
+      (split-window-right)
+      (switch-to-buffer-other-window (messages-buffer)))))
+
+(defun --launch-todo ()
+  (interactive)
+  (use-package org)
+  (with-delay 0.5
+    (find-file "~/.emacs.d/init.el")
+    (find-file "~/org/self.org")
+    (delete-other-windows)
+    (org-shifttab)
+    (org-shifttab)
+    (org-shifttab)
+    (split-window-right)
+    (org-agenda-list)
+    (org-alert-enable)))
+
+(defun --launch-code ()
+  (interactive)
+  (use-package clojure-mode)
+  (use-package magit)
+  (with-delay 0.5
+    (find-file "~/code/sysrev/project.clj")
+    (split-window-right)
+    (magit-status-setup-buffer)
+    (sysrev)))
+
 ;;; Favorite themes (dark)
 ;; 'base16-eighties
 ;; 'leuven-dark
@@ -71,11 +123,14 @@
   (not (null (string-match-p str (symbol-name sym)))))
 
 (defmacro define-map-keys (map &rest defs)
-  `(progn
-     ,@(mapcar (lambda (entry)
-                 (cl-destructuring-bind (kbd-str func) entry
-                   `(define-key ,map (kbd ,kbd-str) ,func)))
-               defs)))
+  `(progn ,@(mapcar (lambda (entry)
+                      (cl-destructuring-bind (kbd-str func) entry
+                        `(define-key ,map (kbd ,kbd-str) ,func)))
+                    defs)))
+
+(defmacro define-map-keys-multi (maps &rest defs)
+  `(progn ,@(mapcar (lambda (m) `(define-map-keys ,m ,@defs))
+                    maps)))
 
 ;;;
 ;;; Package setup
@@ -133,10 +188,11 @@
 ;;
 ;; (eg. makefile-gmake-mode will set indent-tabs-mode to t,
 ;;  so the syntactic tabs in Makefile files will be maintained)
-(add-hook 'write-file-hooks
+(add-hook 'write-file-functions
           (lambda ()
             (cleanup-buffer)
             nil))
+;;(setq write-file-functions nil)
 
 (defun print-to-buffer (x)
   ;;(insert "\n" (prin1-to-string x))
@@ -149,11 +205,12 @@
 (defun minor-mode-active-p (minor-mode)
   (if (member minor-mode (active-minor-modes)) t nil))
 
-(defun load-local (file &optional no-byte-compile)
+(defun load-local (file &optional no-compile)
   (let ((path (locate-user-emacs-file file))
         ;;(ext ".el")
-        (ext (if no-byte-compile ".el" ".elc")))
-    (unless no-byte-compile
+        (ext (if no-compile ".el" ".elc"))
+        (no-byte-compile no-compile))
+    (unless no-compile
       (byte-recompile-file (concat path ".el") nil 0 nil))
     (load (concat path ext) nil t t)))
 
@@ -180,7 +237,8 @@
   (diminish 'eldoc-mode)
   (diminish 'isearch-mode))
 
-(use-package vterm)
+(use-package vterm
+  :commands vterm)
 
 (use-package outshine
   :defer t
@@ -225,7 +283,6 @@
 
 (use-package disable-mouse
   :if (laptop?)
-  ;; :defer 0.25
   :config
   (diminish 'global-disable-mouse-mode)
   (diminish 'disable-mouse-mode)
@@ -244,9 +301,6 @@
                                 (tramp-remote-shell "/bin/sh")
                                 (tramp-remote-shell-args
                                  ("-c")))))
-
-(defun ensure-tramp ()
-  (use-package tramp))
 
 (defun symbol-suffix (sym suffix)
   (intern (concat (symbol-name sym) suffix)))
@@ -320,7 +374,6 @@
     (add-to-list 'helm-white-buffer-regexp-list b))
   ;; helm-map helm-ag-map helm-do-ag-map
   (use-package helm-ag
-    :disabled t
     :init (setq helm-ag-insert-at-point 'symbol
                 helm-ag-use-temp-buffer t
                 helm-ag-use-grep-ignore-list t))
@@ -377,7 +430,7 @@
   ;; " "
   ;; unicode 2004 U+2004 (thick space)
   (diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr"))
-  (setq aggressive-indent-sit-for-time 0.0)
+  (setq aggressive-indent-sit-for-time 0.025)
   (unless (null jeff/indent-disable-functions)
     (add-to-list 'aggressive-indent-dont-indent-if
                  'jeff/indent-disable-function-active))
@@ -397,7 +450,7 @@
 
 (use-package auto-complete
   :if (not (exclude-pkg? 'auto-complete))
-  ;; :defer 0.25
+  :defer 0.25
   :config
   (ac-config-default)
   (setq ac-delay 0.025
@@ -446,37 +499,37 @@
   (if jeff/use-projectile-ag 'helm-projectile-ag 'helm-projectile-grep))
 
 (use-package projectile
-  :defer t
   :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
-        projectile-indexing-method 'alien ;; 'hybrid
+        projectile-indexing-method 'hybrid
         projectile-enable-caching t
         projectile-mode-line-prefix "")
-  :bind (
-         ;; ("C-c C-p"     . 'projectile-command-map)
-         ("C-c C-p p"   . helm-projectile-switch-project)
-         ("C-c C-p f"   . helm-projectile-find-file)
-         ("C-c C-p S"   . projectile-save-project-buffers)
-         ("C-c C-p C-s" . projectile-save-project-buffers)
+  :bind (("C-c p"       . projectile-command-map)
+         ("C-c C-p"     . projectile-command-map)
          ("C-c TAB"     . helm-projectile-switch-to-buffer)
-         ("C-c g"       . helm-projectile-grep))
+         ("C-c g"       . helm-projectile-grep)
+         ("C-c G"       . projectile-grep)
+         ("C-c C-s"     . helm-projectile-ag)
+         ("C-c s"       . helm-projectile-ag)
+         ("C-c S"       . projectile-ag))
   :config
-  (define-map-keys global-map
-    ("C-c C-p" 'projectile-command-map))
   (use-package helm-projectile
     :init (use-package helm)
     :config (helm-projectile-toggle 1))
-  (define-map-keys projectile-mode-map
-    ("C-c g"         jeff/projectile-search-fn))
-  (define-map-keys global-map
+  (define-map-keys projectile-command-map
+    ("p"            'helm-projectile-switch-project)
+    ("S"            'projectile-save-project-buffers)
+    ("C-s"          'projectile-save-project-buffers))
+  (define-map-keys-multi (global-map projectile-mode-map)
+    ("C-c p"        'projectile-command-map)
     ("C-c C-p"      'projectile-command-map)
-    ("C-c C-p p"    'helm-projectile-switch-project)
-    ("C-c C-p f"    'helm-projectile-find-file)
-    ("C-c C-p S"    'projectile-save-project-buffers)
-    ("C-c C-p C-s"  'projectile-save-project-buffers)
     ("C-c TAB"      'helm-projectile-switch-to-buffer)
-    ("C-c g"        jeff/projectile-search-fn))
+    ("C-c g"        'helm-projectile-grep)
+    ("C-c G"        'projectile-grep)
+    ("C-c C-s"      'helm-projectile-ag)
+    ("C-c s"        'helm-projectile-ag)
+    ("C-c S"        'projectile-ag))
   (dolist (s '(".log" ".ai" ".svg" ".xml" ".zip" ".png" ".jpg"))
     (add-to-list 'grep-find-ignored-files (concat "*" s))
     ;; (add-to-list 'helm-ag-ignore-patterns (concat "*" s))
@@ -514,7 +567,7 @@
 
 (use-package flycheck
   :pin melpa
-  :demand t
+  :defer 0.25
   :init
   (setq flycheck-global-modes t
         ;; '(clojure-mode clojurec-mode clojurescript-mode groovy-mode)
@@ -547,10 +600,8 @@
   (when jeff/flycheck-global
     (global-flycheck-mode 1)))
 
-(when jeff/flycheck-global
-  (use-package flycheck))
-
 (use-package flx-ido
+  :defer 0.25
   :init
   (require 'ido)
   (setq ido-enable-flex-matching t
@@ -564,6 +615,7 @@
   :defer 0.5
   :config (paren-activate))
 ;; (paren-deactivate)
+;; (--with-elapsed-time-alert (paren-activate) (paren-deactivate) (paren-activate))
 
 (defun theme? (theme)
   (let ((theme (if (symbolp theme) (symbol-name theme) theme)))
@@ -620,6 +672,7 @@
     ("C-M-f"        nil)))
 
 (use-package smartparens
+  :defer 0.25
   :config
   (sp-pair "'" nil :actions :rem)
   (sp-pair "`" nil :actions :rem)
@@ -684,11 +737,13 @@
   (global-git-gutter-mode t))
 
 (use-package git-gutter-fringe
+  :defer 0.2
   :diminish git-gutter-mode
   :if window-system
   :config (do-git-gutter-config))
 
 (use-package git-gutter
+  :defer 0.2
   :diminish git-gutter-mode
   :if (null window-system)
   :config (do-git-gutter-config))
@@ -704,9 +759,11 @@
   (use-package projectile))
 
 (use-package paradox
+  :defer t
   :pin melpa
   :commands list-packages paradox-list-packages
-  :config (paradox-enable))
+  :config (let ((inhibit-message t))
+            (paradox-enable)))
 
 (defcustom jeff/enable-auto-neotree nil
   "Non-nil enables hooks to integrate neotree into various actions."
@@ -752,13 +809,21 @@
   :pin melpa
   :config
   (setq alert-default-style 'libnotify
-        alert-fade-time 10))
+        alert-fade-time 5))
 
 (defun jeff/init-time (&optional as-string)
   (let ((init-time (float-time
                     (time-subtract after-init-time before-init-time))))
     (if as-string (format "%.2fs" init-time) init-time)))
 ;;(jeff/init-time t)
+
+(defun jeff/load-org-notify ()
+  (interactive)
+  (when (not (featurep 'org-notify))
+    (use-package org)
+    (add-to-list 'load-path "~/.emacs.d/org-notify")
+    (require 'org-notify)
+    (setq org-notify-interval 600)))
 
 (use-package org
   :mode ("\\.org\\'" . org-mode)
@@ -783,6 +848,8 @@
   (define-map-keys org-mode-map
     ("C-c C-p" nil)
     ("C-<tab>" nil))
+  (use-package org-ql
+    :pin melpa)
   (use-package org-present
     :pin melpa)
   (use-package org-projectile
@@ -795,10 +862,12 @@
     :pin melpa)
   (use-package org-fancy-priorities
     :pin melpa)
+  (jeff/load-org-notify)
   (use-package org-alert
     :load-path "~/.emacs.d/org-alert"
     :config
-    (setq org-alert-interval 600)
+    (setq org-alert-interval 600
+          org-alert-fade-time 10)
     (org-alert-disable))
   (use-package org-bullets
     :pin melpa
@@ -1047,7 +1116,7 @@ return value is nil."
         cider-preferred-build-tool 'shadow-cljs
         cider-default-cljs-repl 'shadow-select
         cider-shadow-default-options ":dev")
-  (ensure-tramp)
+  (use-package tramp)
   :config
   (let ((inhibit-message t))
     ;; (setq-default clojure-docstring-fill-column 70)
@@ -1056,10 +1125,9 @@ return value is nil."
       (add-hook 'cider-mode-hook 'ac-flyspell-workaround)
       (add-hook 'cider-mode-hook 'ac-cider-setup)
       (add-hook 'cider-repl-mode-hook 'ac-cider-setup)
-      (eval-after-load "auto-complete"
-        `(progn
-           (add-to-list 'ac-modes 'cider-mode)
-           (add-to-list 'ac-modes 'cider-repl-mode))))
+      (use-package auto-complete)
+      (add-to-list 'ac-modes 'cider-mode)
+      (add-to-list 'ac-modes 'cider-repl-mode))
     (set-mode-name clojure-mode "CLJ")
     (set-mode-name clojurescript-mode "CLJS")
     (set-mode-name clojurec-mode "CLJC")
@@ -1092,7 +1160,7 @@ return value is nil."
           (cider-repl-return)
           (insert (format "(in-ns '%s)" cider-figwheel-connecting))
           (cider-repl-return))))
-;;; (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
+    ;; (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
     (defun cider-connect-figwheel (&optional port)
       (interactive)
       (let ((port (or port 7888))
@@ -1164,13 +1232,14 @@ return value is nil."
     (use-package flycheck-clj-kondo)))
 
 (use-package slime
+  :disabled t
   :pin melpa
   :commands slime
   :mode
   ("\\.lisp\\'" . lisp-mode)
   ("\\.asd\\'" . lisp-mode)
   :init
-  (ensure-tramp)
+  (use-package tramp)
   (setq slime-contribs '(slime-fancy slime-tramp))
   :config
   (use-package paredit)
@@ -1324,9 +1393,9 @@ return value is nil."
   :config (use-rainbow-mode 'less-css-mode))
 
 (use-package js2-mode
-  :defer t
   :pin melpa
-  :mode "\\.config/waybar/config\\'"
+  :mode ("\\.js\\'" "\\.json\\'"
+         "\\.config/waybar/config\\'")
   :config
   (flycheck-add-mode 'javascript-eslint 'js2-mode)
   (flycheck-add-mode 'javascript-eslint 'js2-jsx-mode)
@@ -1343,11 +1412,6 @@ return value is nil."
   (add-hook 'js2-mode-hook 'my-js2-mode-hook)
   (add-hook 'js2-jsx-mode-hook 'my-js2-mode-hook))
 
-(use-package js-mode
-  :ensure nil
-  :mode ("\\.js\\'" "\\.json\\'"
-         "\\.config/waybar/config\\'"))
-
 (use-package web-mode
   :pin melpa
   ;; :mode ("\\.js\\'" "\\.jsx\\'" "\\.json\\'")
@@ -1357,7 +1421,6 @@ return value is nil."
     :disabled t
     :pin melpa)
   (use-package flycheck)
-  (use-package js-mode)
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   (add-to-list 'flycheck-disabled-checkers 'javascript-jshint)
   (add-to-list 'flycheck-disabled-checkers 'json-jsonlist)
@@ -1417,10 +1480,6 @@ return value is nil."
              (not (equal (user-login-name) "root")))
     (setq interprogram-cut-function 'wl-copy)
     (setq interprogram-paste-function 'wl-paste)))
-;;;
-(cond ((mac?)     nil)
-      ((wayland?) (do-wayland-copy-paste-setup))
-      (t          (do-xsel-copy-paste-setup)))
 
 ;; Make sure Emacs has the correct ssh-agent config,
 ;; in order to use tramp and git commands without requesting a password.
@@ -1433,7 +1492,8 @@ return value is nil."
 ;; are using the same path for the socket file.
 ;; The path is set here, and the same is set in a script
 ;; for starting emacsclient (/usr/local/bin/e).
-(setq server-socket-dir (format "/tmp/%s/emacs%d" (user-login-name) (user-uid)))
+(unless (graphical?)
+  (setq server-socket-dir (format "/tmp/%s/emacs%d" (user-login-name) (user-uid))))
 
 (defcustom jeff/use-spaceline nil
   "Uses spaceline for modeline if non-nil."
@@ -1463,7 +1523,7 @@ return value is nil."
 (use-package doom-themes
   :config
   (add-hook 'after-init-hook #'doom-themes-visual-bell-config)
-  (add-hook 'after-init-hook #'doom-themes-neotree-config)
+  ;;(add-hook 'after-init-hook #'doom-themes-neotree-config)
   (setq doom-neotree-enable-variable-pitch t
         doom-neotree-file-icons 'simple
         doom-neotree-line-spacing 2)
@@ -1472,6 +1532,7 @@ return value is nil."
     (doom-themes-neotree-config)))
 
 (use-package default-text-scale
+  :defer 0.5
   :config
   (setq default-text-scale-amount 10)
   (default-text-scale-mode)
@@ -1495,9 +1556,27 @@ return value is nil."
    '("(->> (all-projects) count time)")
    '("@(subscribe [:active-panel])")))
 
-(defun jeff/init-display (&optional frame)
-  ;;(force-window-update)
-  (redraw-frame frame))
+(defun --cider-quit-all ()
+  (interactive)
+  (use-package projectile)
+  (stop-cider-all)
+  (save-excursion
+    (find-file "~/code/sysrev/project.clj")
+    (dolist (b (projectile-project-buffers))
+      (kill-buffer b))))
+
+(defun --benchmark-sysrev ()
+  (interactive)
+  (use-package projectile)
+  (--cider-quit-all)
+  (with-delay 0.1 (garbage-collect))
+  (with-delay 0.25 (sysrev))
+  (with-delay 2.5 (--cider-quit-all)))
+
+(defun jeff/init-copy-paste ()
+  (cond ((mac?)     nil)
+        ((wayland?) (do-wayland-copy-paste-setup))
+        (t          (do-xsel-copy-paste-setup))))
 
 (defun jeff/init-ui (&optional frame initial full)
   (when (or initial full)
@@ -1537,11 +1616,10 @@ return value is nil."
 
   (when (and initial (graphical?))
     (global-display-line-numbers-mode 1))
+
   (when full
     (powerline-reset)
-    (powerline-default-theme)
-    ;;(run-with-timer 0.1 nil 'jeff/init-display frame)
-    )
+    (powerline-default-theme))
 
   nil)
 
@@ -1556,10 +1634,53 @@ return value is nil."
                   helm-projectile smex flycheck fringe-helper flycheck-pos-tip mic-paren
                   paredit paxedit magit paradox systemd groovy-mode markdown-mode nginx-mode
                   org org-bullets org-pomodoro mpv pkgbuild-mode clojure-mode cider
-                  clj-refactor flycheck-clojure flycheck-clj-kondo slime less-css-mode
+                  clj-refactor flycheck-clojure flycheck-clj-kondo less-css-mode
                   web-mode js2-mode)
 
-(add-hook 'post-command-hook 'force-mode-line-update)
+(defun native-comp? ()
+  (and (functionp 'native-comp-available-p)
+       (native-comp-available-p)))
+
+(defun --body-title (body)
+  (let* ((form (car (last body)))
+         (full (prin1-to-string form)))
+    (cond ((<= (length full) 40)
+           full)
+          ((and (listp form) (symbolp (car form)))
+           (format "(%s ...)" (symbol-name (car form))))
+          (t "<body>"))))
+
+(defun --elapsed-seconds (start-time)
+  (time-to-seconds (time-since start-time)))
+
+(defmacro --with-elapsed-time (&rest body)
+  `(let ((time-start (current-time)))
+     ,@body
+     (let ((elapsed (time-since time-start)))
+       (time-to-seconds elapsed))))
+
+(defun --elapsed-alert (title elapsed)
+  (let ((alert-fade-time 3))
+    (alert (format "Elapsed: %.3fs" elapsed)
+           :title title)))
+
+(defmacro --with-elapsed-time-alert (&rest body)
+  `(--elapsed-alert (--body-title ',body)
+                    (--with-elapsed-time ,@body)))
+
+;;(--with-elapsed-time-alert (+ 1 2))
+
+(defun jeff/native-comp-all ()
+  (interactive)
+  (jeff/native-comp-path "~/.emacs.d/elpa/")
+  ;; (jeff/native-comp-path "/usr/share/emacs/28.0.50/")
+  (jeff/native-comp-path "/usr/local/share/emacs/28.0.50/lisp/")
+  t)
+
+(defun jeff/native-comp-path (path)
+  (when (native-comp?)
+    (let ((comp-always-compile t))
+      (native-compile-async path t nil))))
 
 (defun jeff/describe-init ()
   (interactive)
@@ -1570,45 +1691,18 @@ return value is nil."
 
 (defun jeff/after-init ()
   (jeff/init-ui nil t)
-  (setq file-name-handler-alist file-name-handler-alist-backup
-        inhibit-message nil)
-  (run-with-timer 1.0 nil 'jeff/describe-init))
+  (jeff/init-copy-paste)
+  (force-window-update)
+  (redraw-frame)
+  (run-with-timer 1.0 nil 'jeff/describe-init)
+  (garbage-collect))
 
-;;(jeff/init-ui)
+(add-hook 'post-command-hook 'force-mode-line-update)
+
 (add-hook 'after-init-hook 'jeff/after-init)
-(add-hook 'after-make-frame-functions 'jeff/init-ui)
+;;(add-hook 'after-make-frame-functions 'jeff/init-ui)
 
-;;(native-compile-async "~/.emacs.d/elpa/" t t)
-;;(native-compile-async "/usr/local/share/emacs/28.0.50/lisp" t t)
-
-;;(native-comp-available-p)
-;;(functionp 'json-serialize)
-
-(defun native-comp? ()
-  (and (functionp 'native-comp-available-p)
-       (native-comp-available-p)))
-
-(defmacro jeff/with-exec-time (& body)
-  `(let ((time-start (time-since before-init-time)))
-     ,@body
-     (let ((elapsed (time-since time-start)))
-       elapsed)))
-
-(defun jeff/native-comp-all ()
-  (when (native-comp?)
-    (dolist (x '("~/.emacs.d/elpa"
-                 "~/.emacs.d/aggressive-indent-mode"
-                 "~/.emacs.d/gruvbox-theme"
-                 "~/.emacs.d/eval-sexp-fu.el"
-                 "~/.emacs.d/commands.el"
-                 "~/.emacs.d/keys.el"
-                 "~/.emacs.d/auto-margin.el"
-                 "/usr/share/emacs/28.0.50/"
-                 ;;"~/repos/elisp-benchmarks/benchmarks/"
-                 ))
-      (native-compile-async x t t))))
-
-;;(byte-recompile-file (locate-user-emacs-file "init.el") nil 0 nil)
+;;(byte-recompile-file "~/.emacs.d/init.el" nil 0 nil)
 
 ;; Local Variables:
 ;; byte-compile-warnings: (not free-vars make-local callargs)

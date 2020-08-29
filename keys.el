@@ -35,6 +35,7 @@
   ("C-x x"        'split-window-below)
   ("M-<tab>"      'helm-mini)
   ("C-<tab>"      'helm-projectile-switch-to-buffer)
+  ("C-c TAB"      'helm-projectile-switch-to-buffer)
   ("C-x TAB"      'helm-mini)           ; terminal
   ("C-x s"        'save-buffer)
   ("C-x C-s"      'save-buffer)

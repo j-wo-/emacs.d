@@ -2,8 +2,7 @@
   (interactive
    (list (read--expression "Mode: ")))
   (dolist (buffer (buffer-list))
-    (save-excursion
-      (set-buffer buffer)
+    (with-current-buffer buffer
       (when (eql major-mode mode)
         (kill-buffer buffer)))))
 
