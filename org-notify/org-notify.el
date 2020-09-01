@@ -43,6 +43,8 @@
 (defvar org-notify-interval 300
   "Interval in seconds to recheck and display schedule.")
 
+(defvar org-notify-fade-time 10)
+
 (defvar org-notify-notification-title "*org*"
   "Title to be sent with notify-send.")
 
@@ -80,68 +82,84 @@
                            (substring-no-properties todo-keyword))))
     ret))
 
-(defun org-notify--all-raw ()
-  (->> (or (jeff/org-query)
-           nil)
-       (org-ql-select org-agenda-files )))
-
-(defun org-notify--expired-raw ()
-  (->> `(ts-active :from (->> (ts-now)
-                               (ts-adjust 'day -10000))
-                   :to   (ts-now))
-       (org-ql-select org-agenda-files)))
-
 (defun org-notify--map-extract (xs)
   (mapcar 'org-notify--extract xs))
 
-(defun org-notify--all ()
-  (org-notify--map-extract (org-notify--all-raw)))
+(defun org-notify--select (q)
+  (->> (org-ql-select org-agenda-files q)
+       (org-notify--map-extract)))
+
+(defun org-notify--ongoing ()
+  (org-notify--select
+   `(and (scheduled      :from ,(->> (ts-now)
+                                     (ts-adjust 'day -1))
+                         :to   ,(ts-now))
+         (deadline       :from ,(ts-now)
+                         :to   ,(->> (ts-now)
+                                     (ts-adjust 'day 1)))
+         (not (done)))))
+
+(defun org-notify--upcoming ()
+  (org-notify--select
+   `(and (scheduled      :from ,(ts-now)
+                         :to   ,(->> (ts-now)
+                                     (ts-adjust 'hour 4))))))
+
+(defun org-notify--future ()
+  (org-notify--select
+   `(and (scheduled      :from ,(->> (ts-now)
+                                     (ts-adjust 'hour 4))))))
 
 (defun org-notify--expired ()
-  (org-notify--map-extract (org-notify--expired-raw)))
+  (org-notify--select
+   `(and (ts-active      :to   ,(ts-now))
+         (not (deadline  :from ,(->> (ts-now)))))))
 
-''(defun org-notify--unique-headlines (regexp agenda)
-    "Return unique headlines from the results of REGEXP in AGENDA."
-    (let ((matches (-distinct (-flatten (s-match-strings-all regexp agenda)))))
-      (--map (org-notify--strip-prefix it) matches)))
+(defun org-notify--all ()
+  `((:ongoing    . ,(org-notify--ongoing))
+    (:upcoming   . ,(org-notify--upcoming))
+    (:future     . ,(org-notify--future))
+    (:expired    . ,(org-notify--expired))))
 
-''(defun org-notify--get-headlines ()
-    "Return the current org agenda as text only."
-    (with-temp-buffer
-      (let ((org-agenda-sticky nil)
-            (org-agenda-buffer-tmp-name (buffer-name)))
-        (ignore-errors (org-agenda-list 3))
-        (org-notify--unique-headlines
-         org-notify-headline-regexp
-         (buffer-substring-no-properties (point-min) (point-max))))))
-
-(defun org-notify--headline-complete? (x)
-  "Return whether HEADLINE has been completed."
-  (plist-get )
-  (if (plist-get x :done))
-  (not (null ))
-
-  (--any? (s-starts-with? it headline) org-done-keywords-for-agenda))
-
-(defun org-notify--filter-active (deadlines)
-  "Remove any completed headings from the provided DEADLINES."
-  (-remove 'org-notify--headline-complete? deadlines))
-
-(defun org-notify--strip-states (deadlines)
-  "Remove the todo states from DEADLINES."
-  (--map (s-trim (s-chop-prefixes org-todo-keywords-for-agenda it)) deadlines))
+(defun org-notify--format (x)
+  (cl-flet ((f
+             (field)
+             (plist-get x field))
+            (format-time
+             (x)
+             (or (-some->> x (ts-format "%l:%M %p")) "")))
+    (let* ((title (f :title))
+           (scheduled (-some-> (f :scheduled) (ts-parse)))
+           (deadline (-some-> (f :deadline) (ts-parse)))
+           (result ""))
+      (when title
+        (setq result (format "%s" title)))
+      (when (or scheduled deadline)
+        (setq result (format "%s | %s - %s" result
+                             (format-time scheduled)
+                             (format-time deadline))))
+      result)))
 
 (defun org-notify-check ()
   "Check for active, due deadlines and initiate notifications."
   (interactive)
   ;; avoid interrupting current command.
   (unless (minibufferp)
-    (save-window-excursion
-      (save-excursion
-        (save-restriction
-          (let ((active (org-notify--filter-active (org-notify--get-headlines))))
-            (dolist (dl (org-notify--strip-states active))
-              (alert dl :title org-notify-notification-title))))))
+    (let ((all (org-notify--all)))
+      (dolist (type (reverse '(:ongoing
+                               :upcoming
+                               ;; :future
+                               :expired)))
+        (let ((type-name (capitalize (substring (symbol-name type) 1)))
+              (entries (alist-get type all))
+              (text ""))
+          (dolist (x entries)
+            (let ((x-text (org-notify--format x)))
+              (unless (= 0 (length x-text))
+                (setq text (format "%s\n%s" text x-text)))))
+          (unless (= 0 (length text))
+            (let ((alert-fade-time org-notify-fade-time))
+              (alert text :title type-name))))))
     (when (get-buffer org-agenda-buffer-name)
       (ignore-errors
         (with-current-buffer org-agenda-buffer-name

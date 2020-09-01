@@ -53,7 +53,8 @@
     (org-shifttab)
     (split-window-right)
     (org-agenda-list)
-    (org-alert-enable)))
+    (jeff/load-org-notify)
+    (org-notify-enable)))
 
 (defun --launch-code ()
   (interactive)
@@ -485,7 +486,6 @@
   (let ((inhibit-message t))
     (use-package company-statistics :config (company-statistics-mode 1)))
   (use-package company-quickhelp
-    :if t
     :config
     (setq company-quickhelp-delay 0.5)
     (company-quickhelp-mode 1))
@@ -569,7 +569,7 @@
   :pin melpa
   :defer 0.25
   :init
-  (setq flycheck-global-modes t
+  (setq flycheck-global-modes '(not org-mode)
         ;; '(clojure-mode clojurec-mode clojurescript-mode groovy-mode)
         flycheck-disabled-checkers '(clojure-cider-typed emacs-lisp-checkdoc)
         ;; because git-gutter is in the left fringe
@@ -846,8 +846,14 @@
     ("C-S-<return>"   'org-meta-return))
   ;; unbind conflicting keys
   (define-map-keys org-mode-map
-    ("C-c C-p" nil)
-    ("C-<tab>" nil))
+    ("C-c C-p"        nil)
+    ("C-c p"          nil)
+    ("C-<tab>"        nil)
+    ("M-s a"          'org-agenda-list)
+    ("M-s s"          'org-schedule)
+    ("M-s d"          'org-deadline)
+    ("M-s p"          'org-pomodoro)
+    ("M-s c"          'org-alert-check))
   (use-package org-ql
     :pin melpa)
   (use-package org-present
@@ -864,6 +870,7 @@
     :pin melpa)
   (jeff/load-org-notify)
   (use-package org-alert
+    :disabled t
     :load-path "~/.emacs.d/org-alert"
     :config
     (setq org-alert-interval 600
