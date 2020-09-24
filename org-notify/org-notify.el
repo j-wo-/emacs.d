@@ -135,9 +135,10 @@
       (when title
         (setq result (format "%s" title)))
       (when (or scheduled deadline)
-        (setq result (format "%s | %s - %s" result
+        (setq result (format "[%s - %s]\n%s"
                              (format-time scheduled)
-                             (format-time deadline))))
+                             (format-time deadline)
+                             result)))
       result)))
 
 (defun org-notify-check ()
@@ -156,8 +157,9 @@
           (dolist (x entries)
             (let ((x-text (org-notify--format x)))
               (unless (= 0 (length x-text))
-                (setq text (format "%s\n%s" text x-text)))))
+                (setq text (format "%s%s\n\n" text x-text)))))
           (unless (= 0 (length text))
+            (setq text (format "\n%s" text))
             (let ((alert-fade-time org-notify-fade-time))
               (alert text :title type-name))))))
     (when (get-buffer org-agenda-buffer-name)

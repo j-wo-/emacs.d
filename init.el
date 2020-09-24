@@ -24,8 +24,10 @@
         "~/.config/waybar/config"
         "~/.config/wofi/config"
         "~/.config/alacritty/alacritty.yml"
-        "~/bin/vcsh/launch-sway-programs"
-        "~/bin/vcsh/makepkg-chroot"
+        "~/.config/systemd/user/compile.slice"
+        "~/.config/systemd/user/sway-session.target"
+        "~/bin/launch-sway-programs"
+        "~/bin/makepkg-chroot"
         "~/abs/build"
         "~/abs/build-one"
         "~/abs/build-all"))
@@ -66,7 +68,7 @@
     (magit-status-setup-buffer)
     (sysrev)))
 
-;;; Favorite themes (dark)
+;;;; Favorite themes (dark)
 ;; 'base16-eighties
 ;; 'leuven-dark
 ;; 'alect-dark
@@ -76,17 +78,14 @@
 ;; 'sanityinc-tomorrow-night
 ;; 'sanityinc-tomorrow-eighties
 ;; 'monokai
-
-;;; Favorite themes (light)
+;;;; Favorite themes (light)
 ;; 'sanityinc-solarized-light
 ;; 'leuven
 ;; 'anti-zenburn
-
-;;; Terminal themes (null background)
+;;;; Terminal themes (null background)
 ;; 'sanityinc-tomorrow-night-rxvt
 ;; 'gruvbox-dark-hard
-
-;;; More themes
+;;;; More themes
 ;; 'moe-dark
 ;; 'alect-black
 ;; 'sanityinc-solarized-dark
@@ -109,13 +108,11 @@
   ;; (if (graphical?) 'gruvbox-dark-medium 'gruvbox-dark-medium)
   )
 
-;; (defvar custom-emacs-theme 'sanityinc-tomorrow-night)
-
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
-;; (setq-default fill-column 70)
+;;(setq-default fill-column 70)
 
 (global-auto-revert-mode t)
 (transient-mark-mode t)
@@ -409,45 +406,20 @@
 
 (defvar jeff/use-global-aggressive-indent t)
 
-(defvar jeff/indent-disable-functions nil)
-(defvar jeff/indent-disable-cider nil)
-
-(when jeff/indent-disable-cider
-  (setq jeff/indent-disable-functions
-        (list 'company-capf 'all-completions 'cider-complete
-              'nrepl-send-sync-request 'cider-sync-request:complete
-              'accept-process-output)))
-
-(defun jeff/indent-disable-function-active ()
-  (unless (null jeff/indent-disable-functions)
-    (let ((active-fnames (function-stack)))
-      (cl-some (lambda (fname) (member fname active-fnames))
-               jeff/indent-disable-functions))))
-
-(defun jeff/load-aggressive-indent ()
+(defun --load-aggressive-indent ()
   (add-to-list 'load-path "~/.emacs.d/aggressive-indent-mode")
   (require 'aggressive-indent)
-  ;; " "
-  ;; " "
+  ;; " " " "
   ;; unicode 2004 U+2004 (thick space)
   (diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr"))
   (setq aggressive-indent-sit-for-time 0.025)
-  (unless (null jeff/indent-disable-functions)
-    (add-to-list 'aggressive-indent-dont-indent-if
-                 'jeff/indent-disable-function-active))
+  ;; 'aggressive-indent-dont-indent-if
   (when jeff/use-global-aggressive-indent
     (dolist (mode '(cider-repl-mode))
       (add-to-list 'aggressive-indent-excluded-modes mode))
     (aggressive-indent-global-mode)))
 
-(jeff/load-aggressive-indent)
-
-(use-package aggressive-indent
-  ;; :pin "melpa-stable"
-  :disabled t
-  :ensure nil
-  :load-path "~/.emacs.d/aggressive-indent-mode"
-  :init (jeff/load-aggressive-indent))
+(--load-aggressive-indent)
 
 (use-package auto-complete
   :if (not (exclude-pkg? 'auto-complete))
@@ -545,10 +517,6 @@
   :config
   (smex-initialize))
 
-(defcustom jeff/flycheck-global t
-  "Runs (global-flycheck-mode 1) if non-nil."
-  :group 'jeff)
-
 ;;(print-to-buffer byte-compile-warning-types)
 
 ;; (redefine
@@ -569,7 +537,7 @@
   :pin melpa
   :defer 0.25
   :init
-  (setq flycheck-global-modes '(not org-mode)
+  (setq flycheck-global-modes '(not org-mode js-mode)
         ;; '(clojure-mode clojurec-mode clojurescript-mode groovy-mode)
         flycheck-disabled-checkers '(clojure-cider-typed emacs-lisp-checkdoc)
         ;; because git-gutter is in the left fringe
@@ -597,8 +565,7 @@
     "...X....")
   (use-package flycheck-pos-tip
     :config (setq flycheck-display-errors-function 'flycheck-pos-tip-error-messages))
-  (when jeff/flycheck-global
-    (global-flycheck-mode 1)))
+  (global-flycheck-mode 1))
 
 (use-package flx-ido
   :defer 0.25
@@ -628,12 +595,15 @@
   (global-paren-face-mode)
   (let ((paren-color  (cond ((theme? 'zenburn) "#808080")
                             ((theme? 'alect-dark) "#848484")
+                            ((theme? 'gruvbox-dark-medium) "#787878")
                             (t "#707070")))
         (square-color (cond ((theme? 'zenburn) "#bfc438")
                             ((theme? 'alect-dark) "#c4c830")
+                            ((theme? 'gruvbox-dark-medium) "#cbcf3a")
                             (t "#bbbf40")))
         (curly-color  (cond ((theme? 'zenburn) "#66a818")
-                            ((theme? 'alect-dark) "#6bb018")
+                            ((theme? 'alect-dark) "#8bc018")
+                            ((theme? 'gruvbox-dark-medium) "#70a038")
                             (t "#4f8f3d"))))
     (face-spec-set 'parenthesis `((t (:foreground ,paren-color))))
     (defface square-brackets
@@ -669,7 +639,8 @@
     ("C-M-<right>"  nil)
     ("C-M-<up>"     nil)
     ("C-M-<down>"   nil)
-    ("C-M-f"        nil)))
+    ("C-M-f"        nil)
+    ("M-s"          nil)))
 
 (use-package smartparens
   :defer 0.25
@@ -770,7 +741,7 @@
   :group 'jeff)
 
 (when jeff/enable-auto-neotree
-  (load-local "neotree"))
+  (load-local "neotree" t))
 
 ;;;
 ;;; modes
@@ -800,10 +771,7 @@
   :config (use-package gh-md))
 
 (use-package nginx-mode
-  :mode "/nginx.conf$" "\\.nginx-site\\'"
-  :config
-  (unless jeff/use-global-aggressive-indent
-    (add-hook 'nginx-mode-hook #'aggressive-indent-mode)))
+  :mode "/nginx.conf$" "\\.nginx-site\\'")
 
 (use-package alert
   :pin melpa
@@ -823,7 +791,8 @@
     (use-package org)
     (add-to-list 'load-path "~/.emacs.d/org-notify")
     (require 'org-notify)
-    (setq org-notify-interval 600)))
+    (setq org-notify-interval 600
+          org-notify-fade-time 7)))
 
 (use-package org
   :mode ("\\.org\\'" . org-mode)
@@ -835,8 +804,7 @@
         org-agenda-files '("~/org/self.org"
                            "~/org/schedule.org"
                            "~/org/work.org"
-                           ;; "~/org/sysrev.org"
-                           "~/code/sysrev/sysrev-tasks.org")
+                           "~/org/sysrev.org")
         org-agenda-timegrid-use-ampm t)
   (define-map-keys org-mode-map
     ("C-S-<left>"     'org-metaleft)
@@ -851,9 +819,10 @@
     ("C-<tab>"        nil)
     ("M-s a"          'org-agenda-list)
     ("M-s s"          'org-schedule)
-    ("M-s d"          'org-deadline)
+    ("M-s d"          'org-deadline))
+  (define-map-keys-multi (global-map org-mode-map)
     ("M-s p"          'org-pomodoro)
-    ("M-s c"          'org-alert-check))
+    ("M-s c"          'org-notify-check))
   (use-package org-ql
     :pin melpa)
   (use-package org-present
@@ -1138,52 +1107,27 @@ return value is nil."
     (set-mode-name clojure-mode "CLJ")
     (set-mode-name clojurescript-mode "CLJS")
     (set-mode-name clojurec-mode "CLJC")
-    (add-hook 'clojure-mode-hook 'cider-mode)
-    (add-hook 'clojurescript-mode-hook 'cider-mode)
-    (add-hook 'clojure-mode-hook 'turn-off-smartparens-mode)
-    (add-hook 'clojurescript-mode-hook 'turn-off-smartparens-mode)
-    (add-hook 'cider-repl-mode-hook 'turn-off-smartparens-mode)
-    (add-hook 'clojure-mode-hook 'enable-paredit-mode)
-    (add-hook 'clojurescript-mode-hook 'enable-paredit-mode)
-    (add-hook 'cider-repl-mode-hook 'enable-paredit-mode)
-    (add-hook 'clojure-mode-hook 'paxedit-mode)
-    (add-hook 'clojurescript-mode-hook 'paxedit-mode)
-    (defun my-cider-reload-repl-ns ()
+    (dolist (m '(clojure-mode clojurescript-mode cider-repl-mode))
+      (add-to-list 'sp-ignore-modes-list m))
+    (dolist (mh '(clojure-mode-hook clojurescript-mode-hook))
+      (add-hook mh 'cider-mode))
+    (dolist (mh '(clojure-mode-hook clojurescript-mode-hook cider-repl-mode-hook))
+      (add-hook mh 'enable-paredit-mode)
+      (add-hook mh 'paxedit-mode))
+    (defun --cider-reload-repl-ns ()
       (let ((ns (buffer-local-value 'cider-buffer-ns (cl-first (cider-repl-buffers)))))
         (when ns
           (cider-nrepl-request:eval
            (format "(require '%s :reload)" ns)
            (lambda (_response) nil)))))
-    (defvar cider-figwheel-connecting nil)
-    (defun cider-figwheel-init ()
-      (when cider-figwheel-connecting
-        (pop-to-buffer (cl-first (cider-repl-buffers)))
-        (insert "(require 'figwheel-sidecar.repl-api)")
-        (cider-repl-return)
-        (insert "(figwheel-sidecar.repl-api/cljs-repl)")
-        (cider-repl-return)
-        (when (and nil (not (zerop (length cider-figwheel-connecting))))
-          (insert (format "(require '%s)" cider-figwheel-connecting))
-          (cider-repl-return)
-          (insert (format "(in-ns '%s)" cider-figwheel-connecting))
-          (cider-repl-return))))
-    ;; (add-hook 'nrepl-connected-hook 'cider-figwheel-init t)
-    (defun cider-connect-figwheel (&optional port)
-      (interactive)
-      (let ((port (or port 7888))
-            (cider-figwheel-connecting
-             (if (member major-mode '(clojure-mode clojurescript-mode))
-                 (clojure-expected-ns)
-               "")))
-        (cider-connect `(:host "localhost" :port ,port))))
-    (defun cider-load-buffer-reload-repl (&optional buffer)
+    (defun --cider-load-buffer-reload-repl (&optional buffer)
       (interactive)
       (let ((result (if buffer
                         (cider-load-buffer buffer)
                       (cider-load-buffer))))
-        (my-cider-reload-repl-ns)
+        (--cider-reload-repl-ns)
         result))
-    (add-hook 'cider-file-loaded-hook 'my-cider-reload-repl-ns)
+    (add-hook 'cider-file-loaded-hook '--cider-reload-repl-ns)
     (when --use-lispy
       (enable-lispy 'clojure-mode-hook)
       (enable-lispy 'cider-mode-hook)
@@ -1242,9 +1186,8 @@ return value is nil."
   :disabled t
   :pin melpa
   :commands slime
-  :mode
-  ("\\.lisp\\'" . lisp-mode)
-  ("\\.asd\\'" . lisp-mode)
+  :mode (("\\.lisp\\'" . lisp-mode)
+         ("\\.asd\\'" . lisp-mode))
   :init
   (use-package tramp)
   (setq slime-contribs '(slime-fancy slime-tramp))
@@ -1299,22 +1242,11 @@ return value is nil."
   (add-to-list 'projectile-globally-ignored-modes "comint-mode")
   (add-to-list 'projectile-globally-ignored-modes "slime-repl-mode")
 
-  (unless jeff/use-global-aggressive-indent
-    (add-hook 'lisp-mode-hook #'aggressive-indent-mode)
-    (add-hook 'slime-mode-hook #'aggressive-indent-mode))
+  (dolist (mh '(lisp-mode-hook slime-mode-hook slime-repl-mode-hook))
+    ;;(enable-lispy 'lisp-mode-hook)
+    (add-hook mh 'turn-off-smartparens-mode)
+    (add-hook mh 'enable-paredit-mode))
 
-  (add-hook 'lisp-mode-hook 'turn-off-smartparens-mode)
-  (add-hook 'slime-mode-hook 'turn-off-smartparens-mode)
-  (add-hook 'slime-repl-mode-hook 'turn-off-smartparens-mode)
-  (add-hook 'lisp-mode-hook 'enable-paredit-mode)
-  (add-hook 'slime-mode-hook 'enable-paredit-mode)
-  (add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
-
-  ;; (enable-lispy 'lisp-mode-hook)
-  ;; (enable-lispy 'slime-mode-hook)
-  ;; (enable-lispy 'slime-repl-mode-hook)
-
-  ;;(use-package slime-annot)
   ;;(use-package slime-company)
   (use-package ac-slime
     :config
@@ -1322,6 +1254,7 @@ return value is nil."
     (add-hook 'slime-mode-hook 'set-up-slime-ac-fuzzy)
     (add-hook 'slime-repl-mode-hook 'set-up-slime-ac-fuzzy)))
 
+;; using hook this way to avoid infinite loop in melpa bootstrap
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (use-package paxedit)
@@ -1339,9 +1272,8 @@ return value is nil."
             (rainbow-mode 1)))
 
 (use-package scala-mode
-  :mode
-  ("\\.scala\\'" . scala-mode)
-  ("\\.sbt\\'" . scala-mode)
+  :mode (("\\.scala\\'" . scala-mode)
+         ("\\.sbt\\'" . scala-mode))
   :config
   (use-package ensime
     :disabled t
@@ -1389,35 +1321,39 @@ return value is nil."
   (setq haskell-process-log t)
   (setq haskell-process-type 'cabal-repl))
 
-(add-hook 'java-mode-hook (lambda () (setq indent-tabs-mode nil)))
-
 ;;;
 ;;; web dev
 ;;;
 
 (use-package less-css-mode
-  :mode "\\.less\\'" "\\.variables\\'" "\\.overrides\\'"
+  :mode ("\\.less\\'" "\\.variables\\'" "\\.overrides\\'")
   :config (use-rainbow-mode 'less-css-mode))
 
 (use-package js2-mode
   :pin melpa
-  :mode ("\\.js\\'" "\\.json\\'"
-         "\\.config/waybar/config\\'")
+  :mode ("\\.js\\'" "\\.json\\'" "\\.config/waybar/config\\'")
   :config
   (flycheck-add-mode 'javascript-eslint 'js2-mode)
   (flycheck-add-mode 'javascript-eslint 'js2-jsx-mode)
-  (setq js2-include-node-externs t)
-  (setq js2-include-browser-externs t)
-  (setq js2-strict-trailing-comma-warning nil)
-  (setq js2-indent-switch-body t)
-  (defun my-js2-mode-hook ()
-    (setq js2-basic-offset 2)
-    (flycheck-mode 1)
-    ;; (tern-mode t)
+  (setq js2-include-node-externs t
+        js2-include-browser-externs t
+        js2-strict-trailing-comma-warning nil
+        js2-indent-switch-body t
+        js2-basic-offset 2)
+  (defun --custom-js2-mode-hook ()
+    (setq-local js2-basic-offset 2)
+    ;;(tern-mode t)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
-  (add-hook 'js2-mode-hook 'my-js2-mode-hook)
-  (add-hook 'js2-jsx-mode-hook 'my-js2-mode-hook))
+  (add-hook 'js2-mode-hook '--custom-js2-mode-hook)
+  (add-hook 'js2-jsx-mode-hook '--custom-js2-mode-hook))
+
+(use-package js
+  :ensure nil
+  :mode (("\\.js\\'"                      . js-mode)
+         ("\\.json\\'"                    . js-mode)
+         ("\\.config/waybar/config\\'"    . js-mode))
+  :init (setq js-indent-level 2))
 
 (use-package web-mode
   :pin melpa
@@ -1431,7 +1367,7 @@ return value is nil."
   (flycheck-add-mode 'javascript-eslint 'web-mode)
   (add-to-list 'flycheck-disabled-checkers 'javascript-jshint)
   (add-to-list 'flycheck-disabled-checkers 'json-jsonlist)
-  (defun my-web-mode-hook ()
+  (defun --custom-web-mode-hook ()
     (setq web-mode-markup-indent-offset 2)
     (setq web-mode-css-indent-offset 2)
     (setq web-mode-code-indent-offset 2)
@@ -1439,7 +1375,7 @@ return value is nil."
     ;; (tern-mode t)
     (when (executable-find "eslint")
       (flycheck-select-checker 'javascript-eslint)))
-  (add-hook 'web-mode-hook 'my-web-mode-hook))
+  (add-hook 'web-mode-hook '--custom-web-mode-hook))
 
 (use-package jade-mode :mode "\\.jade\\'")
 
@@ -1677,17 +1613,26 @@ return value is nil."
 
 ;;(--with-elapsed-time-alert (+ 1 2))
 
-(defun jeff/native-comp-all ()
-  (interactive)
-  (jeff/native-comp-path "~/.emacs.d/elpa/")
-  ;; (jeff/native-comp-path "/usr/share/emacs/28.0.50/")
-  (jeff/native-comp-path "/usr/local/share/emacs/28.0.50/lisp/")
-  t)
-
 (defun jeff/native-comp-path (path)
   (when (native-comp?)
     (let ((comp-always-compile t))
       (native-compile-async path t nil))))
+
+(defun jeff/native-comp-elpa ()
+  (interactive)
+  (jeff/native-comp-path "~/.emacs.d/elpa/")
+  t)
+
+(defun jeff/native-comp-emacs-base ()
+  (interactive)
+  (jeff/native-comp-path "/usr/local/share/emacs/28.0.50/lisp/")
+  t)
+
+(defun jeff/native-comp-all ()
+  (interactive)
+  (jeff/native-comp-emacs-base)
+  (jeff/native-comp-elpa)
+  t)
 
 (defun jeff/describe-init ()
   (interactive)
@@ -1708,6 +1653,7 @@ return value is nil."
 
 (add-hook 'after-init-hook 'jeff/after-init)
 ;;(add-hook 'after-make-frame-functions 'jeff/init-ui)
+;;(add-hook 'after-make-frame-functions 'jeff/init-copy-paste)
 
 ;;(byte-recompile-file "~/.emacs.d/init.el" nil 0 nil)
 

@@ -1,10 +1,10 @@
 (defun kill-mode-buffers (mode)
   (interactive
    (list (read--expression "Mode: ")))
-  (dolist (buffer (buffer-list))
-    (with-current-buffer buffer
+  (--each (buffer-list)
+    (with-current-buffer it
       (when (eql major-mode mode)
-        (kill-buffer buffer)))))
+        (kill-buffer it)))))
 
 (defun kill-image-buffers ()
   (interactive)
@@ -24,10 +24,9 @@
   (interactive)
   (let* ((ext (read-from-minibuffer
                "File extension: " (current-file-extension)))
-         (ext-re (if (equal ext "") "" (format "\\.%s$" ext)))
-         (files (directory-files default-directory t ext-re)))
-    (dolist (f files nil)
-      (fully-indent-file f))))
+         (ext-re (if (equal ext "") "" (format "\\.%s$" ext))))
+    (--each (directory-files default-directory t ext-re)
+      (fully-indent-file it))))
 
 (defun nxml-pretty-format ()
   (interactive)

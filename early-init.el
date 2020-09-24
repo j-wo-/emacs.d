@@ -38,14 +38,14 @@
 ;;; Configure variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq gc-cons-threshold-default gc-cons-threshold
-      gc-cons-threshold (* 100 1000 1000)
-      read-process-output-max (* 1024 256 4)
+      gc-cons-threshold (* 100 1024 1024)
+      read-process-output-max (round (* 1.0 1024 1024))
       inhibit-splash-screen t
       make-backup-files nil
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
-      echo-keystrokes 0.025)
+      echo-keystrokes 0.01)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -57,7 +57,7 @@
       ;; comp-deferred-compilation nil
       comp-deferred-compilation-black-list '("powerline" "slime"))
 (setq comp-native-driver-options
-      '("-march=native" "-Ofast" "-fno-finite-math-only"))
+      '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only"))
 ;; (setq comp-always-compile t)
 ;; (setq load-no-native t comp-deferred-compilation nil)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
