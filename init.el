@@ -1,5 +1,4 @@
 ;;; -*- lexical-binding: t -*-
-
 (set-language-environment "utf-8")
 
 (require 'cl-lib)
@@ -122,8 +121,14 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
+(defun --indent-tabs-on ()
+  (setq-local indent-tabs-mode t))
+(defun --indent-tabs-off ()
+  (setq-local indent-tabs-mode t))
+(defun --indent-tabs-mode (mode-hook enable-tabs)
+  (add-hook mode-hook (if enable-tabs '--indent-tabs-on '--indent-tabs-off)))
 (setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
+;;(setq-default tab-width 4)
 ;;(setq-default fill-column 70)
 
 (global-auto-revert-mode t)
@@ -374,6 +379,13 @@
   (defun jeff/sh-mode-hook () (setq-local tab-width 2))
   (add-hook 'sh-mode-hook 'jeff/sh-mode-hook))
 
+(use-package cc-mode
+  :config
+  (--indent-tabs-mode 'c-mode-hook t)
+  (--indent-tabs-mode 'c++-mode-hook t)
+  (--indent-tabs-mode 'objc-mode-hook t)
+  (--indent-tabs-mode 'java-mode-hook t))
+
 (use-package python-mode
   :pin melpa
   :mode ("\\.py\\'" . python-mode)
@@ -437,7 +449,7 @@
   (setq aggressive-indent-sit-for-time 0.025)
   ;; 'aggressive-indent-dont-indent-if
   (when jeff/use-global-aggressive-indent
-    (dolist (mode '(cider-repl-mode))
+    (dolist (mode '(cider-repl-mode c-mode c++-mode objc-mode java-mode))
       (add-to-list 'aggressive-indent-excluded-modes mode))
     (aggressive-indent-global-mode)))
 
@@ -610,8 +622,6 @@
 (use-package mic-paren
   :defer 0.5
   :config (paren-activate))
-;; (paren-deactivate)
-;; (--with-elapsed-time-alert (paren-activate) (paren-deactivate) (paren-activate))
 
 (defun theme? (theme)
   (let ((theme (if (symbolp theme) (symbol-name theme) theme)))
@@ -812,7 +822,7 @@
 (use-package alert
   :pin melpa
   :config
-  (setq alert-default-style 'libnotify
+  (setq alert-default-style 'libnotify ; 'message
         alert-fade-time 5))
 
 (defun jeff/init-time (&optional as-string)
@@ -937,14 +947,14 @@
 
 (defcustom modeline-font nil
   ;; "InputMono Nerd Font 15"
-  ;; "InputMono Nerd Font:pixelsize=23"
+  ;; "InputMono Nerd Font:pixelsize=24"
   "Alternate font used for modeline."
   :group 'jeff)
 
 (defun switch-to-theme (theme)
   (cl-flet ((theme-p (s) (symbol-matches theme s)))
     (let ((lnum-font nil)
-          ;; (lnum-font "Inconsolata:pixelsize=15")
+          ;; (lnum-font "Inconsolata:pixelsize=22")
           (lnum-weight1 'semi-bold)
           (lnum-weight2 'semi-bold))
       ;; load elpa package for theme
@@ -1487,6 +1497,8 @@ return value is nil."
 (defcustom jeff/use-spaceline nil
   "Uses spaceline for modeline if non-nil."
   :group 'jeff)
+
+;;(setq warning-minimum-level :error)
 
 (use-package powerline
   :if (not jeff/use-spaceline)

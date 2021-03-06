@@ -33,10 +33,10 @@
   ("C-x 2"        'delete-other-windows-vertically) ; terminal
   ("C-q"          'delete-window)
   ("C-x x"        'split-window-below)
-  ("M-<tab>"      'helm-mini)
-  ("C-<tab>"      'helm-projectile-switch-to-buffer)
-  ("C-c TAB"      'helm-projectile-switch-to-buffer)
+  ("C-<tab>"      'helm-mini)
   ("C-x TAB"      'helm-mini)           ; terminal
+  ("C-c TAB"      'helm-projectile-switch-to-buffer)
+  ("M-<tab>"      'helm-projectile-switch-to-buffer)
   ("C-x s"        'save-buffer)
   ("C-x C-s"      'save-buffer)
   ("C-x f"        'helm-find-files)
@@ -69,7 +69,7 @@
   ("C-M-s"        'split-window-auto)
   ("C-M-f"        'toggle-frame-fullscreen)
   ("C-x n"        'jeff/neotree-project-dir)
-  ("C-;"          'comment-or-uncomment-region))
+  ("C-c ;"        'comment-or-uncomment-region))
 
 ;; swap () and [] keys
 (when t ;; (graphical?)

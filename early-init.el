@@ -36,8 +36,10 @@
         (right-fringe . 8)
         ;;(internal-border-width . 0)
         ;;(font . ,(font-xlfd-name --default-font))
-        (font . ,(font-xlfd-name --default-font))))
-
+        (font . ,(if (stringp --default-font)
+                     --default-font
+                   (font-xlfd-name --default-font))))
+      warning-suppress-types '((comp)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -77,12 +79,13 @@
 ;;; Configure nativecomp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq comp-speed 3
+(setq comp-speed 2
       ;; comp-async-jobs-number 12
       ;; comp-deferred-compilation nil
-      comp-deferred-compilation-black-list '("powerline" "slime"))
+      comp-deferred-compilation-deny-list '("powerline" "slime"))
 (setq comp-native-driver-options
-      '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only"))
+      ;; '("-march=native" "-Ofast" "-g0" "-fno-finite-math-only")
+      '("-march=native" "-O2"))
 ;; (setq comp-always-compile t)
 ;; (setq load-no-native t comp-deferred-compilation nil)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

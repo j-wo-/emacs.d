@@ -35,3 +35,7 @@
                              "xmllint --format -" (buffer-name) t)
     (nxml-mode)
     (indent-region (point-min) (point-max))))
+
+;; Local Variables:
+;; byte-compile-warnings: (not free-vars make-local callargs)
+;; End:
