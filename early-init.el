@@ -5,47 +5,72 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
+;; { 0, { "thin" }},
+;; { 20, { "ultra-light", "ultralight" }},
+;; { 40, { "extra-light", "extralight" }},
+;; { 50, { "light" }},
+;; { 75, { "semi-light", "semilight", "demilight", "book" }},
+;; { 100, { "normal", "medium", "regular", "unspecified" }},
+;; { 180, { "semi-bold", "semibold", "demibold", "demi" }},
+;; { 200, { "bold" }},
+;; { 205, { "extra-bold", "extrabold" }},
+;; { 210, { "ultra-bold", "ultrabold", "black" }}
+
 (defvar --default-font
-  (font-spec :family "InputMono Nerd Font" :size 26))
+  (font-spec :family "InputMono Nerd Font" :size 15)
+  ;; (font-spec :family "Inconsolata" :weight 'semi-bold :size 18)
+  ;; (font-spec :family "Inconsolata" :weight 'bold :size 18)
+  ;; (font-spec :family "InputMono Nerd Font" :size 16)
+  )
 ;; (find-font --default-font)
 ;; (font-xlfd-name --default-font)
 
+;; (set-frame-font --default-font)
+;; (set-frame-font (font-spec :family "Inconsolata" :weight 'bold :size 18))
+;; (set-frame-font (font-spec :family "Inconsolata" :weight 'semi-bold :size 18))
+;; (set-frame-font (font-spec :family "InputMono Nerd Font" :size 15))
+;; (set-frame-font (font-spec :family "Input Mono" :weight 'semi-bold :size 14))
+
 (setq default-frame-alist
-      `((left-fringe . 10)
-        (right-fringe . 10)
-        (internal-border-width . 0)
+      `((left-fringe . 8)
+        (right-fringe . 8)
+        ;;(internal-border-width . 0)
         ;;(font . ,(font-xlfd-name --default-font))
         (font . ,(font-xlfd-name --default-font))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Set temporary values during emacs init
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun --set-temp-vars-pre-init ()
-  (setq file-name-handler-alist-backup file-name-handler-alist
-        file-name-handler-alist nil
-        inhibit-message t))
-
-(defun --restore-temp-vars-post-init ()
-  (setq file-name-handler-alist file-name-handler-alist-backup
+  (defvar file-name-handler-alist-backup file-name-handler-alist)
+  (setq file-name-handler-alist nil
         inhibit-message nil))
 
+(defun --restore-temp-vars-post-init ()
+  ;; (length file-name-handler-alist)
+  ;; (length file-name-handler-alist-backup)
+  (dolist (x file-name-handler-alist-backup)
+    (add-to-list 'file-name-handler-alist x))
+  (setq inhibit-message nil))
+
 (--set-temp-vars-pre-init)
-(add-hook 'after-init-hook '--restore-temp-vars-post-init)
+(add-hook 'after-init-hook #'--restore-temp-vars-post-init 95)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Configure variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq gc-cons-threshold-default gc-cons-threshold
-      gc-cons-threshold (* 100 1024 1024)
+      gc-cons-threshold (* 50 1024 1024)
       read-process-output-max (round (* 1.0 1024 1024))
       inhibit-splash-screen t
       make-backup-files nil
       custom-safe-themes t
       auto-save-default nil
       vc-follow-symlinks t
-      echo-keystrokes 0.01)
+      echo-keystrokes 0.02)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

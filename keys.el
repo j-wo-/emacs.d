@@ -86,9 +86,10 @@
 
 ;; set modifier keys for MacOS
 (when (mac?)
-  (cond ((and (laptop?) (gui-mac-std?))
+  (cond ((or (and (equal (system-name) "jeff-m1.lan") (gui-emacs-mac?))
+             (and (equal (system-name) "jeff-mbp") (gui-mac-std?)))
          (progn (setq mac-command-modifier 'meta)
                 (setq mac-option-modifier 'super)))
-        ((gui-emacs-mac?)
+        (t
          (progn (setq mac-command-modifier 'super)
                 (setq mac-option-modifier 'meta)))))

@@ -6,12 +6,17 @@
 
 (defun graphical? () (cl-some #'display-graphic-p (frame-list)))
 (defun laptop? () (or (equal (system-name) "jeff-mbp")
-                      (equal (system-name) "jeff-laptop")))
+                      (equal (system-name) "jeff-laptop")
+                      (equal (system-name) "jeff-m1.lan")))
 (defun mac? () (eql system-type 'darwin))
 (defun gui-mac-std? () (eql window-system 'ns))
 (defun gui-emacs-mac? () (eql window-system 'mac))
 (defun gui-mac? () (or (gui-mac-std?) (gui-emacs-mac?)))
 (defun wayland? () (and (getenv "DISPLAY") (getenv "WAYLAND_DISPLAY") t))
+
+;; find-function-C-source-directory
+(when (mac?)
+  (setq source-directory "~/Library/Caches/Homebrew/emacs-mac--git/"))
 
 (defvar jeff/all-config-files
   (list "~/.emacs.d/init.el"
@@ -68,44 +73,51 @@
     (magit-status-setup-buffer)
     (sysrev)))
 
-;;;; Favorite themes (dark)
-;; 'base16-eighties
-;; 'leuven-dark
-;; 'alect-dark
-;; 'apropospriate-dark
-;; 'zenburn
-;; 'gruvbox-dark-soft 'gruvbox-dark-medium 'gruvbox-dark-hard
-;; 'sanityinc-tomorrow-night
-;; 'sanityinc-tomorrow-eighties
-;; 'monokai
-;;;; Favorite themes (light)
-;; 'sanityinc-solarized-light
-;; 'leuven
-;; 'anti-zenburn
-;;;; Terminal themes (null background)
-;; 'sanityinc-tomorrow-night-rxvt
-;; 'gruvbox-dark-hard
-;;;; More themes
-;; 'moe-dark
-;; 'alect-black
-;; 'sanityinc-solarized-dark
-;; 'flatland
-;; 'spacemacs-dark
-;; 'material
-;; 'molokai
-;; 'base16-default-dark
-;; 'cyberpunk
+(defun -th (name)
+  (switch-to-theme name))
+
+(when nil
+  ;;;; Favorite themes
+  (-th 'sanityinc-tomorrow-night)
+  (-th 'sanityinc-tomorrow-eighties)
+  (-th 'gruvbox-dark-soft)
+  (-th 'gruvbox-dark-medium)
+  (-th 'gruvbox-dark-hard)
+  (-th 'base16-gruvbox-dark-soft)
+  (-th 'base16-gruvbox-dark-medium)
+  (-th 'base16-gruvbox-dark-hard)
+  (-th 'zenburn)
+  (-th 'material)
+  (-th 'flatland)
+  (-th 'alect-dark)
+  (-th 'base16-eighties)
+  (-th 'sanityinc-solarized-dark)
+  (-th 'sanityinc-solarized-light)
+  ;;;; More themes
+  (-th 'base16-material)
+  (-th 'base16-material-darker)
+  (-th 'moe-dark)
+  (-th 'alect-black)
+  (-th 'base16-default-dark)
+  (-th 'base16-tomorrow-night)
+  (-th 'base16-tomorrow-night-eighties)
+  (-th 'leuven-dark)
+  (-th 'apropospriate-dark)
+  (-th 'monokai)
+  (-th 'molokai)
+  (-th 'leuven)
+  ;;(-th 'anti-zenburn)
+  ;;(-th 'sanityinc-tomorrow-night-rxvt)
+  ;;(-th 'spacemacs-dark)
+  )
 
 (defvar custom-emacs-theme
-  ;; (if (graphical?) 'base16-eighties 'gruvbox-dark-medium)
-  ;; (if (graphical?) 'zenburn 'gruvbox-dark-medium)
-  ;; (if (graphical?) 'gruvbox-dark-soft 'gruvbox-dark-medium)
-  (if (graphical?) 'gruvbox-dark-medium 'gruvbox-dark-medium)
-  ;; (if (graphical?) 'sanityinc-solarized-light 'gruvbox-dark-medium)
-  ;; (if (graphical?) 'sanityinc-solarized-dark 'gruvbox-dark-medium)
-  ;; (if (graphical?) 'sanityinc-tomorrow-night 'gruvbox-dark-medium)
-  ;; (if (graphical?) 'leuven 'gruvbox-dark-medium)
-  ;; (if (graphical?) 'gruvbox-dark-medium 'gruvbox-dark-medium)
+  'sanityinc-tomorrow-night
+  ;; 'alect-dark
+  ;; (if (graphical?) 'gruvbox-dark-soft 'sanityinc-tomorrow-night)
+  ;; (if (graphical?) 'base16-eighties 'sanityinc-tomorrow-night)
+  ;; (if (graphical?) 'zenburn 'sanityinc-tomorrow-night)
+  ;; (if (graphical?) 'material 'sanityinc-tomorrow-night)
   )
 
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -218,6 +230,15 @@
 (windmove-default-keybindings '(shift))
 (windmove-default-keybindings '(control meta))
 
+;; ITERM2 MOUSE SUPPORT
+(when (and (mac?) (null window-system))
+  (require 'mwheel)
+  (require 'mouse)
+  (xterm-mouse-mode t)
+  (mouse-wheel-mode t)
+  (global-set-key [mouse-5] 'next-line)
+  (global-set-key [mouse-4] 'previous-line))
+
 ;;;
 ;;; load packages
 ;;;
@@ -280,7 +301,7 @@
 ;;;
 
 (use-package disable-mouse
-  :if (laptop?)
+  :if nil ;; (laptop?)
   :config
   (diminish 'global-disable-mouse-mode)
   (diminish 'disable-mouse-mode)
@@ -300,8 +321,9 @@
                                 (tramp-remote-shell-args
                                  ("-c")))))
 
-(defun symbol-suffix (sym suffix)
-  (intern (concat (symbol-name sym) suffix)))
+(eval-and-compile
+  (defun symbol-suffix (sym suffix)
+    (intern (concat (symbol-name sym) suffix))))
 
 (defmacro set-mode-name (mode name)
   (let ((func-name (intern (concat "--set-mode-name--" (symbol-name mode)))))
@@ -460,6 +482,7 @@
   (use-package company-quickhelp
     :config
     (setq company-quickhelp-delay 0.5)
+    ;; (setq company-quickhelp-use-propertized-text t)
     (company-quickhelp-mode 1))
   (global-company-mode 1))
 
@@ -471,14 +494,16 @@
   (if jeff/use-projectile-ag 'helm-projectile-ag 'helm-projectile-grep))
 
 (use-package projectile
+  :defer 0.2
   :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
         projectile-indexing-method 'hybrid
         projectile-enable-caching t
         projectile-mode-line-prefix "")
-  :bind (("C-c p"       . projectile-command-map)
-         ("C-c C-p"     . projectile-command-map)
+  :bind (("s-p"         . helm-projectile)
+         ("C-c p"       . helm-projectile)
+         ("C-c C-p"     . helm-projectile)
          ("C-c TAB"     . helm-projectile-switch-to-buffer)
          ("C-c g"       . helm-projectile-grep)
          ("C-c G"       . projectile-grep)
@@ -536,10 +561,14 @@
 (use-package flycheck
   :pin melpa
   :defer 0.25
+  :diminish " F "
   :init
   (setq flycheck-global-modes '(not org-mode js-mode)
         ;; '(clojure-mode clojurec-mode clojurescript-mode groovy-mode)
-        flycheck-disabled-checkers '(clojure-cider-typed emacs-lisp-checkdoc)
+        flycheck-disabled-checkers '(clojure-cider-typed
+                                     clojure-cider-kibit
+                                     clojure-cider-eastwood
+                                     emacs-lisp-checkdoc)
         ;; because git-gutter is in the left fringe
         flycheck-indication-mode 'right-fringe)
   :config
@@ -596,14 +625,17 @@
   (let ((paren-color  (cond ((theme? 'zenburn) "#808080")
                             ((theme? 'alect-dark) "#848484")
                             ((theme? 'gruvbox-dark-medium) "#787878")
+                            ((theme? 'eighties) "#868686")
                             (t "#707070")))
         (square-color (cond ((theme? 'zenburn) "#bfc438")
                             ((theme? 'alect-dark) "#c4c830")
                             ((theme? 'gruvbox-dark-medium) "#cbcf3a")
+                            ((theme? 'eighties) "#d4d648")
                             (t "#bbbf40")))
         (curly-color  (cond ((theme? 'zenburn) "#66a818")
                             ((theme? 'alect-dark) "#8bc018")
                             ((theme? 'gruvbox-dark-medium) "#70a038")
+                            ((theme? 'eighties) "#a8f038")
                             (t "#4f8f3d"))))
     (face-spec-set 'parenthesis `((t (:foreground ,paren-color))))
     (defface square-brackets
@@ -621,12 +653,12 @@
         (font-lock-add-keywords nil clojure-brackets-keywords t)
       (font-lock-remove-keywords nil clojure-brackets-keywords))
     (when (called-interactively-p 'any)
-      (font-lock-fontify-buffer)))
+      (font-lock-ensure)))
   (add-hook 'paren-face-mode-hook '--custom-paren-face-mode-hook))
 
 (use-package paredit
   :defer t
-  :diminish paredit-mode
+  :diminish (paredit-mode . "()")
   :config
   (define-globalized-minor-mode real-global-paredit-mode
     paredit-mode (lambda ()
@@ -643,6 +675,7 @@
     ("M-s"          nil)))
 
 (use-package smartparens
+  :pin melpa-stable
   :defer 0.25
   :config
   (sp-pair "'" nil :actions :rem)
@@ -650,11 +683,11 @@
   (diminish 'smartparens-mode " SP")
   (when nil
     (global-set-key (kbd "C-{")
-                    (lambda (&optional arg)
+                    (lambda (&optional _arg)
                       (interactive "P")
                       (sp-wrap-with-pair "(")))
     (global-set-key (kbd "C-(")
-                    (lambda (&optional arg)
+                    (lambda (&optional _arg)
                       (interactive "P")
                       (sp-wrap-with-pair "["))))
   (smartparens-global-mode t))
@@ -665,7 +698,7 @@
 
 (use-package paxedit
   :defer t
-  :diminish "Pax"
+  :diminish ""
   :pin melpa
   :config
   (setq paxedit-alignment-cleanup t
@@ -718,6 +751,9 @@
   :diminish git-gutter-mode
   :if (null window-system)
   :config (do-git-gutter-config))
+
+(use-package with-editor
+  :pin melpa)
 
 (use-package magit
   :pin melpa
@@ -899,17 +935,16 @@
     (face-spec-set face nil 'reset))
   (setq override-faces nil))
 
-(defcustom modeline-font "InputMono Nerd Font:medium:pixelsize=25"
+(defcustom modeline-font nil
+  ;; "InputMono Nerd Font 15"
   ;; "InputMono Nerd Font:pixelsize=23"
-  ;; "AnkaCoder Nerd Font:pixelsize=24"
-  ;; "Inconsolata Nerd Font 13"
-  ;; "Inconsolata Nerd Font:pixelsize=24"
   "Alternate font used for modeline."
   :group 'jeff)
 
 (defun switch-to-theme (theme)
   (cl-flet ((theme-p (s) (symbol-matches theme s)))
-    (let ((lnum-font "Inconsolata:pixelsize=22")
+    (let ((lnum-font nil)
+          ;; (lnum-font "Inconsolata:pixelsize=15")
           (lnum-weight1 'semi-bold)
           (lnum-weight2 'semi-bold))
       ;; load elpa package for theme
@@ -943,10 +978,11 @@
         (disable-theme active-theme))
       ;; reset any modified face specs
       (reset-override-faces)
-      (set-override-faces `(line-number
-                            ((t (:font ,lnum-font :weight ,lnum-weight1))))
-                          `(line-number-current-line
-                            ((t (:font ,lnum-font :weight ,lnum-weight2)))))
+      (when lnum-font
+        (set-override-faces `(line-number
+                              ((t (:font ,lnum-font :weight ,lnum-weight1))))
+                            `(line-number-current-line
+                              ((t (:font ,lnum-font :weight ,lnum-weight2))))))
       (cond ((theme-p "alect-dark")
              (alect-create-theme dark))
             ((theme-p "alect-dark-alt")
@@ -959,70 +995,80 @@
       (cond ((eql theme 'moe-dark)   (moe-dark))
             ((eql theme 'moe-light)  (moe-light))
             (t                       (load-theme theme t)))
+      (when modeline-font
+        (set-override-faces
+         `(mode-line (( t (:font ,modeline-font))))
+         `(mode-line-inactive ((t (:font ,modeline-font))))))
       ;; set face specs based on theme
-      (cond ((theme-p "zenburn")
-             (set-override-faces
-              `(vertical-border
-                ((t (:foreground "#7b7b6b"))))
-              `(mode-line
-                ((t (:font ,modeline-font
-                           :box nil
-                           ;; :foreground "#8fb28f"
-                           ;; :background "#2b2b2b"
-                           ))))
-              `(mode-line-inactive
-                ((t (:font ,modeline-font
-                           ;; :foreground "#5f7f5f"
-                           ;; :background "#383838"
-                           :box nil))))))
-            ((theme-p "gruvbox")
-             (set-override-faces
-              ;; `(fringe ((t (:background "#373230"))))
-              ;; `(fringe ((t (:background "#332c2a"))))
-              `(fringe ((t (:background "#37312b"))))
-              `(line-number
-                ((t (;; :foreground "#7c6f64" :background "#3c3836"
-                     ;; :foreground "#6c5f54" :background "#363230"
-                     ;; :foreground "#5f5046" :background "#37312b"
-                     :foreground "#635448" :background "#37312b"
-                     :font ,lnum-font :weight ,lnum-weight1))))
-              `(line-number-current-line
-                ((t (:foreground "#fe8019" :background "#37312b"
-                                 :font ,lnum-font :weight ,lnum-weight2))))
-              `(mode-line
-                ((t (:font ,modeline-font :foreground "#d5c4a1" :background "#665c54"))))
-              `(mode-line-inactive
-                ((t (:font ,modeline-font :foreground "#a89984" :background "#3c3836"))))))
-            ((theme-p "alect")
-             (set-override-faces))
-            ((theme-p "eighties")
-             (set-override-faces
-              `(fringe ((t (:background "#404040"))))
-              `(vertical-border ((t (:foreground "#505050"))))
-              `(mode-line
-                ((t (:font ,modeline-font
-                           :box (:line-width -2 :color "#555555" :style nil)))))
-              `(mode-line-inactive
-                ((t (:font ,modeline-font
-                           :box (:line-width -2 :color "#555555" :style nil)))))))
-            (t
-             (set-override-faces
-              `(fringe ((t (:background "#2a292c"))))
-              ;; `(fringe ((t (:background "#373230"))))
-              `(vertical-border ((t (:foreground "#505050"))))
-              `(mode-line
-                ((t (:font ,modeline-font
-                           :box (:line-width -1 :color "#555555" :style nil)
-                           ;; :box nil
-                           ))))
-              `(mode-line-inactive
-                ((t (:font ,modeline-font
-                           :box (:line-width -1 :color "#555555" :style nil)
-                           ;; :box nil
-                           )))))))
+      ''(cond ((theme-p "zenburn")
+               (set-override-faces
+                `(vertical-border
+                  ((t (:foreground "#7b7b6b"))))
+                `(mode-line
+                  ((t (:font ,modeline-font
+                             :box nil
+                             ;; :foreground "#8fb28f"
+                             ;; :background "#2b2b2b"
+                             ))))
+                `(mode-line-inactive
+                  ((t (:font ,modeline-font
+                             ;; :foreground "#5f7f5f"
+                             ;; :background "#383838"
+                             :box nil))))))
+              ((and nil (theme-p "gruvbox"))
+               (set-override-faces
+                ;; `(fringe ((t (:background "#373230"))))
+                ;; `(fringe ((t (:background "#332c2a"))))
+                `(fringe ((t (:background "#37312b"))))
+                `(line-number
+                  ((t (;; :foreground "#7c6f64" :background "#3c3836"
+                       ;; :foreground "#6c5f54" :background "#363230"
+                       ;; :foreground "#5f5046" :background "#37312b"
+                       :foreground "#635448" :background "#37312b"
+                       :font ,lnum-font :weight ,lnum-weight1))))
+                `(line-number-current-line
+                  ((t (:foreground "#fe8019" :background "#37312b"
+                                   :font ,lnum-font :weight ,lnum-weight2))))
+                `(mode-line
+                  ((t (:font ,modeline-font :foreground "#d5c4a1" :background "#665c54"))))
+                `(mode-line-inactive
+                  ((t (:font ,modeline-font :foreground "#a89984" :background "#3c3836"))))))
+              ((theme-p "alect")
+               (set-override-faces))
+              ((theme-p "eighties")
+               (set-override-faces
+                `(fringe ((t (:background "#404040"))))
+                `(vertical-border ((t (:foreground "#505050"))))
+                `(mode-line
+                  ((t (:font ,modeline-font
+                             :foreground "#e8e8e8"
+                             :box (:line-width -2 :color "#4a4a4a" :style nil)
+                             ;; :box (:line-width 0 :color "#555555" :style nil)
+                             ))))
+                `(mode-line-inactive
+                  ((t (:font ,modeline-font
+                             :foreground "#c0c0c0"
+                             :box (:line-width -2 :color "#4a4a4a" :style nil)
+                             ))))))
+              ((and nil t)
+               (set-override-faces
+                `(fringe ((t (:background "#2a292c"))))
+                ;; `(fringe ((t (:background "#373230"))))
+                `(vertical-border ((t (:foreground "#505050"))))
+                `(mode-line
+                  ((t (:font ,modeline-font
+                             :box (:line-width -1 :color "#555555" :style nil)
+                             ;; :box nil
+                             ))))
+                `(mode-line-inactive
+                  ((t (:font ,modeline-font
+                             :box (:line-width -1 :color "#555555" :style nil)
+                             ;; :box nil
+                             )))))))
       ;; ensure powerline colors are updated
       (powerline-reset)
-      (powerline-default-theme))))
+      (powerline-default-theme)
+      (redraw-frame))))
 
 (defun switch-custom-theme (&optional frame)
   (let ((frame (or (and (framep frame) frame)
@@ -1137,7 +1183,8 @@ return value is nil."
       ("C-c n" 'cider-repl-set-ns)
       ("C-c C-p" nil))
     (define-map-keys cider-repl-mode-map
-      ("C-c C-p" nil))))
+      ("C-c C-p" nil)
+      ("C-M-l" 'cider-repl-clear-buffer))))
 
 (use-package clj-refactor
   :defer t
@@ -1145,7 +1192,7 @@ return value is nil."
   :diminish clj-refactor-mode
   :config
   (setq cljr-warn-on-eval nil
-        cljr-suppress-middleware-warnings t)
+        cljr-suppress-middleware-warnings nil)
   (defun clj-refactor-clojure-mode-hook ()
     (clj-refactor-mode 1)
     (yas-minor-mode 1)  ; for adding require/use/import statements
@@ -1156,7 +1203,6 @@ return value is nil."
 
 (use-package flycheck-clojure
   :defer t
-  :pin melpa
   ;; :disabled t
   :init (use-package flycheck)
   :config (flycheck-clojure-setup))
@@ -1392,7 +1438,7 @@ return value is nil."
 ;; logging into an X session.
 (defun xsel-paste ()
   (shell-command-to-string "xsel -ob"))
-(defun xsel-copy (text &optional push)
+(defun xsel-copy (text &optional _push)
   (let ((process-connection-type nil))
     (let ((proc (start-process "xsel -ib" "*Messages*" "xsel" "-ib")))
       (process-send-string proc text)
@@ -1410,7 +1456,7 @@ return value is nil."
 ;;;
 (defun wl-paste ()
   (shell-command-to-string "wl-paste -n"))
-(defun wl-copy (text &optional push)
+(defun wl-copy (text &optional _push)
   (let ((process-connection-type nil))
     (let ((proc (start-process "wl-copy" "*Messages*" "wl-copy")))
       (process-send-string proc text)
@@ -1445,8 +1491,10 @@ return value is nil."
 (use-package powerline
   :if (not jeff/use-spaceline)
   :config
-  (setq powerline-height 29
+  (setq powerline-height 31
+        ;; powerline-height 29
         ;; powerline-height 48
+
         powerline-default-separator 'arrow
         powerline-display-buffer-size nil
         powerline-display-mule-info nil
@@ -1521,21 +1569,19 @@ return value is nil."
         ((wayland?) (do-wayland-copy-paste-setup))
         (t          (do-xsel-copy-paste-setup))))
 
-(defun jeff/init-ui (&optional frame initial full)
-  (when (or initial full)
-    (switch-custom-theme))
+(defun set-frame-fullscreen (frame active)
+  (let ((current (frame-parameter (or frame (selected-frame)) 'fullscreen)))
+    (when (or (and active (not current))
+              (and current (not active)))
+      (toggle-frame-fullscreen frame))))
+
+(defun jeff/init-ui (&optional frame initial _full)
+  (interactive)
+  (switch-custom-theme)
 
   ;;(scroll-bar-mode -1)
   ;;(menu-bar-mode -1)
   ;;(tool-bar-mode -1)
-
-  (when (and full (gui-mac?))
-    ;;(set-frame-font "Source Code Pro 19")
-    ;;(set-frame-font "SauceCodePro Nerd Font Medium 19")
-    ;;(set-frame-font "Sauce Code Powerline 19")
-    ;;(set-frame-font "Fira Code-13")
-    ;;(set-frame-font "Inconsolata for Powerline 15")
-    (set-frame-font "Inconsolata Nerd Font Mono 26" nil t))
 
   ;;(set-frame-font "Inconsolata for Powerline 16")
   ;;(set-frame-font "SauceCodePro Medium:pixelsize=26")
@@ -1547,22 +1593,25 @@ return value is nil."
   ;;(set-frame-font "Anka/Coder:pixelsize=26")
   ;;(set-frame-font "Input Mono Medium:pixelsize=25")
   ;;(set-frame-font "InputMono Nerd Font:pixelsize=27")
-  ;;(set-frame-font "InputMono Nerd Font Medium 20")
-  ''(when (and full (graphical?))
-      (set-frame-font "InputMono Nerd Font:medium:pixelsize=26" nil t))
+  ;;(set-frame-font "InputMono Nerd Font:size=15")
+  ;;(set-frame-font "Inconsolata:weight=bold:size=18")
+  ;;(set-frame-font "Inconsolata:weight=semi-bold:size=18")
+  ;;(set-frame-font "Inconsolata:weight=regular:size=18")
+  ;;(set-frame-font "Input Mono:weight=semibold:width=semicondensed:size=16")
 
   (cond ((equal (system-name) "jeff-osx")
          (set-frame-width nil 100)
-         (set-frame-height nil 48))
-        ((equal (system-name) "jeff-mbp")
-         nil))
+         (set-frame-height nil 48)))
 
-  (when (and initial (graphical?))
+  (unless (laptop?)
     (global-display-line-numbers-mode 1))
+  ;;(global-display-line-numbers-mode 0)
 
-  (when full
-    (powerline-reset)
-    (powerline-default-theme))
+  (powerline-reset)
+  (powerline-default-theme)
+
+  (when (and (gui-mac?) initial)
+    (set-frame-fullscreen frame t))
 
   nil)
 
@@ -1580,9 +1629,10 @@ return value is nil."
                   clj-refactor flycheck-clojure flycheck-clj-kondo less-css-mode
                   web-mode js2-mode)
 
-(defun native-comp? ()
-  (and (functionp 'native-comp-available-p)
-       (native-comp-available-p)))
+(eval-and-compile
+  (defun native-comp? ()
+    (and (functionp 'native-comp-available-p)
+         (native-comp-available-p))))
 
 (defun --body-title (body)
   (let* ((form (car (last body)))
@@ -1613,10 +1663,14 @@ return value is nil."
 
 ;;(--with-elapsed-time-alert (+ 1 2))
 
-(defun jeff/native-comp-path (path)
+(defmacro --when-native-comp (&rest body)
   (when (native-comp?)
-    (let ((comp-always-compile t))
-      (native-compile-async path t nil))))
+    `(progn ,@body)))
+
+(defun jeff/native-comp-path (_path)
+  (--when-native-comp
+   (let ((comp-always-compile t))
+     (native-compile-async _path t nil))))
 
 (defun jeff/native-comp-elpa ()
   (interactive)
@@ -1642,17 +1696,22 @@ return value is nil."
            :category 'emacs-init)))
 
 (defun jeff/after-init ()
-  (jeff/init-ui nil t)
+  (jeff/init-ui (selected-frame) t)
   (jeff/init-copy-paste)
-  (force-window-update)
-  (redraw-frame)
-  (run-with-timer 1.0 nil 'jeff/describe-init)
+
+  (run-with-timer 0.75 nil 'jeff/describe-init)
   (garbage-collect))
 
-(add-hook 'post-command-hook 'force-mode-line-update)
+(defun --force-minibuffer-update ()
+  (force-window-update (minibuffer-window)))
+
+;;(add-hook 'post-command-hook '--force-minibuffer-update)
+
+;;(add-hook 'post-command-hook 'force-mode-line-update)
+;;(setq post-command-hook (delete 'force-mode-line-update post-command-hook))
 
 (add-hook 'after-init-hook 'jeff/after-init)
-;;(add-hook 'after-make-frame-functions 'jeff/init-ui)
+(add-hook 'after-make-frame-functions 'jeff/init-ui)
 ;;(add-hook 'after-make-frame-functions 'jeff/init-copy-paste)
 
 ;;(byte-recompile-file "~/.emacs.d/init.el" nil 0 nil)
