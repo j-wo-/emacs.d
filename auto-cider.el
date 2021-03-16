@@ -105,7 +105,7 @@
                           cljs-file-path
                           clj-test-file-path
                           figwheel-port
-                          cljs-user-ns
+                          _cljs-user-ns
                           clj-repl-forms
                           cljs-repl-forms)
   (--init-run-cider 2)

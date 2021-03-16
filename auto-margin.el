@@ -11,40 +11,42 @@
   "Modified version of `split-window-sensibly' that splits horizontally
    by default when allowed."
   (interactive)
-  (if (< (frame-width (window-frame window))
-         split-width-threshold)
-      ;; use the default behavior if the frame isn't wide enough to
-      ;; support two full-size horizontal windows
-      (split-window-sensibly window)
-    (let ((window (or window (selected-window))))
-      (cl-destructuring-bind (mleft . mright) (window-margins window)
-        ;; * Remove the existing window margins first, otherwise they will
-        ;;   interfere with splitting calculations.
-        ;; * If a split is performed, it will trigger an
-        ;;   `autoset-window-margins' to set proper margin values.
-        ;; * If no split is performed, the margins are set back to
-        ;;   their existing values.
-        (set-window-margins window 0 0)
-        (or (and (window-splittable-p window t)
-                 ;; Split window horizontally.
-                 (with-selected-window window
-                   (split-window-right)))
-            (and (window-splittable-p window)
-                 ;; Split window vertically.
-                 (with-selected-window window
-                   (split-window-below)))
-            (and (eq window (frame-root-window (window-frame window)))
-                 (not (window-minibuffer-p window))
-                 ;; If WINDOW is the only window on its frame and is not the
-                 ;; minibuffer window, try to split it vertically disregarding
-                 ;; the value of `split-height-threshold'.
-                 (let ((split-height-threshold 0))
-                   (when (window-splittable-p window)
-                     (with-selected-window window
-                       (split-window-below)))))
-            ;; No split, restore existing window margins
-            (and (set-window-margins window mleft mright)
-                 nil))))))
+  (let ((window (or window (selected-window))))
+    (if (< (frame-width (window-frame window))
+           split-width-threshold)
+        ;; use the default behavior if the frame isn't wide enough to
+        ;; support two full-size horizontal windows
+        (split-window-sensibly window)
+      (set-window-margins window 0 0)
+      (or (and (window-splittable-p window t)
+               ;; Split window horizontally.
+               (with-selected-window window
+                 (split-window-right)))
+          (and (window-splittable-p window)
+               ;; Split window vertically.
+               (with-selected-window window
+                 (split-window-below)))
+          (and
+           ;; If WINDOW is the only usable window on its frame (it is
+           ;; the only one or, not being the only one, all the other
+           ;; ones are dedicated) and is not the minibuffer window, try
+           ;; to split it vertically disregarding the value of
+           ;; `split-height-threshold'.
+           (let ((frame (window-frame window)))
+             (or
+              (eq window (frame-root-window frame))
+              (catch 'done
+                (walk-window-tree (lambda (w)
+                                    (unless (or (eq w window)
+                                                (window-dedicated-p w))
+                                      (throw 'done nil)))
+                                  frame nil 'nomini)
+                t)))
+           (not (window-minibuffer-p window))
+           (let ((split-height-threshold 0))
+             (when (window-splittable-p window)
+               (with-selected-window window
+                 (split-window-below)))))))))
 
 (defun split-window-auto ()
   (interactive)
@@ -100,4 +102,5 @@
                 after-make-frame-functions))
   (add-hook hook 'autoset-frame-margins))
 
-(add-hook 'pre-redisplay-functions 'autoset-window-frame-margins)
+;;(add-hook 'pre-redisplay-functions 'autoset-window-frame-margins)
+;;(add-hook 'post-command-hook 'autoset-frame-margins)

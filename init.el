@@ -111,7 +111,7 @@
   )
 
 (defvar custom-emacs-theme
-  'sanityinc-tomorrow-night
+  (if (graphical?) 'sanityinc-tomorrow-night 'sanityinc-tomorrow-night-rxvt)
   ;; 'alect-dark
   ;; (if (graphical?) 'gruvbox-dark-soft 'sanityinc-tomorrow-night)
   ;; (if (graphical?) 'base16-eighties 'sanityinc-tomorrow-night)
@@ -192,11 +192,24 @@
 ;; when bootstrapping packages.
 (ensure-installed paren-face elisp-slime-nav paredit)
 
+(defvar cleanup-buffer-enable t)
+
+(defun cleanup-buffer-toggle ()
+  (interactive)
+  (if cleanup-buffer-enable
+      (progn
+        (setq cleanup-buffer-enable nil)
+        (message "cleanup-buffer disabled"))
+    (progn
+        (setq cleanup-buffer-enable t)
+        (message "cleanup-buffer enabled"))))
+
 (defun cleanup-buffer ()
   (interactive)
-  (when (not indent-tabs-mode)
-    (untabify (point-min) (point-max)))
-  (delete-trailing-whitespace (point-min) (point-max)))
+  (when cleanup-buffer-enable
+    (when (not indent-tabs-mode)
+      (untabify (point-min) (point-max)))
+    (delete-trailing-whitespace (point-min) (point-max))))
 
 ;; Add a hook to convert all tabs to spaces when saving any file,
 ;; unless its buffer mode is set to use tabs for indentation.
@@ -395,7 +408,7 @@
   (set-mode-name python-mode "Python"))
 
 (use-package helm
-  :defer t
+  ;; :defer t
   :init (setq helm-follow-mode-persistent t)
   :config
   (require 'helm-buffers)
@@ -506,7 +519,7 @@
   (if jeff/use-projectile-ag 'helm-projectile-ag 'helm-projectile-grep))
 
 (use-package projectile
-  :defer 0.2
+  :defer 0.25
   :init
   (setq projectile-use-git-grep t
         projectile-switch-project-action 'helm-projectile
@@ -517,7 +530,9 @@
          ("C-c p"       . helm-projectile)
          ("C-c C-p"     . helm-projectile)
          ("C-c TAB"     . helm-projectile-switch-to-buffer)
+         ("C-c C-g"     . helm-projectile-grep)
          ("C-c g"       . helm-projectile-grep)
+         ("M-/"         . helm-projectile-grep)
          ("C-c G"       . projectile-grep)
          ("C-c C-s"     . helm-projectile-ag)
          ("C-c s"       . helm-projectile-ag)
@@ -620,7 +635,7 @@
   (flx-ido-mode 1))
 
 (use-package mic-paren
-  :defer 0.5
+  :defer 0.25
   :config (paren-activate))
 
 (defun theme? (theme)
@@ -946,17 +961,23 @@
   (setq override-faces nil))
 
 (defcustom modeline-font nil
-  ;; "InputMono Nerd Font 15"
-  ;; "InputMono Nerd Font:pixelsize=24"
+  ;; "InputC3Mono Nerd Font:pixelsize=22"
+  ;; "InputC3Mono Nerd Font 17"
+  ;; "InputMono Nerd Font 16"
+  ;; "InputMono Nerd Font:pixelsize=21"
   "Alternate font used for modeline."
   :group 'jeff)
 
 (defun switch-to-theme (theme)
   (cl-flet ((theme-p (s) (symbol-matches theme s)))
-    (let ((lnum-font nil)
-          ;; (lnum-font "Inconsolata:pixelsize=22")
-          (lnum-weight1 'semi-bold)
-          (lnum-weight2 'semi-bold))
+    (let (;;(lnum-font nil)
+          ;;(lnum-font "Inconsolata 16")
+          ;;(lnum-font "Inconsolata:pixelsize=22")
+          (lnum-font "InputC3Mono Nerd Font 16")
+          ;;(lnum-font "InputC3Mono Nerd Font:pixelsize=22")
+          ;;(lnum-font "Inconsolata for Powerline:pixelsize=22")
+          (lnum-weight1 'regular)
+          (lnum-weight2 'regular))
       ;; load elpa package for theme
       (cond ((theme-p "sanityinc-tomorrow")
              (use-package color-theme-sanityinc-tomorrow))
@@ -1501,6 +1522,7 @@ return value is nil."
 ;;(setq warning-minimum-level :error)
 
 (use-package powerline
+  :pin melpa-stable
   :if (not jeff/use-spaceline)
   :config
   (setq powerline-height 31
@@ -1591,25 +1613,7 @@ return value is nil."
   (interactive)
   (switch-custom-theme)
 
-  ;;(scroll-bar-mode -1)
-  ;;(menu-bar-mode -1)
-  ;;(tool-bar-mode -1)
-
-  ;;(set-frame-font "Inconsolata for Powerline 16")
-  ;;(set-frame-font "SauceCodePro Medium:pixelsize=26")
-  ;;(set-frame-font "Inconsolata for Powerline:pixelsize=31")
-  ;;(set-frame-font "Inconsolata Nerd Font Mono:pixelsize=29")
-  ;;(set-frame-font "InconsolataGo Nerd Font Mono:pixelsize=29")
-  ;;(set-frame-font "Anka/Coder Condensed:pixelsize=28")
-  ;;(set-frame-font "AnkaCoder Nerd Font Mono:pixelsize=26")
-  ;;(set-frame-font "Anka/Coder:pixelsize=26")
-  ;;(set-frame-font "Input Mono Medium:pixelsize=25")
-  ;;(set-frame-font "InputMono Nerd Font:pixelsize=27")
-  ;;(set-frame-font "InputMono Nerd Font:size=15")
-  ;;(set-frame-font "Inconsolata:weight=bold:size=18")
-  ;;(set-frame-font "Inconsolata:weight=semi-bold:size=18")
-  ;;(set-frame-font "Inconsolata:weight=regular:size=18")
-  ;;(set-frame-font "Input Mono:weight=semibold:width=semicondensed:size=16")
+  ;; (scroll-bar-mode -1) (menu-bar-mode -1) (tool-bar-mode -1)
 
   (cond ((equal (system-name) "jeff-osx")
          (set-frame-width nil 100)
@@ -1617,7 +1621,7 @@ return value is nil."
 
   (unless (laptop?)
     (global-display-line-numbers-mode 1))
-  ;;(global-display-line-numbers-mode 0)
+  ;; (global-display-line-numbers-mode 0)
 
   (powerline-reset)
   (powerline-default-theme)
@@ -1710,7 +1714,6 @@ return value is nil."
 (defun jeff/after-init ()
   (jeff/init-ui (selected-frame) t)
   (jeff/init-copy-paste)
-
   (run-with-timer 0.75 nil 'jeff/describe-init)
   (garbage-collect))
 
