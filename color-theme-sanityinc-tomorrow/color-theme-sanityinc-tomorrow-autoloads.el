@@ -1,4 +1,4 @@
-;;; color-theme-sanityinc-tomorrow-autoloads.el --- automatically extracted autoloads
+;;; color-theme-sanityinc-tomorrow-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -13,31 +13,21 @@
 (when (boundp 'custom-theme-load-path) (add-to-list 'custom-theme-load-path (file-name-as-directory (file-name-directory load-file-name))))
 
 (autoload 'color-theme-sanityinc-tomorrow-night "color-theme-sanityinc-tomorrow" "\
-Apply the tomorrow night theme.
-
-\(fn)" t nil)
+Apply the tomorrow night theme." t nil)
 
 (autoload 'color-theme-sanityinc-tomorrow-day "color-theme-sanityinc-tomorrow" "\
-Apply the tomorrow day theme.
-
-\(fn)" t nil)
+Apply the tomorrow day theme." t nil)
 
 (autoload 'color-theme-sanityinc-tomorrow-bright "color-theme-sanityinc-tomorrow" "\
-Apply the tomorrow bright theme.
-
-\(fn)" t nil)
+Apply the tomorrow bright theme." t nil)
 
 (autoload 'color-theme-sanityinc-tomorrow-eighties "color-theme-sanityinc-tomorrow" "\
-Apply the tomorrow eighties theme.
-
-\(fn)" t nil)
+Apply the tomorrow eighties theme." t nil)
 
 (autoload 'color-theme-sanityinc-tomorrow-blue "color-theme-sanityinc-tomorrow" "\
-Apply the tomorrow blue theme.
+Apply the tomorrow blue theme." t nil)
 
-\(fn)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "color-theme-sanityinc-tomorrow" '("color-theme-sanityinc-tomorrow" "sanityinc-tomorrow--")))
+(register-definition-prefixes "color-theme-sanityinc-tomorrow" '("color-theme-sanityinc-tomorrow" "sanityinc-tomorrow--"))
 
 ;;;***
 
