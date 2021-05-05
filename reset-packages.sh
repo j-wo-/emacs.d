@@ -3,7 +3,7 @@ set -eux
 
 fd -I -e elc -X sudo rm
 
-sudo rm -rf eln-cache 2> /dev/null
+#sudo rm -rf eln-cache 2> /dev/null
 
 sudo rm -rf elpa 2> /dev/null
 mkdir elpa

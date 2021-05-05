@@ -1,11 +1,21 @@
+;;; -*- lexical-binding: t -*-
+
 ;; This automatically centers windows in large frames by adding hooks
 ;; to modify window margins whenever the window layout may have changed.
 
+(require 'init-base)
 (require 'cl-lib)
+(require 'use-package)
+(use-package dash)
 
 ;; Controls max width for a centered window
 (defvar auto-margin/custom-frame-width 110)
 (defvar auto-margin/custom-min-margin 20)
+(defun --min-margin-left (&optional window)
+  (let ((current (-> (window-margins window) car (or 0))))
+    (if (and (> current 0)
+             (not (display-graphic-p (window-frame window))))
+        1 0)))
 
 (defun split-window-prefer-horizontal (&optional window)
   "Modified version of `split-window-sensibly' that splits horizontally
@@ -17,7 +27,7 @@
         ;; use the default behavior if the frame isn't wide enough to
         ;; support two full-size horizontal windows
         (split-window-sensibly window)
-      (set-window-margins window 0 0)
+      (set-window-margins window (--min-margin-left window) 0)
       (or (and (window-splittable-p window t)
                ;; Split window horizontally.
                (with-selected-window window
@@ -72,35 +82,40 @@
 ;; the window is wide enough.
 ;; (setq split-width-threshold 160)
 
-(defun autoset-window-margins (&optional window &rest args)
-  (let ((w (or (and (windowp window) window)
-               (selected-window))))
-    (let* ((ws (window-size w t))
-           (mtotal (min (- ws auto-margin/custom-frame-width 1)
-                        (- (floor (/ ws 2)) 4))))
-      (if (>= mtotal (* 2 auto-margin/custom-min-margin))
-          (let ((ms (floor (/ (- ws auto-margin/custom-frame-width 1) 2))))
-            (set-window-margins w ms ms))
-        (set-window-margins w 0 0)))))
+(defun autoset-window-margins (&optional window &rest _args)
+  (let* ((min-left (--min-margin-left window))
+         (w (or (and (windowp window) window)
+                (selected-window)))
+         (ws (window-size w t))
+         (mtotal (min (- ws auto-margin/custom-frame-width 1)
+                      (- (floor (/ ws 2)) 4))))
+    (if (>= mtotal (* 2 auto-margin/custom-min-margin))
+        (let ((m (floor (/ (- ws auto-margin/custom-frame-width 1) 2))))
+          (set-window-margins w (max m min-left) m))
+      (set-window-margins w (max 0 min-left) 0))))
 
 (defun remove-frame-margins (&optional frame)
   (let ((frame (or (and (framep frame) frame)
                    (selected-frame))))
     (dolist (window (window-list frame))
-      (set-window-margins window 0 0))))
+      (set-window-margins window (--min-margin-left window) 0))))
 
-(defun autoset-frame-margins (&optional frame &rest args)
-  (let ((frame (or (and (framep frame) frame)
-                   (selected-frame))))
-    (mapc #'autoset-window-margins (window-list frame))))
+(defun autoset-frame-margins (&optional frame &rest _args)
+  (->> (or (and (framep frame) frame)
+           (selected-frame))
+    (window-list)
+    (mapc 'autoset-window-margins)))
 
 (defun autoset-window-frame-margins (window)
   (autoset-frame-margins (window-frame window)))
 
 (dolist (hook '(window-setup-hook
                 window-size-change-functions
-                after-make-frame-functions))
+                after-make-frame-functions
+                after-setting-font-hook))
   (add-hook hook 'autoset-frame-margins))
 
 ;;(add-hook 'pre-redisplay-functions 'autoset-window-frame-margins)
 ;;(add-hook 'post-command-hook 'autoset-frame-margins)
+
+(provide 'auto-margin)

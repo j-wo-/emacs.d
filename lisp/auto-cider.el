@@ -1,11 +1,19 @@
 ;;; -*- lexical-binding: t -*-
 
-(require 'cl-lib)
+(require 'init-base)
 
-(eval-when-compile
-  (require 'dash)
-  (require 'sesman)
-  (require 'cider))
+(require 'cl-lib)
+(require 'dash)
+(require 'sesman)
+(require 'cider)
+
+(defun --cider-load-buffer-reload-repl (&optional buffer)
+  (interactive)
+  (let ((result (if buffer
+                    (cider-load-buffer buffer)
+                  (cider-load-buffer))))
+    (--cider-reload-repl-ns)
+    result))
 
 (defun all-sesman-sessions ()
   (sesman-sessions (sesman--system) t))
@@ -238,4 +246,34 @@
       (wait-on-condition (have-repl-buffers) ()
         (show-repl-buffers)))))
 
-;;(load-local "auto-cider")
+(defun sysrev ()
+  (interactive)
+  (run-cider-project
+   "sysrev"
+   "~/code/sysrev/project.clj"
+   "~/code/sysrev/src/clj/sysrev/user.clj"
+   "~/code/sysrev/src/cljs/sysrev/user.cljs"
+   "~/code/sysrev/test/clj/sysrev/test/core.clj"
+   7888
+   "sysrev.user"
+   '("(->> (all-projects) count time)")
+   '("@(subscribe [:active-panel])")))
+
+(defun --cider-quit-all ()
+  (interactive)
+  (use-package projectile)
+  (stop-cider-all)
+  (save-excursion
+    (find-file "~/code/sysrev/project.clj")
+    (dolist (b (projectile-project-buffers))
+      (kill-buffer b))))
+
+(defun --benchmark-sysrev ()
+  (interactive)
+  (use-package projectile)
+  (--cider-quit-all)
+  (with-delay 0.1 (garbage-collect))
+  (with-delay 0.25 (sysrev))
+  (with-delay 2.5 (--cider-quit-all)))
+
+(provide 'auto-cider)

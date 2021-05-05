@@ -1,3 +1,10 @@
+;;; -*- lexical-binding: t -*-
+
+(require 'init-base)
+(require 'cl-lib)
+(require 'use-package)
+(use-package dash)
+
 (defmacro define-map-keys (map &rest defs)
   `(progn
      ,@(mapcar (lambda (entry)
@@ -31,6 +38,8 @@
   ("C-2"          'delete-other-windows-vertically)
   ("C-M-2"        'delete-other-windows-vertically)
   ("C-x 2"        'delete-other-windows-vertically) ; terminal
+  ("C-3"          'goto-line)
+  ("C-x 3"        'goto-line)
   ("C-q"          'delete-window)
   ("C-x x"        'split-window-below)
   ("C-<tab>"      'helm-mini)
@@ -45,7 +54,7 @@
   ;; unset defaults
   ("C-x o"        nil)                  ; other-window
   ;; ("C-x 0"        nil)                  ; delete-window
-  ("C-x 3"        nil)                  ; split-window-right
+  ;;("C-x 3"        nil)                  ; split-window-right
   ("C-x b"        nil)                  ; ido-switch-buffer
   ;; custom bindings
   ("C-<left>"     'previous-buffer)
@@ -69,7 +78,11 @@
   ("C-M-s"        'split-window-auto)
   ("C-M-f"        'toggle-frame-fullscreen)
   ("C-x n"        'jeff/neotree-project-dir)
-  ("C-c ;"        'comment-or-uncomment-region))
+  ("C-c ;"        'comment-or-uncomment-region)
+  ("M-/"          'hippie-expand)
+  ("s-/"          'hippie-expand)
+  ("C-x \\"       '--align-regexp)
+  ("C-\\"         '--align-regexp))
 
 ;; swap () and [] keys
 (when t ;; (graphical?)
@@ -93,3 +106,5 @@
         (t
          (progn (setq mac-command-modifier 'super)
                 (setq mac-option-modifier 'meta)))))
+
+(provide 'init-keys)
