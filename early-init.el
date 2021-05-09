@@ -106,14 +106,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Configure nativecomp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar --gcc-fast nil)
+(defvar --gcc-fast t)
 
 (if --gcc-fast
     (setq ;; comp-speed 2
      comp-speed 2
      comp-native-driver-options
-     ("-march=native" "-O3")
-     ;; '("-march=native" "-Ofast" "-fno-finite-math-only" "-g0")
+     ;; '("-march=native" "-O3")
+     '("-march=native" "-Ofast" "-fno-finite-math-only" "-g0")
      )
   (setq comp-speed 2
         comp-native-driver-options
