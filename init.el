@@ -37,12 +37,13 @@
   company-statistics
   popup
   pos-tip
-  bind-key)
+  bind-key
+  all-the-icons)
 (ensure-installed melpa-stable
   ac-cider
   ace-window
   alert
-  all-the-icons
+  ;; all-the-icons
   ;; ample-theme
   anti-zenburn-theme
   anzu
@@ -148,7 +149,6 @@
   zenburn-theme
   zoutline)
 (load-local 'init-base)
-;;(load-local 'init-install t)
 (load-local 'init-theme)
 (load-local 'init-keys)
 (load-local 'init-commands)
@@ -157,7 +157,6 @@
 (load-local 'init-copy-paste)
 (load-local 'init-launch)
 (load-local 'auto-margin)
-;;(load-local 'init-post)
 
 (when --run-profiler
   (add-to-list 'after-init-hook (lambda ()
@@ -165,12 +164,4 @@
                                   (profiler-report))))
 
 (when use-package-compute-statistics
-  ;;(run-with-timer 0.5 nil 'use-package-report)
-  (use-package-report)
-  )
-
-;;(byte-recompile-file "~/.emacs.d/init.el" nil 0 nil)
-
-;; Local Variables:
-;; byte-compile-warnings: (not free-vars make-local callargs)
-;; End:
+  (use-package-report))

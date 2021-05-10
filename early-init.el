@@ -21,7 +21,9 @@
   ;; "InputMono Nerd Font 17"
   ;; "InputC3Mono Nerd Font 20"
   ;; "InputC4Mono Nerd Font 20"
-  "InputC4Mono Nerd Font:pixelsize=25"
+  "InputC4Mono Nerd Font 19"
+  ;; "FiraCode Nerd Font:pixelsize=23"
+  ;; "FuraCode Nerd Font:weight=Medium:pixelsize=23"
   ;; (font-spec :family "InputMono Nerd Font" :size 26)
   ;; (font-spec :family "Inconsolata" :weight 'semi-bold :size 18)
   ;; (font-spec :family "Inconsolata" :weight 'bold :size 18)
@@ -36,9 +38,12 @@
 ;; (set-frame-font "InputMono Nerd Font 17")
 ;; (set-frame-font "InputC3Mono Nerd Font 20")
 ;; (set-frame-font "InputC4Mono Nerd Font 19")
-;; (set-frame-font "InputC4Mono Nerd Font 20")
-;; (set-frame-font "InputC4Mono Nerd Font:pixelsize=25")
+;; (set-frame-font "InputC4Mono Nerd Font 19")
+;; (set-frame-font "InputC4Mono Nerd Font:weight=Medium:pixelsize=25")
 ;; (set-frame-font (font-spec :family "Input Mono" :weight 'semi-bold :size 14))
+;; (set-frame-font (font-spec :family "FuraCode Nerd Font" :weight 'medium :size 23))
+;; (set-frame-font "FuraCode Nerd Font:weight=Medium:pixelsize=23")
+;; (set-frame-font (font-spec :family "FiraCode Nerd Font" :size 23))
 
 (setq default-frame-alist
       `((left-fringe . 12)

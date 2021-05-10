@@ -22,8 +22,9 @@
   :diminish outshine-mode
   :config
   (require 'outline)
-  (diminish 'outline-minor-mode
-            (if (graphical?) " " " ▼")) ;; " " " " " "
+  ;; " " " " " "
+  ;;(diminish 'outline-minor-mode (if (graphical?) " " " ▼"))
+  (diminish 'outline-minor-mode " ")
   (add-hook 'outline-minor-mode-hook 'outshine-mode)
   (add-hook 'prog-mode-hook 'outline-minor-mode)
   (defvar outline-display-table (make-display-table))
@@ -171,7 +172,8 @@
   ;; " " " "
   ;; unicode 2004 U+2004 (thick space)
   (use-package diminish)
-  (diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr"))
+  ;;(diminish 'aggressive-indent-mode (if (graphical?) " " " Aggr"))
+  (diminish 'aggressive-indent-mode " ")
   (setq aggressive-indent-sit-for-time 0.025)
   ;; 'aggressive-indent-dont-indent-if
   (when --use-global-aggressive-indent
@@ -228,8 +230,12 @@
   "Use ag for projectile search if non-nil; otherwise use git grep."
   :group 'jeff)
 
-(defvar jeff/projectile-search-fn
+(defvar --helm-projectile-search-fn
   (if jeff/use-projectile-ag 'helm-projectile-ag 'helm-projectile-grep))
+
+(defun --helm-projectile-search ()
+  (interactive)
+  (funcall --helm-projectile-search-fn))
 
 (use-package projectile
   :defer 0.25
@@ -243,10 +249,10 @@
          ("C-c p"       . helm-projectile)
          ("C-c C-p"     . helm-projectile)
          ("C-c TAB"     . helm-projectile-switch-to-buffer)
-         ("C-."         . helm-projectile-grep)
-         ("C-c C-g"     . helm-projectile-grep)
-         ("C-c g"       . helm-projectile-grep)
-         ("M-/"         . helm-projectile-grep)
+         ("C-."         . --helm-projectile-search)
+         ("C-c C-g"     . --helm-projectile-search)
+         ("C-c g"       . --helm-projectile-search)
+         ("M-/"         . --helm-projectile-search)
          ("C-c G"       . projectile-grep)
          ("C-c C-s"     . helm-projectile-ag)
          ("C-c s"       . helm-projectile-ag)
@@ -263,7 +269,7 @@
     ("C-c p"        'projectile-command-map)
     ("C-c C-p"      'projectile-command-map)
     ("C-c TAB"      'helm-projectile-switch-to-buffer)
-    ("C-c g"        'helm-projectile-grep)
+    ("C-c g"        '--helm-projectile-search)
     ("C-c G"        'projectile-grep)
     ("C-c C-s"      'helm-projectile-ag)
     ("C-c s"        'helm-projectile-ag)
@@ -488,7 +494,7 @@
     (add-hook hook 'whitespace-mode))
   (add-hook 'before-save-hook 'whitespace-cleanup)
   :config
-  (setq whitespace-line-column 80) ;; limit line length
+  (setq whitespace-line-column 95) ;; limit line length
   (setq whitespace-style '(face tabs empty trailing lines-tail)))
 
 (use-package paradox
