@@ -111,29 +111,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Configure nativecomp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar --gcc-fast t)
+;; (defvar --gcc-args '("-O2"))
+(defvar --gcc-args '("-Ofast" "-fno-finite-math-only"))
 
-(if --gcc-fast
-    (setq ;; comp-speed 2
-     comp-speed 2
-     comp-native-driver-options
-     ;; '("-march=native" "-O3")
-     '("-march=native" "-Ofast" "-fno-finite-math-only" "-g0")
-     )
-  (setq comp-speed 2
-        comp-native-driver-options
-        '("-march=native" "-O2")))
+(setq native-comp-speed 2
+      native-comp-driver-options `("-march=native" "-g0" ,@--gcc-args)
+      native-comp-deferred-compilation-deny-list '("powerline"
+                                                   "slime"
+                                                   "auto-margin"
+                                                   "smartparens"))
 
-(setq comp-deferred-compilation-deny-list '("powerline"
-                                            "slime"
-                                            ;; "pos-tip"
-                                            ;; "flycheck-pos-tip"
-                                            ;; "tooltip"
-                                            "auto-margin"
-                                            "smartparens"
-                                            ))
-
-;; (setq load-no-native t comp-deferred-compilation nil)
+'(setq load-no-native t
+       native-comp-deferred-compilation nil)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Local Variables:

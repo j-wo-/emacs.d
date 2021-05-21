@@ -147,7 +147,7 @@
 
 (defun jeff/native-comp-path (path)
   (--when-native-comp
-   (let ((comp-always-compile t))
+   (let ((native-comp-always-compile t))
      (native-compile-async path t nil))))
 
 (defun jeff/native-comp-elpa ()
